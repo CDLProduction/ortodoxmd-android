@@ -14,10 +14,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ortodoxmd-android"
 include(":app")
-
 include(":core")
 include(":data")
 include(":widgets")
-include(":features:calendar")
-include(":feature-calendar")
-include(":features:feature-calendar")
+include(":features-calendar")  // Explicit pentru nested folder /features/calendar

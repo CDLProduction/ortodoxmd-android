@@ -12,6 +12,18 @@ android {
 
     defaultConfig {
         minSdk = 24
+        targetSdk = 36  // Adăugat pentru variant matching (AgpVersionAttr)
+        consumerProguardFiles("consumer-rules.pro")
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            isMinifyEnabled = false  // Adăugat explicit pentru generate debug variant (BuildTypeAttr 'debug')
+        }
     }
 
     compileOptions {
@@ -41,11 +53,9 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-compose")
-    // Adăugat pentru import-uri roșii (LaunchedEffect, collectAsState, etc.)
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.runtime:runtime")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")  // Pentru hiltViewModel in Compose
-    // Hilt
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("com.google.dagger:hilt-android:2.53.1")
     kapt("com.google.dagger:hilt-compiler:2.53.1")
 }

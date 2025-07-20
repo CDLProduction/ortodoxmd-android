@@ -9,6 +9,13 @@ android {
 
     defaultConfig {
         minSdk = 24
+        targetSdk = 36  // Adăugat pentru matching
+    }
+
+    buildTypes {
+        debug {
+            isMinifyEnabled = false  // Adăugat pentru debug variant
+        }
     }
 
     compileOptions {
@@ -23,6 +30,6 @@ android {
 
 dependencies {
     implementation(project(":data"))
-    implementation(project(":features:calendar"))  // Fix: Schimbat de la ":features" la submodul corect
-    implementation("androidx.compose.runtime:runtime-android:1.8.3")  // Păstrează dacă ai nevoie; altfel șterge dacă widget e RemoteViews
+//    implementation(project(":features-calendar"))  // Path corect
+    implementation("androidx.compose.runtime:runtime-android:1.8.3")  // Dacă nevoie; șterge dacă widget nu e Compose-based
 }
