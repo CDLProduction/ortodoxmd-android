@@ -24,9 +24,14 @@ android {
 }
 
 dependencies {
-    // Hilt pentru DI comun (analog Spring @Bean)
+    // Hilt pentru DI comun
     implementation("com.google.dagger:hilt-android:2.53.1")
     kapt("com.google.dagger:hilt-compiler:2.53.1")
-    // Coroutines pentru async operations (similar async în Java backend)
+    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    // Adăugat pentru NetworkModule: Retrofit și OkHttp (rezolvă import-uri roșii)
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.11.0")  // Gson explicit dacă nevoie
 }

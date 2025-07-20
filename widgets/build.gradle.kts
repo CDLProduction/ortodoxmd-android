@@ -22,5 +22,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":data"))  // Acces la DB pentru date widget
+    implementation(project(":data"))
+    implementation(project(":features:calendar"))  // Fix: Schimbat de la ":features" la submodul corect
+    implementation("androidx.compose.runtime:runtime-android:1.8.3")  // Păstrează dacă ai nevoie; altfel șterge dacă widget e RemoteViews
 }
