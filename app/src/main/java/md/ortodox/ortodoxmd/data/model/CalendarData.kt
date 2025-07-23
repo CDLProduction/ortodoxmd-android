@@ -1,9 +1,12 @@
 package md.ortodox.ortodoxmd.data.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
+@Entity(tableName = "calendar_data")
 data class CalendarData(
-    @SerializedName("date") val date: String,
+    @PrimaryKey val date: String,
     @SerializedName("fastingType") val fastingType: String,
     @SerializedName("fastingDescriptionEn") val fastingDescriptionEn: String,
     @SerializedName("fastingDescriptionRo") val fastingDescriptionRo: String,
@@ -14,7 +17,7 @@ data class CalendarData(
     @SerializedName("titlesEn") val titlesEn: String,
     @SerializedName("titlesRo") val titlesRo: String,
     @SerializedName("titlesRu") val titlesRu: String,
-    @SerializedName("saints") val saints: List<Saint>,
+    @SerializedName("saints") val saints: List<Saint>,  // Room nu suportă direct List, va necesita conversie
     @SerializedName("fastingDay") val fastingDay: Boolean
 )
 

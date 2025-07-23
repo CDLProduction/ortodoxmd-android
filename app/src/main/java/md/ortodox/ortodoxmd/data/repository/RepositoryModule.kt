@@ -1,5 +1,6 @@
 package md.ortodox.ortodoxmd.data.repository
 
+import md.ortodox.ortodoxmd.data.CalendarDao
 import md.ortodox.ortodoxmd.data.network.CalendarApiService
 import dagger.Module
 import dagger.Provides
@@ -12,7 +13,10 @@ import javax.inject.Singleton
 object RepositoryModule {
     @Provides
     @Singleton
-    fun provideCalendarRepository(apiService: CalendarApiService): CalendarRepository {
-        return CalendarRepository(apiService)
+    fun provideCalendarRepository(
+        apiService: CalendarApiService,
+        calendarDao: CalendarDao  // Adăugat parametrul
+    ): CalendarRepository {
+        return CalendarRepository(apiService, calendarDao)
     }
 }

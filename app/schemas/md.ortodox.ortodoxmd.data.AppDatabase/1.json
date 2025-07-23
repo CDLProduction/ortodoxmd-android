@@ -2,18 +2,12 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e3ffee4c2ac1795b53012e9785891c00",
+    "identityHash": "6c98ed82d6b9a876e97fc881c5cb94a5",
     "entities": [
       {
-        "tableName": "holidays",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `name` TEXT NOT NULL, `type` TEXT NOT NULL)",
+        "tableName": "calendar_data",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`date` TEXT NOT NULL, `fastingType` TEXT NOT NULL, `fastingDescriptionEn` TEXT NOT NULL, `fastingDescriptionRo` TEXT NOT NULL, `fastingDescriptionRu` TEXT NOT NULL, `summaryTitleEn` TEXT NOT NULL, `summaryTitleRo` TEXT NOT NULL, `summaryTitleRu` TEXT NOT NULL, `titlesEn` TEXT NOT NULL, `titlesRo` TEXT NOT NULL, `titlesRu` TEXT NOT NULL, `saints` TEXT NOT NULL, `fastingDay` INTEGER NOT NULL, PRIMARY KEY(`date`))",
         "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
           {
             "fieldPath": "date",
             "columnName": "date",
@@ -21,29 +15,89 @@
             "notNull": true
           },
           {
-            "fieldPath": "name",
-            "columnName": "name",
+            "fieldPath": "fastingType",
+            "columnName": "fastingType",
             "affinity": "TEXT",
             "notNull": true
           },
           {
-            "fieldPath": "type",
-            "columnName": "type",
+            "fieldPath": "fastingDescriptionEn",
+            "columnName": "fastingDescriptionEn",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fastingDescriptionRo",
+            "columnName": "fastingDescriptionRo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fastingDescriptionRu",
+            "columnName": "fastingDescriptionRu",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summaryTitleEn",
+            "columnName": "summaryTitleEn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summaryTitleRo",
+            "columnName": "summaryTitleRo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summaryTitleRu",
+            "columnName": "summaryTitleRu",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titlesEn",
+            "columnName": "titlesEn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titlesRo",
+            "columnName": "titlesRo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titlesRu",
+            "columnName": "titlesRu",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "saints",
+            "columnName": "saints",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fastingDay",
+            "columnName": "fastingDay",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
         "primaryKey": {
-          "autoGenerate": true,
+          "autoGenerate": false,
           "columnNames": [
-            "id"
+            "date"
           ]
         }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e3ffee4c2ac1795b53012e9785891c00')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c98ed82d6b9a876e97fc881c5cb94a5')"
     ]
   }
 }

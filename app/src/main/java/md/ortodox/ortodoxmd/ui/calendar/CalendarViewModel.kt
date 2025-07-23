@@ -11,6 +11,7 @@ import md.ortodox.ortodoxmd.data.model.CalendarData
 import android.util.Log
 import javax.inject.Inject
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -24,15 +25,19 @@ class CalendarViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    private val calendar = Calendar.getInstance()
+    private var currentDate = dateFormat.format(Date())
+
     init {
-        fetchCalendarData()
+        fetchCalendarData(currentDate) // Încarcă automat datele pentru ziua curentă
     }
 
-    private fun fetchCalendarData() {
+    fun fetchCalendarData(date: String) {
+        currentDate = date
         viewModelScope.launch {
-            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             try {
-                val data = repository.getCalendarData(currentDate)
+                val data = repository.getCalendarData(date)
                 _calendarData.value = data
                 _errorMessage.value = null
             } catch (e: Exception) {
@@ -41,4 +46,18 @@ class CalendarViewModel @Inject constructor(
             }
         }
     }
+
+    fun goToPreviousDay() {
+        calendar.time = dateFormat.parse(currentDate) ?: Date()
+        calendar.add(Calendar.DAY_OF_YEAR, -1)
+        fetchCalendarData(dateFormat.format(calendar.time))
+    }
+
+    fun goToNextDay() {
+        calendar.time = dateFormat.parse(currentDate) ?: Date()
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        fetchCalendarData(dateFormat.format(calendar.time))
+    }
+
+    fun getCurrentDate(): String = currentDate
 }
