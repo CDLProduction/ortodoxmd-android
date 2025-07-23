@@ -1,7 +1,13 @@
 pluginManagement {
     repositories {
-        google()
-        mavenCentral()
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        mavenCentral()  // Asigură acces la KSP
         gradlePluginPortal()
     }
 }
@@ -12,9 +18,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ortodoxmd-android"
+
+rootProject.name = "ortodoxmdandroid"
 include(":app")
-include(":core")
-include(":data")
-include(":widgets")
-include(":features-calendar")  // Explicit pentru nested folder /features/calendar
