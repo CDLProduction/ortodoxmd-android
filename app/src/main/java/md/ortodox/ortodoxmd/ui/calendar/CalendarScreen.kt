@@ -34,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.ui.tooling.preview.Preview
 import md.ortodox.ortodoxmd.ui.theme.Pink40
 import md.ortodox.ortodoxmd.ui.theme.Purple40
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
@@ -163,10 +164,15 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                             )
                             // Post
                             Text(
-                                text = "Post: ${it.fastingDescriptionRo}",
+                                text = it.fastingDescriptionRo,
                                 style = Typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 16.sp
+                                fontSize = 24.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    .align(Alignment.CenterHorizontally)
+
                             )
                             // Rezumat
                             Text(
