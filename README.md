@@ -19,7 +19,7 @@ Referințe cheie:
 Dependințe cheie: minSdk 24, targetSdk 36.
 
 ## Checklist Features (Android-Side)
-- [ ] **Calendar Ortodox** - Ecran listă sărbători (fetch din server), widget home.
+- [x] **Calendar Ortodox** - Ecran listă sărbători (fetch din server), widget home.
 - [ ] **Radio Online** - Streaming cu ExoPlayer, controale UI.
 - [ ] **Rugăciuni Ortodoxe** - Categorii, afișare text (offline cache în Room).
 - [ ] **Biblie** - Navigare capitole, bookmark local, descărcare offline.
