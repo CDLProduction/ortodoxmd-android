@@ -26,7 +26,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -39,18 +43,32 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
+
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
 
 data class DrawerItem(
     val title: String,
     val icon: ImageVector,
+    val route: String,
+    val subItems: List<SubDrawerItem>? = null
+)
+
+data class SubDrawerItem(
+    val title: String,
     val route: String
+)
+
+val categories = listOf(
+    SubDrawerItem("Rugăciuni de Dimineață", "prayer/morning"),
+    SubDrawerItem("Rugăciuni de Seară", "prayer/evening"),
+    SubDrawerItem("Rugăciuni pentru Boală", "prayer/for_illness"),
+    SubDrawerItem("Rugăciuni Generale", "prayer/general")
 )
 
 val drawerItems = listOf(
     DrawerItem("Calendar", Icons.Filled.Home, "calendar"),
-    DrawerItem("Rugăciuni", Icons.Filled.Menu, "prayer")
+    DrawerItem("Rugăciuni", Icons.Filled.Menu, "prayer", subItems = categories)
     // Adaugă item-uri noi aici pe viitor
 )
 
@@ -77,7 +95,6 @@ fun AppScaffold() {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = { NavigationDrawerContent(navController, drawerState) },
-        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.8f),  // Scrim mai puțin transparent pentru blur intens
         content = {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
@@ -102,8 +119,9 @@ fun AppScaffold() {
                     composable("calendar") {
                         CalendarScreen(Modifier.padding(innerPadding))
                     }
-                    composable("prayer") {
-                        PrayerScreen(Modifier.padding(innerPadding))
+                    composable("prayer/{category}") { backStackEntry ->
+                        val category = backStackEntry.arguments?.getString("category") ?: "GENERAL"
+                        PrayerScreen(category = category, modifier = Modifier.padding(innerPadding))
                     }
                 }
             }
@@ -114,9 +132,11 @@ fun AppScaffold() {
 @Composable
 fun NavigationDrawerContent(navController: NavHostController, drawerState: DrawerState) {
     val coroutineScope = rememberCoroutineScope()
+    var expandedItem by remember { mutableStateOf<String?>(null) }
+
     Column(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.background)  // Background solid pentru a reduce transparența
+            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.95f))  // Background solid pentru a reduce transparența
             .padding(16.dp)
             .systemBarsPadding()  // Ajustează pentru a evita suprapunerea cu status bar
     ) {
@@ -126,16 +146,39 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                 label = { Text(item.title) },
                 selected = false,
                 onClick = {
-                    coroutineScope.launch { drawerState.close() }
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (item.subItems != null) {
+                        expandedItem = if (expandedItem == item.title) null else item.title
+                    } else {
+                        coroutineScope.launch { drawerState.close() }
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 }
             )
+
+            if (item.subItems != null && expandedItem == item.title) {
+                item.subItems.forEach { subItem ->
+                    NavigationDrawerItem(
+                        label = { Text(subItem.title, modifier = Modifier.padding(start = 16.dp)) },
+                        selected = false,
+                        onClick = {
+                            coroutineScope.launch { drawerState.close() }
+                            navController.navigate(subItem.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 }

@@ -28,7 +28,8 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")  // Verifică dacă e corect pentru dispozitiv real
+//            .baseUrl("http://10.0.2.2:8080/")  //acces in localhost pentru emulator
+            .baseUrl("http://127.0.0.1:8080/")  // Verifică dacă e corect pentru dispozitiv real
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -38,5 +39,10 @@ object NetworkModule {
     @Singleton
     fun provideCalendarApiService(retrofit: Retrofit): CalendarApiService {
         return retrofit.create(CalendarApiService::class.java)
+    }
+    @Provides
+    @Singleton
+    fun providePrayerApiService(retrofit: Retrofit): PrayerApiService {
+        return retrofit.create(PrayerApiService::class.java)
     }
 }
