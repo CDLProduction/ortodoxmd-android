@@ -92,4 +92,5 @@ dependencies {
     implementation(libs.coroutines.android)
 
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.material.icons.extended)
 }
