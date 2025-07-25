@@ -4,56 +4,26 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-
 import md.ortodox.ortodoxmd.ui.theme.Pink40
 import md.ortodox.ortodoxmd.ui.theme.Purple40
-
-
-
 import md.ortodox.ortodoxmd.ui.theme.Typography
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import androidx.compose.material3.Button
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberDatePickerState
-
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.SelectableDates
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,12 +48,15 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
         ) {
             Text(
                 // Display month as 1-indexed for the user
-                text = "Calendar Ortodox - ${currentMonth + 1}/$currentYear",
+                text = "${currentMonth + 1}/$currentYear",
                 style = Typography.titleLarge,
-                modifier = Modifier.weight(1f)
             )
+            Spacer(Modifier.weight(1f))
+            Button(onClick = { viewModel.goToToday() }, modifier = Modifier.padding(end = 8.dp)) {
+                Text("Azi")
+            }
             Button(onClick = { showDatePicker = true }) {
-                Text("Selectează Data")
+                Text("Selectează")
             }
         }
 
@@ -163,12 +136,17 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier
                         .aspectRatio(1f) // Make cells square
                         .padding(4.dp)
+                        .then(
+                            // Add a border for the current day, regardless of selection
+                            if (isCurrentDay) {
+                                Modifier.border(1.dp, Purple40, CircleShape)
+                            } else {
+                                Modifier
+                            }
+                        )
                         .background(
-                            color = when {
-                                isSelectedDay -> Pink40
-                                isCurrentDay -> Purple40
-                                else -> Color.Transparent
-                            },
+                            // Fill the background only for the selected day
+                            color = if (isSelectedDay) Pink40 else Color.Transparent,
                             shape = CircleShape
                         )
                         .clickable {
@@ -179,7 +157,8 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                 ) {
                     Text(
                         text = day.toString(),
-                        color = if (isCurrentDay || isSelectedDay) Color.White else MaterialTheme.colorScheme.onSurface
+                        // Text color should be white if selected, otherwise default
+                        color = if (isSelectedDay) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.repository.CalendarRepository
 import md.ortodox.ortodoxmd.data.model.CalendarData
-import android.util.Log
 import javax.inject.Inject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -63,6 +62,19 @@ class CalendarViewModel @Inject constructor(
         _selectedDate.value = date
         fetchCalendarData(date)
     }
+
+    /**
+     * Resets the calendar view and selected date to the current day.
+     */
+    fun goToToday() {
+        val todayCalendar = Calendar.getInstance()
+        _currentMonth.value = todayCalendar.get(Calendar.MONTH)
+        _currentYear.value = todayCalendar.get(Calendar.YEAR)
+        val todayDateStr = dateFormat.format(todayCalendar.time)
+        _selectedDate.value = todayDateStr
+        fetchCalendarData(todayDateStr)
+    }
+
 
     /**
      * Updates the calendar's month and year from the DatePicker.
