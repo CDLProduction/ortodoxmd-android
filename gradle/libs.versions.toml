@@ -1,6 +1,7 @@
 [versions]
 agp = "8.11.1"
 hiltNavigationCompose = "1.2.0"
+navigationCompose = "2.9.2"
 kotlin = "2.2.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -15,11 +16,17 @@ okHttp = "5.1.0"
 gson = "2.13.1"
 coroutines = "1.10.2"
 hilt = "2.56.2"
-ksp = "2.2.0-2.0.2"  # Verificat că este corect aliniat cu Kotlin 2.0.21
+ksp = "2.2.0-2.0.2"
+appcompat = "1.7.1"
+
 
 [libraries]
+
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

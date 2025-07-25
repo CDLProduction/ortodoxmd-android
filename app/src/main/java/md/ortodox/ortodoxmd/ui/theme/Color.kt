@@ -1,11 +1,21 @@
+// In ui/theme/Color.kt
+
 package md.ortodox.ortodoxmd.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Light Theme Colors
+val GoldLight = Color(0xFFB09141) // A rich, warm gold
+val RedLight = Color(0xFFA63C3C)
+val ParchmentLight = Color(0xFFFFF8E1) // A soft, parchment-like background
+val SurfaceLight = Color(0xFFFFFFFF) // Cards can be slightly brighter
+val TextPrimaryLight = Color(0xFF333333)
+val TextSecondaryLight = Color(0xFF5C5C5C)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Dark Theme Colors
+val GoldDark = Color(0xFFD4AF37) // A brighter gold for dark backgrounds
+val RedDark = Color(0xFFD35D5D)
+val CharcoalDark = Color(0xFF1B1B1B) // A very dark, soft black
+val SurfaceDark = Color(0xFF2C2C2C) // Cards are slightly lighter than the background
+val TextPrimaryDark = Color(0xFFEAEAEA)
+val TextSecondaryDark =  Color(0xFFBDBDBD)

@@ -46,6 +46,7 @@ android {
     buildFeatures {
         compose = true
     }
+    buildToolsVersion = "36.0.0"
 }
 
 room {
@@ -57,6 +58,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -88,4 +90,7 @@ dependencies {
 
     // Adăugat pentru calendar: Coroutines (async, similar async în Java)
     implementation(libs.coroutines.android)
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.material.icons.extended)
 }
