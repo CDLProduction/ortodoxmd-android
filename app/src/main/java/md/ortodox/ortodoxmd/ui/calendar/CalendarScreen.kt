@@ -17,11 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import md.ortodox.ortodoxmd.ui.theme.Pink40
-import md.ortodox.ortodoxmd.ui.theme.Purple40
-import md.ortodox.ortodoxmd.ui.theme.Typography
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -39,20 +35,29 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
     val currentDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.padding(16.dp)) {
+    // Formatter for a nice month/year display (e.g., "Iulie 2025")
+    val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale("ro")) }
+
+    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+
         // Header with month/year selector
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            val calendar = Calendar.getInstance().apply {
+                set(Calendar.YEAR, currentYear)
+                set(Calendar.MONTH, currentMonth)
+            }
+            val monthYearTitle = monthFormatter.format(calendar.time).replaceFirstChar { it.uppercase() }
+
             Text(
-                // Display month as 1-indexed for the user
-                text = "${currentMonth + 1}/$currentYear",
-                style = Typography.titleLarge,
+                text = monthYearTitle,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.weight(1f))
-            Button(onClick = { viewModel.goToToday() }, modifier = Modifier.padding(end = 8.dp)) {
+            OutlinedButton(onClick = { viewModel.goToToday() }, modifier = Modifier.padding(end = 8.dp)) {
                 Text("Azi")
             }
             Button(onClick = { showDatePicker = true }) {
@@ -83,7 +88,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                     }
                 },
                 dismissButton = {
-                    Button(onClick = { showDatePicker = false }) {
+                    TextButton(onClick = { showDatePicker = false }) {
                         Text("Anulează")
                     }
                 }
@@ -99,11 +104,13 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            val daysOfWeek = listOf("D", "L", "M", "M", "J", "V", "S")
+            // Corrected day abbreviations for Romanian
+            val daysOfWeek = listOf("D", "L", "Ma", "Mi", "J", "V", "S")
             daysOfWeek.forEach { day ->
                 Text(
                     text = day,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
                 )
@@ -114,39 +121,32 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
 
         // Grid with the days of the month
         val daysInMonth = viewModel.getDaysInMonth(currentYear, currentMonth)
-        val firstDayOfWeek = viewModel.getFirstDayOfWeek(currentYear, currentMonth) // 0=Sun, 1=Mon...
+        val firstDayOfWeek = viewModel.getFirstDayOfWeek(currentYear, currentMonth)
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
         ) {
-            // Add empty boxes for padding before the first day
             items(count = firstDayOfWeek) {
                 Box(Modifier)
             }
 
-            // Add the actual day cells
             items(count = daysInMonth) { dayIndex ->
                 val day = dayIndex + 1
-                val monthForFormat = currentMonth + 1
-                val dateStr = String.format("%04d-%02d-%02d", currentYear, monthForFormat, day)
+                val dateStr = String.format("%04d-%02d-%02d", currentYear, currentMonth + 1, day)
                 val isCurrentDay = dateStr == currentDate
                 val isSelectedDay = dateStr == selectedDate
 
                 Box(
                     modifier = Modifier
-                        .aspectRatio(1f) // Make cells square
-                        .padding(4.dp)
-                        .then(
-                            // Add a border for the current day, regardless of selection
-                            if (isCurrentDay) {
-                                Modifier.border(1.dp, Purple40, CircleShape)
-                            } else {
-                                Modifier
-                            }
-                        )
+                        .aspectRatio(1f)
+                        .padding(2.dp)
                         .background(
-                            // Fill the background only for the selected day
-                            color = if (isSelectedDay) Pink40 else Color.Transparent,
+                            color = if (isSelectedDay) MaterialTheme.colorScheme.secondary else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .border(
+                            width = if (isCurrentDay) 1.5.dp else 0.dp,
+                            color = if (isCurrentDay) MaterialTheme.colorScheme.primary else Color.Transparent,
                             shape = CircleShape
                         )
                         .clickable {
@@ -157,67 +157,80 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                 ) {
                     Text(
                         text = day.toString(),
-                        // Text color should be white if selected, otherwise default
-                        color = if (isSelectedDay) Color.White else MaterialTheme.colorScheme.onSurface
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = when {
+                            isSelectedDay -> MaterialTheme.colorScheme.onSecondary
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
                     )
                 }
             }
         }
 
+        Spacer(Modifier.height(8.dp))
+
         // Details for the selected day
         AnimatedVisibility(
-            visible = showDetails && calendarData != null,
+            visible = showDetails && (calendarData != null || errorMessage != null),
             enter = fadeIn(),
             exit = fadeOut()
         ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
+                    .padding(top = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                if (errorMessage != null) {
-                    Text(
-                        text = errorMessage!!,
-                        modifier = Modifier.padding(20.dp),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                } else if (calendarData != null) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                when {
+                    errorMessage != null -> {
                         Text(
-                            text = calendarData!!.date,
-                            style = Typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            text = errorMessage!!,
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
                         )
-                        Text(
-                            text = "Post: ${calendarData!!.fastingDescriptionRo}",
-                            style = Typography.bodyLarge
-                        )
-                        Text(
-                            text = "Rezumat: ${calendarData!!.summaryTitleRo}",
-                            style = Typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = "Titluri: ${calendarData!!.titlesRo}",
-                            style = Typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = "Sfinți:",
-                            style = Typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        calendarData!!.saints.forEach { saint ->
+                    }
+                    calendarData != null -> {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Text(
-                                text = "• ${saint.nameAndDescriptionRo}",
-                                style = Typography.bodyLarge
+                                text = calendarData!!.date,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
                             )
+                            Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                            Text(
+                                text = "Post: ${calendarData!!.fastingDescriptionRo}",
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                            Text(
+                                text = "Rezumat: ${calendarData!!.summaryTitleRo}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = "Titluri: ${calendarData!!.titlesRo}",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (calendarData!!.saints.isNotEmpty()) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "Sfinți:",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                calendarData!!.saints.forEach { saint ->
+                                    Text(
+                                        text = "• ${saint.nameAndDescriptionRo}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
                         }
                     }
                 }
