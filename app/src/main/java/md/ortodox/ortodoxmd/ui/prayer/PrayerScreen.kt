@@ -11,6 +11,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,14 +25,24 @@ import md.ortodox.ortodoxmd.data.model.Prayer
 
 @Composable
 fun PrayerScreen(category: String, modifier: Modifier = Modifier) {
+    // Use a single ViewModel instance for this screen.
+    // Hilt will scope it correctly to the NavBackStackEntry.
     val viewModel: PrayerViewModel = hiltViewModel()
-    viewModel.fetchPrayers(category)
-    val prayers = viewModel.prayers.collectAsState().value
+
+    // Use LaunchedEffect to fetch prayers when the category changes.
+    // This will run once when the composable enters the screen,
+    // and again if the 'category' key changes.
+    LaunchedEffect(key1 = category) {
+        viewModel.fetchPrayers(category)
+    }
+
+    val prayers by viewModel.prayers.collectAsState()
 
     LazyColumn(modifier = modifier.padding(16.dp)) {
-        if (prayers != null) {
-            items(prayers.size) { index ->
-                PrayerItem(prayers[index])
+        val prayerList = prayers
+        if (prayerList != null) {
+            items(prayerList.size) { index ->
+                PrayerItem(prayerList[index])
             }
         } else {
             item {
@@ -51,25 +62,18 @@ fun PrayerItem(prayer: Prayer, isSubPrayer: Boolean = false) {
             .padding(start = if (isSubPrayer) 16.dp else 0.dp, top = 8.dp, bottom = 8.dp)
             .clickable { expanded = !expanded },
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(
-//            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
-//                alpha = 0.9f,
-//                red = 30f,
-//                green = 30f,
-//                blue = 30f
-//            )
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = prayer.titleRo,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.primary
             )
             AnimatedVisibility(visible = expanded) {
                 Text(
-                    text = prayer.textRo,  // Folosește textRo procesat
+                    text = prayer.textRo,
                     style = MaterialTheme.typography.bodyLarge,
                     fontSize = 16.sp,
                     lineHeight = 24.sp,

@@ -14,7 +14,7 @@
 
 # Java class files
 *.class
-
+deploymentTargetSelector.xml
 # Generated files
 bin/
 gen/

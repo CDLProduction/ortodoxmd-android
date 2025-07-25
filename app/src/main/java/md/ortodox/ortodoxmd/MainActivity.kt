@@ -157,7 +157,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                 saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState = false
                         }
                     }
                 }
@@ -175,7 +175,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                     saveState = true
                                 }
                                 launchSingleTop = true
-                                restoreState = true
+                                restoreState = false
                             }
                         }
                     )

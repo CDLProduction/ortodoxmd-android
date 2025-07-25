@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.repository.PrayerRepository
 import md.ortodox.ortodoxmd.data.model.Prayer
 import javax.inject.Inject
+import android.util.Log
 
 @HiltViewModel
 class PrayerViewModel @Inject constructor(
@@ -19,6 +20,9 @@ class PrayerViewModel @Inject constructor(
 
     fun fetchPrayers(category: String) {
         viewModelScope.launch {
+            Log.d("PrayerViewModel", "Fetching prayers for category: $category")
+            // Set prayers to null to show loading indicator and clear old data
+            _prayers.value = null
             val data = repository.getPrayersByCategory(category)
             _prayers.value = data
         }
