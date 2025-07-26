@@ -45,4 +45,10 @@ object NetworkModule {
     fun providePrayerApiService(retrofit: Retrofit): PrayerApiService {
         return retrofit.create(PrayerApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideBibleApiService(retrofit: Retrofit): BibleApiService {
+        return retrofit.create(BibleApiService::class.java)
+    }
 }

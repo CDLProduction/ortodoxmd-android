@@ -4,16 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -27,7 +21,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import md.ortodox.ortodoxmd.ui.bible.*
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
+import md.ortodox.ortodoxmd.ui.home.HomeScreen
+import md.ortodox.ortodoxmd.ui.prayer.PrayerCategoriesScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
 
@@ -38,22 +35,21 @@ data class DrawerItem(
     val subItems: List<SubDrawerItem>? = null
 )
 
-data class SubDrawerItem(
-    val title: String,
-    val route: String
-)
+data class SubDrawerItem(val title: String, val route: String)
 
-// Am schimbat pictogramele pentru a fi mai descriptive
-val categories = listOf(
+val prayerCategories = listOf(
     SubDrawerItem("Rugăciuni de Dimineață", "prayer/morning"),
     SubDrawerItem("Rugăciuni de Seară", "prayer/evening"),
     SubDrawerItem("Rugăciuni pentru Boală", "prayer/for_illness"),
     SubDrawerItem("Rugăciuni Generale", "prayer/general")
 )
 
+// Am modificat ruta pentru "Rugăciuni" pentru a duce la noul ecran
 val drawerItems = listOf(
+    DrawerItem("Acasă", Icons.Default.Home, "home"),
     DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
-    DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer", subItems = categories)
+    DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
+    DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home")
 )
 
 @AndroidEntryPoint
@@ -76,81 +72,132 @@ fun AppScaffold() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val topBarTitle = when (currentRoute?.split("/")?.first()) {
+        "home" -> "OrtodoxMD"
+        "calendar" -> "Calendar"
+        "prayer_categories", "prayer" -> "Rugăciuni" // Titlu comun pentru ambele ecrane
+        "bible_home", "bible_testaments", "bible" -> "Sfânta Scriptură"
+        else -> "OrtodoxMD"
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = { NavigationDrawerContent(navController, drawerState) },
     ) {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
-                    title = { Text("OrtodoxMD") },
+                    title = { Text(topBarTitle) },
                     navigationIcon = {
-                        IconButton(onClick = {
-                            coroutineScope.launch { drawerState.open() }
-                        }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Deschide Meniul")
+                        IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                            Icon(Icons.Filled.Menu, "Deschide Meniul")
                         }
-                    },
-                    // Am actualizat culorile pentru a se potrivi cu tema ta
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                    }
                 )
             }
         ) { innerPadding ->
-            NavHost(
+            AppNavHost(
                 navController = navController,
-                startDestination = "calendar",
                 modifier = Modifier.padding(innerPadding)
-            ) {
-                composable("calendar") {
-                    CalendarScreen()
-                }
-                composable("prayer/{category}") { backStackEntry ->
-                    val category = backStackEntry.arguments?.getString("category") ?: "general"
-                    PrayerScreen(category = category)
-                }
-            }
+            )
         }
+    }
+}
+
+@Composable
+fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
+    NavHost(
+        navController = navController,
+        startDestination = "home",
+        modifier = modifier
+    ) {
+        composable("home") { HomeScreen(navController = navController) }
+        composable("calendar") { CalendarScreen() }
+
+        // NOU: Rută pentru ecranul de categorii
+        composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
+
+        // Ruta existentă pentru afișarea rugăciunilor dintr-o categorie specifică
+        composable("prayer/{category}") { backStackEntry ->
+            val category = backStackEntry.arguments?.getString("category") ?: "general"
+            PrayerScreen(category = category)
+        }
+
+        composable("bible_home") {
+            BibleHomeScreen(mainNavController = navController)
+        }
+        composable("bible_testaments") { TestamentsScreen(navController = navController) }
+        composable("bible/books/{testamentId}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("testamentId")?.toLongOrNull()
+            BooksScreen(navController = navController, testamentId = id)
+        }
+        composable("bible/chapters/{bookId}/{bookName}") { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: return@composable
+            val bookName = backStackEntry.arguments?.getString("bookName") ?: "Carte"
+            ChaptersScreen(navController = navController, bookId = bookId, bookName = bookName)
+        }
+        composable("bible/verses/{bookId}/{bookName}/{chapterNumber}") {
+            VersesScreen(onBackClick = { navController.popBackStack() })
+        }
+        composable("search") { GlobalSearchScreen(navController = navController) }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NavigationDrawerContent(navController: NavHostController, drawerState: DrawerState) {
+fun NavigationDrawerContent(
+    navController: NavHostController,
+    drawerState: DrawerState
+) {
     val coroutineScope = rememberCoroutineScope()
     var expandedItem by remember { mutableStateOf<String?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Folosim ModalDrawerSheet pentru un design standard și corect
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
         drawerItems.forEach { item ->
-            val isSelected = currentRoute == item.route || (item.subItems?.any { sub -> currentRoute == sub.route } == true)
+            val isGroupSelected = currentRoute?.startsWith(item.route.split("/").first()) == true
+
             NavigationDrawerItem(
                 icon = { Icon(item.icon, contentDescription = item.title) },
                 label = { Text(item.title) },
-                selected = isSelected && item.subItems == null, // Selectează doar item-urile fără sub-meniuri
+                selected = isGroupSelected && item.subItems == null,
                 onClick = {
                     if (item.subItems != null) {
-                        expandedItem = if (expandedItem == item.title) null else item.title
+                        // Când se apasă pe "Rugăciuni", navighează la ecranul de categorii
+                        coroutineScope.launch { drawerState.close() }
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     } else {
                         coroutineScope.launch { drawerState.close() }
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
-                            restoreState = true // Am schimbat în true pentru o navigare mai fluidă
+                            restoreState = true
+                        }
+                    }
+                },
+                // Adăugăm un indicator de expandare dacă elementul are sub-meniuri
+                badge = {
+                    if (item.subItems != null) {
+                        IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {
+                            Icon(
+                                imageVector = if (expandedItem == item.title) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = "Expand"
+                            )
                         }
                     }
                 },
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
             )
 
-            // Sub-meniuri expandabile
             if (item.subItems != null && expandedItem == item.title) {
                 Column(modifier = Modifier.padding(start = 24.dp)) {
                     item.subItems.forEach { subItem ->
@@ -162,7 +209,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                 navController.navigate(subItem.route) {
                                     popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                     launchSingleTop = true
-                                    restoreState = true
+                                    restoreState = false
                                 }
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
