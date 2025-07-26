@@ -1,12 +1,14 @@
 package md.ortodox.ortodoxmd.data.repository
 
-import md.ortodox.ortodoxmd.data.CalendarDao
+import md.ortodox.ortodoxmd.data.dao.CalendarDao
 import md.ortodox.ortodoxmd.data.network.CalendarApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import md.ortodox.ortodoxmd.data.PrayerDao
+import md.ortodox.ortodoxmd.data.dao.BibleDao
+import md.ortodox.ortodoxmd.data.dao.PrayerDao
+import md.ortodox.ortodoxmd.data.network.BibleApiService
 import md.ortodox.ortodoxmd.data.network.PrayerApiService
 import javax.inject.Singleton
 
@@ -29,5 +31,14 @@ object RepositoryModule {
         prayerDao: PrayerDao
     ): PrayerRepository {
         return PrayerRepository(apiService, prayerDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBibleRepository(
+        apiService: BibleApiService,
+        bibleDao: BibleDao
+    ): BibleRepository {
+        return BibleRepository(apiService, bibleDao)
     }
 }

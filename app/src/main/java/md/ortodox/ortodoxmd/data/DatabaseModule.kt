@@ -11,6 +11,9 @@ import javax.inject.Singleton
 import android.util.Log
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import md.ortodox.ortodoxmd.data.dao.BibleDao
+import md.ortodox.ortodoxmd.data.dao.CalendarDao
+import md.ortodox.ortodoxmd.data.dao.PrayerDao
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -44,5 +47,10 @@ object DatabaseModule {
     @Provides
     fun providePrayerDao(database: AppDatabase): PrayerDao {
         return database.prayerDao()
+    }
+
+    @Provides
+    fun provideBibleDao(database: AppDatabase): BibleDao {
+        return database.bibleDao()
     }
 }

@@ -2,7 +2,7 @@ package md.ortodox.ortodoxmd.data.repository
 
 import md.ortodox.ortodoxmd.data.model.CalendarData
 import md.ortodox.ortodoxmd.data.network.CalendarApiService
-import md.ortodox.ortodoxmd.data.CalendarDao
+import md.ortodox.ortodoxmd.data.dao.CalendarDao
 import javax.inject.Inject
 import android.util.Log
 import androidx.room.Transaction

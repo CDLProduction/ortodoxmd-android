@@ -1,4 +1,4 @@
-package md.ortodox.ortodoxmd.data
+package md.ortodox.ortodoxmd.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert

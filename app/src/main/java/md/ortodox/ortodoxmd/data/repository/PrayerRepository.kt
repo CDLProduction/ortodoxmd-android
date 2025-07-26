@@ -2,7 +2,7 @@ package md.ortodox.ortodoxmd.data.repository
 
 import md.ortodox.ortodoxmd.data.model.Prayer
 import md.ortodox.ortodoxmd.data.network.PrayerApiService
-import md.ortodox.ortodoxmd.data.PrayerDao
+import md.ortodox.ortodoxmd.data.dao.PrayerDao
 import javax.inject.Inject
 import android.util.Log
 import java.util.Locale

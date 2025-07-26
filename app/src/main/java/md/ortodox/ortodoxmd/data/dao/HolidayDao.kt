@@ -1,8 +1,9 @@
-package md.ortodox.ortodoxmd.data
+package md.ortodox.ortodoxmd.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import md.ortodox.ortodoxmd.data.Holiday
 
 @Dao
 interface HolidayDao {
