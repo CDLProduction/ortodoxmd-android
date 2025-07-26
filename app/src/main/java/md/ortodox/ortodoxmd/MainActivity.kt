@@ -4,55 +4,30 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import md.ortodox.ortodoxmd.ui.MainViewModel
+import md.ortodox.ortodoxmd.ui.bible.*
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
-import md.ortodox.ortodoxmd.ui.bible.BibleScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.NavigationDrawerItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.navigation.compose.currentBackStackEntryAsState
 
 data class DrawerItem(
     val title: String,
@@ -66,7 +41,6 @@ data class SubDrawerItem(
     val route: String
 )
 
-// Am schimbat pictogramele pentru a fi mai descriptive
 val categories = listOf(
     SubDrawerItem("Rugăciuni de Dimineață", "prayer/morning"),
     SubDrawerItem("Rugăciuni de Seară", "prayer/evening"),
@@ -74,10 +48,12 @@ val categories = listOf(
     SubDrawerItem("Rugăciuni Generale", "prayer/general")
 )
 
+// MODIFICAT: Adăugat element pentru Semn de Carte
 val drawerItems = listOf(
     DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer", subItems = categories),
-    DrawerItem("Sfânta Scriptură", Icons.AutoMirrored.Filled.LibraryBooks, "bible")
+    DrawerItem("Sfânta Scriptură", Icons.AutoMirrored.Filled.LibraryBooks, "bible_testaments"),
+    DrawerItem("Semn de Carte", Icons.Default.Bookmark, "bookmark_route")
 )
 
 @AndroidEntryPoint
@@ -99,11 +75,21 @@ fun AppScaffold() {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
+    // NOU: ViewModel pentru acțiuni globale
+    val mainViewModel: MainViewModel = hiltViewModel()
+
+    // NOU: Logica pentru a asculta evenimente de navigare de la semnul de carte
+    LaunchedEffect(Unit) {
+        mainViewModel.bookmarkNavigator.collect { bookmarkDetails ->
+            drawerState.close()
+            val route = "bible/verses/${bookmarkDetails.bookmark.bookId}/${bookmarkDetails.bookName}/${bookmarkDetails.bookmark.chapterNumber}"
+            navController.navigate(route)
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = { NavigationDrawerContent(navController, drawerState) },
-        scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.8f),  // Crește opacitatea pentru un efect mai opac
+        drawerContent = { NavigationDrawerContent(navController, drawerState, mainViewModel) },
         content = {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
@@ -111,13 +97,20 @@ fun AppScaffold() {
                     TopAppBar(
                         title = { Text("OrtodoxMD") },
                         navigationIcon = {
-                            IconButton(onClick = {
-                                coroutineScope.launch { drawerState.open() }
-                            }) {
-                                Icon(Icons.Filled.Menu, contentDescription = "Deschide Meniul")
+                            IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                                Icon(Icons.Filled.Menu, "Deschide Meniul")
                             }
                         },
-                        // Am actualizat culorile pentru a se potrivi cu tema ta
+                        // NOU: Iconiță de căutare
+                        actions = {
+                            IconButton(onClick = { navController.navigate("search") }) {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = "Căutare Globală",
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -131,15 +124,30 @@ fun AppScaffold() {
                     startDestination = "calendar",
                     modifier = Modifier.padding(innerPadding)
                 ) {
-                    composable("calendar") {
-                        CalendarScreen()
-                    }
+                    composable("calendar") { CalendarScreen() }
                     composable("prayer/{category}") { backStackEntry ->
                         val category = backStackEntry.arguments?.getString("category") ?: "general"
                         PrayerScreen(category = category)
                     }
-                    composable("bible") {
-                        BibleScreen()
+
+                    // NOU: Rută pentru căutare
+                    composable("search") { GlobalSearchScreen(navController = navController) }
+
+                    composable("bible_testaments") { TestamentsScreen(navController = navController) }
+                    composable("bible/books/{testamentId}") { backStackEntry ->
+                        val id = backStackEntry.arguments?.getString("testamentId")?.toLongOrNull()
+                        BooksScreen(navController = navController, testamentId = id)
+                    }
+                    composable("bible/chapters/{bookId}/{bookName}") { backStackEntry ->
+                        val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: return@composable
+                        val bookName = backStackEntry.arguments?.getString("bookName") ?: "Carte"
+                        ChaptersScreen(navController = navController, bookId = bookId, bookName = bookName)
+                    }
+                    composable("bible/verses/{bookId}/{bookName}/{chapterNumber}") { backStackEntry ->
+                        val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: return@composable
+                        val bookName = backStackEntry.arguments?.getString("bookName") ?: "Carte"
+                        val chapter = backStackEntry.arguments?.getString("chapterNumber")?.toIntOrNull() ?: return@composable
+                        VersesScreen(bookId = bookId, bookName = bookName, chapterNumber = chapter, onBackClick = { navController.popBackStack() })
                     }
                 }
             }
@@ -149,37 +157,43 @@ fun AppScaffold() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NavigationDrawerContent(navController: NavHostController, drawerState: DrawerState) {
+fun NavigationDrawerContent(
+    navController: NavHostController,
+    drawerState: DrawerState,
+    mainViewModel: MainViewModel // NOU: Primit ca parametru
+) {
     val coroutineScope = rememberCoroutineScope()
     var expandedItem by remember { mutableStateOf<String?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Folosim ModalDrawerSheet pentru un design standard și corect
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
         drawerItems.forEach { item ->
-            val isSelected = currentRoute == item.route || (item.subItems?.any { sub -> currentRoute == sub.route } == true)
+            val isSelected = currentRoute?.startsWith(item.route.split("/").first()) == true
+
             NavigationDrawerItem(
                 icon = { Icon(item.icon, contentDescription = item.title) },
                 label = { Text(item.title) },
-                selected = isSelected && item.subItems == null, // Selectează doar item-urile fără sub-meniuri
+                selected = isSelected && item.subItems == null,
                 onClick = {
-                    if (item.subItems != null) {
+                    // NOU: Logică specială pentru semnul de carte
+                    if (item.route == "bookmark_route") {
+                        mainViewModel.onBookmarkClicked()
+                    } else if (item.subItems != null) {
                         expandedItem = if (expandedItem == item.title) null else item.title
                     } else {
                         coroutineScope.launch { drawerState.close() }
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
-                            restoreState = false // Am schimbat în true pentru o navigare mai fluidă
+                            restoreState = true
                         }
                     }
                 },
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
             )
 
-            // Sub-meniuri expandabile
             if (item.subItems != null && expandedItem == item.title) {
                 Column(modifier = Modifier.padding(start = 24.dp)) {
                     item.subItems.forEach { subItem ->
@@ -191,7 +205,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                 navController.navigate(subItem.route) {
                                     popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                     launchSingleTop = true
-                                    restoreState = false
+                                    restoreState = true // MODIFICAT: Corectat
                                 }
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)

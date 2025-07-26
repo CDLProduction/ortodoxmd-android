@@ -1,13 +1,9 @@
 package md.ortodox.ortodoxmd.data.repository
 
 import md.ortodox.ortodoxmd.data.dao.BibleDao
+import md.ortodox.ortodoxmd.data.model.bible.*
 import md.ortodox.ortodoxmd.data.network.BibleApiService
-
-import md.ortodox.ortodoxmd.data.model.bible.BibleBook
-import md.ortodox.ortodoxmd.data.model.bible.BibleChapter
-import md.ortodox.ortodoxmd.data.model.bible.BibleVerse
-import md.ortodox.ortodoxmd.data.model.bible.BibleBookmark
-import md.ortodox.ortodoxmd.data.model.bible.VerseWithBookInfo
+import md.ortodox.ortodoxmd.ui.bible.ParsedReference
 import javax.inject.Inject
 
 class BibleRepository @Inject constructor(
@@ -38,13 +34,22 @@ class BibleRepository @Inject constructor(
         return data
     }
 
-    // Folosește noua metodă și noul model de date
     suspend fun searchVersesWithBookInfo(query: String): List<VerseWithBookInfo> {
         return bibleDao.searchVersesWithBookInfo(query)
     }
 
-    suspend fun getBookmark(): BibleBookmark? = bibleDao.getBookmark()
+    // NOU: Metodă pentru a căuta după referință.
+    suspend fun getVersesByReference(reference: ParsedReference): List<BibleVerse> {
+        return bibleDao.getVersesByReference(
+            bookName = reference.bookName,
+            chapter = reference.chapter,
+            startVerse = reference.startVerse,
+            endVerse = reference.endVerse
+        )
+    }
+
+    // NOU: Metodă pentru a prelua semnul de carte cu detalii.
+    suspend fun getBookmarkWithDetails(): BookmarkWithDetails? = bibleDao.getBookmarkWithDetails()
 
     suspend fun saveBookmark(bookmark: BibleBookmark) = bibleDao.saveBookmark(bookmark)
-
 }

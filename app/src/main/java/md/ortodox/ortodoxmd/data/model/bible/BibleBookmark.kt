@@ -7,6 +7,6 @@ import androidx.room.PrimaryKey
 data class BibleBookmark(
     @PrimaryKey val id: Int = 1,  // Single bookmark
     val bookId: Long,
-    val chapterNumber: Int,
+    val chapterNumber: Long,
     val verseId: Long
 )

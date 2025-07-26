@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,8 +28,15 @@ fun VersesScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
+    // NOU: Stare pentru Snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         viewModel.fetchVerses(bookId, chapterNumber)
+        // NOU: Colectează fluxul de mesaje pentru snackbar
+        viewModel.snackbarFlow.collectLatest { message ->
+            snackbarHostState.showSnackbar(message)
+        }
     }
 
     LaunchedEffect(searchQuery) {
@@ -36,6 +44,8 @@ fun VersesScreen(
     }
 
     Scaffold(
+        // NOU: Adaugă SnackbarHost
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(bookName) },
@@ -63,7 +73,6 @@ fun VersesScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // CORECLAT: Blocul 'when' este acum exhaustiv și corect.
             when (val state = uiState) {
                 is VersesUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -125,6 +134,7 @@ fun VersesScreen(
     }
 }
 
+// Composable-ul VerseItem rămâne neschimbat
 @Composable
 fun VerseItem(
     verseNumber: String,

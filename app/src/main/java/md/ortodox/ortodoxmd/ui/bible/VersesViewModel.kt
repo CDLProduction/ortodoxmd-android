@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.model.bible.BibleBookmark
 import md.ortodox.ortodoxmd.data.model.bible.BibleVerse
@@ -30,14 +32,11 @@ class VersesViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<VersesUiState>(VersesUiState.Loading)
     val uiState: StateFlow<VersesUiState> = _uiState.asStateFlow()
 
-    private val _bookmark = MutableStateFlow<BibleBookmark?>(null)
-    val bookmark: StateFlow<BibleBookmark?> = _bookmark.asStateFlow()
+    // NOU: Canal pentru a trimite mesaje one-time (ex: Snackbar)
+    private val _snackbarChannel = Channel<String>()
+    val snackbarFlow = _snackbarChannel.receiveAsFlow()
 
     private var searchJob: Job? = null
-
-    init {
-        loadBookmark()
-    }
 
     fun fetchVerses(bookId: Long, chapterNumber: Int) {
         searchJob?.cancel()
@@ -45,7 +44,6 @@ class VersesViewModel @Inject constructor(
             _uiState.value = VersesUiState.Loading
             try {
                 val verses = repository.getVerses(bookId, chapterNumber)
-                // CORECLAT: Se emite starea corectă `ChapterSuccess`
                 _uiState.value = VersesUiState.ChapterSuccess(verses)
             } catch (e: Exception) {
                 _uiState.value = VersesUiState.Error("Nu s-au putut încărca versetele: ${e.message}")
@@ -73,15 +71,10 @@ class VersesViewModel @Inject constructor(
 
     fun saveBookmark(bookId: Long, chapterNumber: Int, verseId: Long) {
         viewModelScope.launch {
-            val newBookmark = BibleBookmark(bookId = bookId, chapterNumber = chapterNumber, verseId = verseId)
+            val newBookmark = BibleBookmark(bookId = bookId, chapterNumber = chapterNumber.toLong(), verseId = verseId)
             repository.saveBookmark(newBookmark)
-            _bookmark.value = newBookmark
-        }
-    }
-
-    private fun loadBookmark() {
-        viewModelScope.launch {
-            _bookmark.value = repository.getBookmark()
+            // NOU: Trimite un mesaj de confirmare către UI
+            _snackbarChannel.send("Semn de carte salvat!")
         }
     }
 }
