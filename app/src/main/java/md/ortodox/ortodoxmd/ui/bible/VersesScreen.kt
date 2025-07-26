@@ -5,7 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.BookmarkAdd
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,117 +14,60 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VersesScreen(
-    bookId: Long,
-    bookName: String,
-    chapterNumber: Int,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    viewModel: VersesViewModel = hiltViewModel()
 ) {
-    val viewModel: VersesViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }
-
-    // NOU: Stare pentru Snackbar
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(Unit) {
-        viewModel.fetchVerses(bookId, chapterNumber)
-        // NOU: Colectează fluxul de mesaje pentru snackbar
-        viewModel.snackbarFlow.collectLatest { message ->
-            snackbarHostState.showSnackbar(message)
-        }
-    }
-
-    LaunchedEffect(searchQuery) {
-        viewModel.searchVerses(searchQuery, bookId, chapterNumber)
-    }
 
     Scaffold(
-        // NOU: Adaugă SnackbarHost
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(bookName) },
+                title = { Text("${uiState.bookName} ${uiState.chapterNumber}") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Înapoi")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.saveBookmark(bookId, chapterNumber, 0L) }) {
-                        Icon(Icons.Default.BookmarkAdd, contentDescription = "Salvează ca semn de carte")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
                     }
                 }
             )
-        },
-        modifier = modifier
-    ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text("Caută în Biblie...") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+        }
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding)) {
+            // Câmp de căutare locală
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = viewModel::onSearchQueryChanged,
+                label = { Text("Caută în acest capitol...") },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                singleLine = true
             )
 
-            when (val state = uiState) {
-                is VersesUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            // Conținutul ecranului
+            when {
+                uiState.isLoading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
-                is VersesUiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                uiState.error != null -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(uiState.error!!, color = MaterialTheme.colorScheme.error)
                     }
                 }
-                is VersesUiState.ChapterSuccess -> {
-                    if (state.verses.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Capitol gol sau inexistent.", modifier = Modifier.padding(16.dp))
+                else -> {
+                    if (uiState.filteredVerses.isEmpty()) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Niciun rezultat găsit.")
                         }
                     } else {
-                        LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
-                            item {
-                                Text(
-                                    text = "Capitolul $chapterNumber",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
-                            }
-                            items(state.verses, key = { it.id }) { verse ->
-                                VerseItem(
-                                    verseNumber = verse.verseNumber.toString(),
-                                    verseText = verse.formattedTextRo
-                                )
-                            }
-                        }
-                    }
-                }
-                is VersesUiState.SearchSuccess -> {
-                    if (state.results.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Niciun rezultat găsit.", modifier = Modifier.padding(16.dp))
-                        }
-                    } else {
-                        LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
-                            items(state.results, key = { it.verse.id }) { result ->
-                                VerseItem(
-                                    verseNumber = result.verse.verseNumber.toString(),
-                                    verseText = result.verse.formattedTextRo,
-                                    reference = "${result.bookNameRo} ${result.verse.chapterNumber}"
+                        LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                            items(uiState.filteredVerses, key = { it.verse.id }) { uiVerse ->
+                                VerseItemWithBookmark(
+                                    uiVerse = uiVerse,
+                                    onToggleBookmark = { viewModel.toggleBookmark(uiVerse.verse.id) }
                                 )
                             }
                         }
@@ -134,38 +78,35 @@ fun VersesScreen(
     }
 }
 
-// Composable-ul VerseItem rămâne neschimbat
 @Composable
-fun VerseItem(
-    verseNumber: String,
-    verseText: String,
-    reference: String? = null,
+fun VerseItemWithBookmark(
+    uiVerse: UiVerse,
+    onToggleBookmark: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier.padding(vertical = 8.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalAlignment = Alignment.Top
     ) {
         Text(
-            text = verseNumber,
-            style = MaterialTheme.typography.bodySmall,
+            text = "${uiVerse.verse.verseNumber}",
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.End,
             modifier = Modifier.width(24.dp)
         )
-        Column {
-            if (reference != null) {
-                Text(
-                    text = reference,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-                Spacer(Modifier.height(4.dp))
-            }
-            Text(
-                text = verseText,
-                style = MaterialTheme.typography.bodyLarge,
-                lineHeight = MaterialTheme.typography.bodyLarge.fontSize * 1.5
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = uiVerse.verse.formattedTextRo,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(8.dp))
+        IconButton(onClick = onToggleBookmark) {
+            Icon(
+                imageVector = if (uiVerse.isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                contentDescription = "Salvează semn de carte",
+                tint = if (uiVerse.isBookmarked) MaterialTheme.colorScheme.primary else LocalContentColor.current
             )
         }
     }

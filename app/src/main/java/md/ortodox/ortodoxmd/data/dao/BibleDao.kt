@@ -2,7 +2,9 @@ package md.ortodox.ortodoxmd.data.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
 import md.ortodox.ortodoxmd.data.model.bible.*
 
 @Dao
@@ -33,23 +35,63 @@ interface BibleDao {
     """)
     suspend fun searchVersesWithBookInfo(query: String): List<VerseWithBookInfo>
 
-    // NOU: Interogare pentru căutare după referință (ex: "Matei 2:15").
     @Query("""
         SELECT v.* FROM bible_verses v
         JOIN bible_books b ON v.bookId = b.id
-        WHERE b.nameRo LIKE '%' || :bookName || '%' AND v.chapterNumber = :chapter
+        WHERE LOWER(b.nameRo) LIKE '%' || LOWER(:bookName) || '%' AND v.chapterNumber = :chapter
         AND v.verseNumber >= :startVerse AND (:endVerse IS NULL OR v.verseNumber <= :endVerse)
     """)
     suspend fun getVersesByReference(bookName: String, chapter: Int, startVerse: Int, endVerse: Int?): List<BibleVerse>
 
-    // NOU: Interogare pentru a prelua semnul de carte cu numele cărții.
-    @Query("""
-        SELECT bm.*, b.nameRo FROM bible_bookmarks bm
-        JOIN bible_books b ON bm.bookId = b.id
-        LIMIT 1
-    """)
-    suspend fun getBookmarkWithDetails(): BookmarkWithDetails?
-
     @Upsert
-    suspend fun saveBookmark(bookmark: BibleBookmark)
+    suspend fun addBookmark(bookmark: BibleBookmark)
+
+    @Query("DELETE FROM bible_bookmarks WHERE verseId = :verseId")
+    suspend fun removeBookmark(verseId: Long)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM bible_bookmarks WHERE verseId = :verseId LIMIT 1)")
+    suspend fun isBookmarked(verseId: Long): Boolean
+
+    @Query("SELECT verseId FROM bible_bookmarks")
+    fun getBookmarkedVerseIds(): Flow<List<Long>>
+
+    @Query("""
+        SELECT v.*, b.nameRo as bookNameRo
+        FROM bible_verses v
+        JOIN bible_bookmarks bm ON v.id = bm.verseId
+        JOIN bible_books b ON v.bookId = b.id
+        ORDER BY v.bookId, v.chapterNumber, v.verseNumber
+    """)
+    fun getAllBookmarksWithDetails(): Flow<List<VerseWithBookInfo>>
+
+    // --- NOU: Metode pentru descărcarea completă a Bibliei ---
+
+    @Query("DELETE FROM bible_verses")
+    suspend fun clearAllVerses()
+
+    @Query("DELETE FROM bible_chapters")
+    suspend fun clearAllChapters()
+
+    @Query("DELETE FROM bible_books")
+    suspend fun clearAllBooks()
+
+    /**
+     * Înlocuiește complet datele Bibliei într-o singură tranzacție.
+     * Acest lucru asigură că nu există stări intermediare inconsistente.
+     */
+    @Transaction
+    suspend fun replaceEntireBible(books: List<BibleBook>, chapters: List<BibleChapter>, verses: List<BibleVerse>) {
+        // Șterge datele vechi
+        clearAllVerses()
+        clearAllChapters()
+        clearAllBooks()
+        // Inserează datele noi
+        insertBooks(books)
+        insertChapters(chapters)
+        insertVerses(verses)
+    }
+
+    // NOU: Metodă pentru a verifica dacă Biblia este descărcată
+    @Query("SELECT COUNT(*) FROM bible_books")
+    suspend fun countBooks(): Int
 }

@@ -1,80 +1,90 @@
 package md.ortodox.ortodoxmd.ui.bible
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import md.ortodox.ortodoxmd.data.model.bible.BibleBookmark
 import md.ortodox.ortodoxmd.data.model.bible.BibleVerse
-import md.ortodox.ortodoxmd.data.model.bible.VerseWithBookInfo
 import md.ortodox.ortodoxmd.data.repository.BibleRepository
 import javax.inject.Inject
 
-sealed interface VersesUiState {
-    object Loading : VersesUiState
-    data class ChapterSuccess(val verses: List<BibleVerse>) : VersesUiState
-    data class SearchSuccess(val results: List<VerseWithBookInfo>) : VersesUiState
-    data class Error(val message: String) : VersesUiState
+// Model de UI pentru a include starea de "marcat"
+data class UiVerse(
+    val verse: BibleVerse,
+    val isBookmarked: Boolean
+)
+
+// Starea UI pentru ecranul de versete
+data class VersesUiState(
+    val isLoading: Boolean = true,
+    val bookName: String = "",
+    val chapterNumber: Int = 0,
+    val verses: List<UiVerse> = emptyList(),
+    val searchQuery: String = "",
+    val error: String? = null
+) {
+    // Căutare locală, în versetele deja încărcate
+    val filteredVerses: List<UiVerse>
+        get() = if (searchQuery.isBlank()) {
+            verses
+        } else {
+            verses.filter {
+                it.verse.textRo.contains(searchQuery, ignoreCase = true) ||
+                        it.verse.verseNumber.toString() == searchQuery
+            }
+        }
 }
 
 @HiltViewModel
 class VersesViewModel @Inject constructor(
-    private val repository: BibleRepository
+    private val repository: BibleRepository,
+    savedStateHandle: SavedStateHandle // Pentru a prelua argumentele de navigare
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<VersesUiState>(VersesUiState.Loading)
+    private val bookId: Long = savedStateHandle.get<String>("bookId")?.toLongOrNull() ?: 0
+    private val bookName: String = savedStateHandle.get<String>("bookName") ?: "Biblia"
+    private val chapterNumber: Int = savedStateHandle.get<String>("chapterNumber")?.toIntOrNull() ?: 0
+
+    private val _uiState = MutableStateFlow(VersesUiState(bookName = bookName, chapterNumber = chapterNumber))
     val uiState: StateFlow<VersesUiState> = _uiState.asStateFlow()
 
-    // NOU: Canal pentru a trimite mesaje one-time (ex: Snackbar)
-    private val _snackbarChannel = Channel<String>()
-    val snackbarFlow = _snackbarChannel.receiveAsFlow()
+    init {
+        loadVerses()
+    }
 
-    private var searchJob: Job? = null
-
-    fun fetchVerses(bookId: Long, chapterNumber: Int) {
-        searchJob?.cancel()
+    private fun loadVerses() {
         viewModelScope.launch {
-            _uiState.value = VersesUiState.Loading
+            _uiState.update { it.copy(isLoading = true) }
             try {
-                val verses = repository.getVerses(bookId, chapterNumber)
-                _uiState.value = VersesUiState.ChapterSuccess(verses)
+                val versesFromDb = repository.getVerses(bookId, chapterNumber)
+                // Combină versetele cu starea semnelor de carte
+                repository.getBookmarkedVerseIds()
+                    .map { bookmarkedIds ->
+                        versesFromDb.map { verse ->
+                            UiVerse(verse = verse, isBookmarked = verse.id in bookmarkedIds)
+                        }
+                    }
+                    .collect { uiVerses ->
+                        _uiState.update {
+                            it.copy(isLoading = false, verses = uiVerses, error = null)
+                        }
+                    }
             } catch (e: Exception) {
-                _uiState.value = VersesUiState.Error("Nu s-au putut încărca versetele: ${e.message}")
+                _uiState.update { it.copy(isLoading = false, error = "Eroare la încărcarea versetelor.") }
             }
         }
     }
 
-    fun searchVerses(query: String, bookId: Long, chapterNumber: Int) {
-        searchJob?.cancel()
-        if (query.isBlank()) {
-            fetchVerses(bookId, chapterNumber)
-            return
-        }
-        searchJob = viewModelScope.launch {
-            delay(300)
-            _uiState.value = VersesUiState.Loading
-            try {
-                val results = repository.searchVersesWithBookInfo(query)
-                _uiState.value = VersesUiState.SearchSuccess(results)
-            } catch (e: Exception) {
-                _uiState.value = VersesUiState.Error("Căutarea a eșuat: ${e.message}")
-            }
-        }
+    fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
     }
 
-    fun saveBookmark(bookId: Long, chapterNumber: Int, verseId: Long) {
+    fun toggleBookmark(verseId: Long) {
         viewModelScope.launch {
-            val newBookmark = BibleBookmark(bookId = bookId, chapterNumber = chapterNumber.toLong(), verseId = verseId)
-            repository.saveBookmark(newBookmark)
-            // NOU: Trimite un mesaj de confirmare către UI
-            _snackbarChannel.send("Semn de carte salvat!")
+            repository.toggleBookmark(verseId)
+            // UI-ul se va actualiza automat datorită `collect` pe Flow
         }
     }
 }
