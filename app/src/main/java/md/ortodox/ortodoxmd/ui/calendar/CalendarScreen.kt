@@ -1,13 +1,10 @@
-@file:Suppress("DEPRECATION")
-
 package md.ortodox.ortodoxmd.ui.calendar
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -17,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,7 +27,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
     val viewModel: CalendarViewModel = hiltViewModel()
     val calendarData by viewModel.calendarData.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    val currentMonth by viewModel.currentMonth.collectAsState() // 0-indexed (0=Jan)
+    val currentMonth by viewModel.currentMonth.collectAsState()
     val currentYear by viewModel.currentYear.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
 
@@ -37,12 +35,11 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
     val currentDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Formatter for a nice month/year display (e.g., "Iulie 2025")
     val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale("ro")) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
 
-        // Header with month/year selector
+        // Header cu selectorul de lună/an
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -67,7 +64,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // Date Picker Dialog
+        // Dialogul pentru Date Picker
         if (showDatePicker) {
             val datePickerState = rememberDatePickerState(
                 initialSelectedDateMillis = Calendar.getInstance().apply {
@@ -101,12 +98,11 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Days of the week header
+        // Header cu zilele săptămânii
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            // Corrected day abbreviations for Romanian
             val daysOfWeek = listOf("D", "L", "Ma", "Mi", "J", "V", "S")
             daysOfWeek.forEach { day ->
                 Text(
@@ -121,62 +117,51 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Grid with the days of the month
-        val daysInMonth = viewModel.getDaysInMonth(currentYear, currentMonth)
-        val firstDayOfWeek = viewModel.getFirstDayOfWeek(currentYear, currentMonth)
+        // Container pentru detecția gestului de swipe și animație
+        Crossfade(
+            targetState = "$currentYear-$currentMonth",
+            label = "month-transition"
+        ) { key ->
+            var dragAmount by remember { mutableStateOf(0f) }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(7),
-        ) {
-            items(count = firstDayOfWeek) {
-                Box(Modifier)
-            }
-
-            items(count = daysInMonth) { dayIndex ->
-                val day = dayIndex + 1
-                val dateStr = String.format("%04d-%02d-%02d", currentYear, currentMonth + 1, day)
-                val isCurrentDay = dateStr == currentDate
-                val isSelectedDay = dateStr == selectedDate
-
-                Box(
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(2.dp)
-                        .background(
-                            color = if (isSelectedDay) MaterialTheme.colorScheme.secondary else Color.Transparent,
-                            shape = CircleShape
-                        )
-                        .border(
-                            width = if (isCurrentDay) 1.5.dp else 0.dp,
-                            color = if (isCurrentDay) MaterialTheme.colorScheme.primary else Color.Transparent,
-                            shape = CircleShape
-                        )
-                        .clickable {
-                            viewModel.selectDate(dateStr)
-                            showDetails = true
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = day.toString(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = when {
-                            isSelectedDay -> MaterialTheme.colorScheme.onSecondary
-                            else -> MaterialTheme.colorScheme.onSurface
+            Box(
+                modifier = Modifier.pointerInput(key) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { dragAmount = 0f },
+                        onHorizontalDrag = { _, drag -> dragAmount += drag },
+                        onDragEnd = {
+                            val swipeThreshold = 150
+                            if (dragAmount > swipeThreshold) {
+                                viewModel.goToPreviousMonth()
+                            } else if (dragAmount < -swipeThreshold) {
+                                viewModel.goToNextMonth()
+                            }
                         }
                     )
                 }
+            ) {
+                CalendarGrid(
+                    currentYear = currentYear,
+                    currentMonth = currentMonth,
+                    selectedDate = selectedDate,
+                    currentDate = currentDate,
+                    onDateSelected = { dateStr ->
+                        viewModel.selectDate(dateStr)
+                        showDetails = true
+                    }
+                )
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Details for the selected day
+        // Detaliile pentru ziua selectată
         AnimatedVisibility(
             visible = showDetails && (calendarData != null || errorMessage != null),
             enter = fadeIn(),
             exit = fadeOut()
         ) {
+            // *** CORECȚIE APLICATĂ AICI: Am adăugat conținutul cardului de detalii ***
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -236,6 +221,60 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun CalendarGrid(
+    currentYear: Int,
+    currentMonth: Int,
+    selectedDate: String,
+    currentDate: String,
+    onDateSelected: (String) -> Unit
+) {
+    val viewModel: CalendarViewModel = hiltViewModel()
+    val daysInMonth = viewModel.getDaysInMonth(currentYear, currentMonth)
+    val firstDayOfWeek = viewModel.getFirstDayOfWeek(currentYear, currentMonth)
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(7),
+        userScrollEnabled = false
+    ) {
+        items(count = firstDayOfWeek) { Box(Modifier) }
+
+        items(count = daysInMonth) { dayIndex ->
+            val day = dayIndex + 1
+            val dateStr = String.format("%04d-%02d-%02d", currentYear, currentMonth + 1, day)
+            val isCurrentDay = dateStr == currentDate
+            val isSelectedDay = dateStr == selectedDate
+
+            Box(
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .padding(2.dp)
+                    .background(
+                        color = if (isSelectedDay) MaterialTheme.colorScheme.secondary else Color.Transparent,
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = if (isCurrentDay) 1.5.dp else 0.dp,
+                        color = if (isCurrentDay) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        shape = CircleShape
+                    )
+                    .clickable { onDateSelected(dateStr) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = day.toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = when {
+                        isSelectedDay -> MaterialTheme.colorScheme.onSecondary
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
             }
         }
     }
