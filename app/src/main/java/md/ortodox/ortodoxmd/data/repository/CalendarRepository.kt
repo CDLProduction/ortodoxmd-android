@@ -12,21 +12,20 @@ class CalendarRepository @Inject constructor(
     private val calendarDao: CalendarDao
 ) {
     suspend fun getCalendarData(date: String): CalendarData? {
-        // Check cache first
+        // Verificăm mai întâi în cache
         val cachedData = calendarDao.getCalendarDataByDate(date)
-        Log.d("CalendarRepository", "Checked cache for date: $date - Found data: ${cachedData != null}")
         if (cachedData != null) {
-            Log.d("CalendarRepository", "Returning cached data for date: $date")
             return cachedData
         }
 
-        // Fetch from API if cache empty
-        Log.d("CalendarRepository", "Cache empty - Fetching from API for date: $date")
+        // Dacă nu există în cache, preluăm de la API
         return try {
-            val data = apiService.getCalendarData(date, "en")
-            Log.d("CalendarRepository", "API returned data for date: $date")
+            // *** MODIFICARE APLICATĂ AICI ***
+            // Am schimbat limba solicitată de la "en" la "ro"
+            val data = apiService.getCalendarData(date, "ro")
+
+            // Salvăm datele noi în cache
             insertCalendarDataWithTransaction(data)
-            Log.d("CalendarRepository", "Insertion completed successfully")
             data
         } catch (e: Exception) {
             Log.e("CalendarRepository", "Error fetching or inserting calendar data: ${e.message}", e)

@@ -66,9 +66,16 @@ fun HomeScreen(
                 )
             }
             item {
+                // *** CORECȚIE TEMPORARĂ DUBLĂ APLICATĂ AICI ***
+                val correctedFastingInfo = when {
+                    uiState.fastingInfo.equals("Harti", ignoreCase = true) -> "Zi fără post"
+                    uiState.fastingInfo.equals("Post", ignoreCase = true) -> "Zi de post"
+                    else -> uiState.fastingInfo
+                }
+
                 InfoCard(
                     title = "Postul Zilei",
-                    content = uiState.fastingInfo,
+                    content = correctedFastingInfo, // Folosim textul corectat
                     icon = Icons.Default.Restaurant,
                     color = MaterialTheme.colorScheme.secondaryContainer
                 )
@@ -176,8 +183,6 @@ private fun NavigationSection(navController: NavHostController) {
             NavigationCard(
                 title = "Rugăciuni",
                 icon = Icons.AutoMirrored.Filled.MenuBook,
-                // *** CORECȚIE APLICATĂ AICI ***
-                // Acum navighează la noul ecran de categorii
                 onClick = { navController.navigate("prayer_categories") },
                 modifier = Modifier.weight(1f)
             )
