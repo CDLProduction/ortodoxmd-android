@@ -26,6 +26,7 @@ import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
 import md.ortodox.ortodoxmd.ui.home.HomeScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerCategoriesScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
+import md.ortodox.ortodoxmd.ui.radio.RadioScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
 
 data class DrawerItem(
@@ -44,12 +45,13 @@ val prayerCategories = listOf(
     SubDrawerItem("Rugăciuni Generale", "prayer/general")
 )
 
-// Am modificat ruta pentru "Rugăciuni" pentru a duce la noul ecran
+// NOU: Adăugat "Radio" în listă
 val drawerItems = listOf(
     DrawerItem("Acasă", Icons.Default.Home, "home"),
     DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
-    DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home")
+    DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
+    DrawerItem("Radio", Icons.Default.Radio, "radio") // Element nou
 )
 
 @AndroidEntryPoint
@@ -78,8 +80,9 @@ fun AppScaffold() {
     val topBarTitle = when (currentRoute?.split("/")?.first()) {
         "home" -> "OrtodoxMD"
         "calendar" -> "Calendar"
-        "prayer_categories", "prayer" -> "Rugăciuni" // Titlu comun pentru ambele ecrane
+        "prayer_categories", "prayer" -> "Rugăciuni"
         "bible_home", "bible_testaments", "bible" -> "Sfânta Scriptură"
+        "radio" -> "Radio Ortodox" // Titlu nou
         else -> "OrtodoxMD"
     }
 
@@ -116,19 +119,17 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
     ) {
         composable("home") { HomeScreen(navController = navController) }
         composable("calendar") { CalendarScreen() }
-
-        // NOU: Rută pentru ecranul de categorii
         composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
-
-        // Ruta existentă pentru afișarea rugăciunilor dintr-o categorie specifică
         composable("prayer/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "general"
             PrayerScreen(category = category)
         }
-
         composable("bible_home") {
             BibleHomeScreen(mainNavController = navController)
         }
+        composable("radio") { RadioScreen() } // Rută nouă
+
+        // --- Restul rutelor pentru Biblie ---
         composable("bible_testaments") { TestamentsScreen(navController = navController) }
         composable("bible/books/{testamentId}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("testamentId")?.toLongOrNull()
@@ -168,7 +169,6 @@ fun NavigationDrawerContent(
                 selected = isGroupSelected && item.subItems == null,
                 onClick = {
                     if (item.subItems != null) {
-                        // Când se apasă pe "Rugăciuni", navighează la ecranul de categorii
                         coroutineScope.launch { drawerState.close() }
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -184,7 +184,6 @@ fun NavigationDrawerContent(
                         }
                     }
                 },
-                // Adăugăm un indicator de expandare dacă elementul are sub-meniuri
                 badge = {
                     if (item.subItems != null) {
                         IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {

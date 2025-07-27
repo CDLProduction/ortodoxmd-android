@@ -2,7 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permisiune necesară pentru a accesa stream-urile online -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Permisiuni pentru a rula serviciul în prim-plan (necesar pentru redare audio în fundal) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:name=".OrtodoxMDApplication"
@@ -15,6 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Ortodoxmdandroid"
         android:networkSecurityConfig="@xml/network_security_config">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -25,6 +31,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- NOU: Declarația pentru serviciul de redare radio -->
+        <service
+            android:name=".ui.radio.RadioService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService"/>
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

@@ -39,7 +39,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
 
-        // Header cu selectorul de lună/an
+        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -64,15 +64,12 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // Dialogul pentru Date Picker
+        // Date Picker
         if (showDatePicker) {
             val datePickerState = rememberDatePickerState(
                 initialSelectedDateMillis = Calendar.getInstance().apply {
                     set(currentYear, currentMonth, 1)
-                }.timeInMillis,
-                selectableDates = object : SelectableDates {
-                    override fun isSelectableDate(utcTimeMillis: Long): Boolean = true
-                }
+                }.timeInMillis
             )
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
@@ -82,14 +79,10 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                             viewModel.updateFromPicker(millis)
                         }
                         showDatePicker = false
-                    }) {
-                        Text("OK")
-                    }
+                    }) { Text("OK") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDatePicker = false }) {
-                        Text("Anulează")
-                    }
+                    TextButton(onClick = { showDatePicker = false }) { Text("Anulează") }
                 }
             ) {
                 DatePicker(state = datePickerState)
@@ -98,7 +91,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Header cu zilele săptămânii
+        // Zilele săptămânii
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
@@ -117,13 +110,12 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Container pentru detecția gestului de swipe și animație
+        // Grila calendarului cu swipe
         Crossfade(
             targetState = "$currentYear-$currentMonth",
             label = "month-transition"
         ) { key ->
             var dragAmount by remember { mutableStateOf(0f) }
-
             Box(
                 modifier = Modifier.pointerInput(key) {
                     detectHorizontalDragGestures(
@@ -131,11 +123,8 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                         onHorizontalDrag = { _, drag -> dragAmount += drag },
                         onDragEnd = {
                             val swipeThreshold = 150
-                            if (dragAmount > swipeThreshold) {
-                                viewModel.goToPreviousMonth()
-                            } else if (dragAmount < -swipeThreshold) {
-                                viewModel.goToNextMonth()
-                            }
+                            if (dragAmount > swipeThreshold) viewModel.goToPreviousMonth()
+                            else if (dragAmount < -swipeThreshold) viewModel.goToNextMonth()
                         }
                     )
                 }
@@ -155,20 +144,15 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Detaliile pentru ziua selectată
+        // Detaliile zilei
         AnimatedVisibility(
             visible = showDetails && (calendarData != null || errorMessage != null),
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            // *** CORECȚIE APLICATĂ AICI: Am adăugat conținutul cardului de detalii ***
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 when {
@@ -191,8 +175,16 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+
+                            // *** CORECȚIE TEMPORARĂ DUBLĂ APLICATĂ AICI ***
+                            val correctedFastingDescription = when {
+                                calendarData!!.fastingDescriptionRo.equals("Harti", ignoreCase = true) -> "Zi fără post"
+                                calendarData!!.fastingDescriptionRo.equals("Post", ignoreCase = true) -> "Zi de post"
+                                else -> calendarData!!.fastingDescriptionRo
+                            }
+
                             Text(
-                                text = "Post: ${calendarData!!.fastingDescriptionRo}",
+                                text = "Post: $correctedFastingDescription",
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                             Text(
@@ -225,7 +217,6 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
         }
     }
 }
-
 
 @Composable
 private fun CalendarGrid(
