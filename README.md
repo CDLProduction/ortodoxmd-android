@@ -20,17 +20,17 @@ Dependințe cheie: minSdk 24, targetSdk 36.
 
 ## Checklist Features (Android-Side)
 - [x] **Calendar Ortodox** - Ecran listă sărbători (fetch din server), widget home.
-- [ ] **Radio Online** - Streaming cu ExoPlayer, controale UI.
-- [ ] **Rugăciuni Ortodoxe** - Categorii, afișare text (offline cache în Room).
-- [ ] **Biblie** - Navigare capitole, bookmark local, descărcare offline.
+- [x] **Radio Online** - Streaming cu ExoPlayer, controale UI.
+- [x] **Rugăciuni Ortodoxe** - Categorii, afișare text (offline cache în Room).
+- [x] **Biblie** - Navigare capitole, bookmark local, descărcare offline.
 - [ ] **Cărți Audio/Electronice** - Playback cu ExoPlayer, salvare poziție, download pentru offline.
 - [ ] **Vieți Sfinți** - Listă biografii, imagini cu Coil.
 - [ ] **Informații Icoane** - Galerie cu zoom, descrieri.
 - [ ] **Hartă Interactivă** - Google Maps SDK cu markere locații (fetch JSON din server).
 - [ ] **Slujbe Bisericești** - Detalii text, structurate.
 - [ ] **Favorite și Liste** - Adăugare local (Room), listă "vreau să citesc/ascult".
-- [ ] **Dashboard** - Ecran home cu shortcuts la conținut frecvent (bazat pe acces local).
-- [ ] **Offline Support** - Verificare conexiune, cache/download cu DownloadManager/Room.
+- [x] **Dashboard** - Ecran home cu shortcuts la conținut frecvent (bazat pe acces local).
+- [x] **Offline Support** - Verificare conexiune, cache/download cu DownloadManager/Room.(partial pentru functionalul actual)
 - [ ] **Testing și CI** - Espresso UI tests, JUnit unit tests, GitHub Actions.
 - [ ] **Deploy** - APK signing, pregătire Play Store (privacy policy).
 
