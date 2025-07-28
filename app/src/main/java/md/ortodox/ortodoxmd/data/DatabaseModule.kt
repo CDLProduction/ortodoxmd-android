@@ -8,12 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import android.util.Log
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
-import md.ortodox.ortodoxmd.data.dao.BibleDao
-import md.ortodox.ortodoxmd.data.dao.CalendarDao
-import md.ortodox.ortodoxmd.data.dao.PrayerDao
+import md.ortodox.ortodoxmd.data.dao.*
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -21,36 +16,20 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
-                context,
-                AppDatabase::class.java,
-                "ortodox_calendar_db"
-            ).addCallback(object : RoomDatabase.Callback() {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    super.onCreate(db)
-                    Log.d("AppDatabase", "Database created successfully")
-                }
-
-                override fun onOpen(db: SupportSQLiteDatabase) {
-                    super.onOpen(db)
-                    Log.d("AppDatabase", "Database opened")
-                }
-            }).fallbackToDestructiveMigration(true)  // Resetează DB la schimbări (pentru dezvoltare)
+        return Room.databaseBuilder(context, AppDatabase::class.java, "ortodox_calendar_db")
+            .fallbackToDestructiveMigration(false)
             .build()
     }
 
     @Provides
-    fun provideCalendarDao(database: AppDatabase): CalendarDao {
-        return database.calendarDao()
-    }
+    fun provideCalendarDao(db: AppDatabase): CalendarDao = db.calendarDao()
 
     @Provides
-    fun providePrayerDao(database: AppDatabase): PrayerDao {
-        return database.prayerDao()
-    }
+    fun providePrayerDao(db: AppDatabase): PrayerDao = db.prayerDao()
 
     @Provides
-    fun provideBibleDao(database: AppDatabase): BibleDao {
-        return database.bibleDao()
-    }
+    fun provideBibleDao(db: AppDatabase): BibleDao = db.bibleDao()
+
+    @Provides
+    fun provideAudiobookDao(db: AppDatabase): AudiobookDao = db.audiobookDao()
 }

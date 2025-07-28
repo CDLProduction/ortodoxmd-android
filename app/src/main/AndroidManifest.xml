@@ -2,12 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permisiune necesară pentru a accesa stream-urile online -->
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Permisiuni pentru a rula serviciul în prim-plan (necesar pentru redare audio în fundal) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Permisiune necesară pentru a scrie fișierele descărcate pe versiuni mai vechi de Android -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
 
     <application
         android:name=".OrtodoxMDApplication"
@@ -32,15 +32,25 @@
             </intent-filter>
         </activity>
 
-        <!-- NOU: Declarația pentru serviciul de redare radio -->
+        <!-- Serviciu redenumit pentru a gestiona atât radioul, cât și cărțile audio -->
         <service
-            android:name=".ui.radio.RadioService"
+            android:name=".ui.playback.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService"/>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </service>
+
+        <!-- NOU: Receiver pentru a gestiona finalizarea descărcărilor -->
+        <receiver
+            android:name=".data.DownloadCompleteReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.DOWNLOAD_COMPLETE"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 

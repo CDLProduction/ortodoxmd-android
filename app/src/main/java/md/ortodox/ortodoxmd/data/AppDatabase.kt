@@ -3,22 +3,20 @@ package md.ortodox.ortodoxmd.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import md.ortodox.ortodoxmd.data.dao.BibleDao
-import md.ortodox.ortodoxmd.data.dao.CalendarDao
-import md.ortodox.ortodoxmd.data.model.CalendarData
-import md.ortodox.ortodoxmd.data.model.Prayer
-import md.ortodox.ortodoxmd.data.dao.PrayerDao
-import md.ortodox.ortodoxmd.data.model.bible.BibleBook
-import md.ortodox.ortodoxmd.data.model.bible.BibleBookmark
-import md.ortodox.ortodoxmd.data.model.bible.BibleChapter
-import md.ortodox.ortodoxmd.data.model.bible.BibleVerse
+import md.ortodox.ortodoxmd.data.dao.*
+import md.ortodox.ortodoxmd.data.model.*
+import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
+import md.ortodox.ortodoxmd.data.model.bible.*
 
-// Definește baza de date unică pentru calendar și rugăciuni
-@Database(entities = [CalendarData::class, Prayer::class, BibleBook::class, BibleChapter::class, BibleVerse::class, BibleBookmark::class],
-    version = 1, exportSchema = false)
+@Database(entities = [
+    CalendarData::class, Prayer::class, BibleBook::class, BibleChapter::class,
+    BibleVerse::class, BibleBookmark::class, AudiobookEntity::class,
+    BibleTestament::class // *** CORECȚIE APLICATĂ AICI: Am adăugat entitatea lipsă ***
+], version = 3, exportSchema = false) // Asigură-te că versiunea este incrementată dacă faci modificări
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun calendarDao(): CalendarDao
     abstract fun prayerDao(): PrayerDao
     abstract fun bibleDao(): BibleDao
+    abstract fun audiobookDao(): AudiobookDao
 }

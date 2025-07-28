@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ortodoxmd-android</string>
+    <string name="playback_channel_name">Redare Audio</string>
+    <string name="playback_channel_description">Notificare pentru controlul redării audio</string>
 </resources>
