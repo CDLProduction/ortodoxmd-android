@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import md.ortodox.ortodoxmd.data.dao.AudiobookDao
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
+import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback
 import md.ortodox.ortodoxmd.data.network.AudiobookApiService
 import javax.inject.Inject
 
@@ -17,9 +18,11 @@ class AudiobookRepository @Inject constructor(
     private val audiobookDao: AudiobookDao,
     @ApplicationContext private val context: Context
 ) {
-    private val baseUrl = "http://10.0.2.2:8081"
+    private val baseUrl = "http://127.0.0.1:8081" // Sau 10.0.2.2 pentru emulator
 
     fun getAudiobooks(): Flow<List<AudiobookEntity>> = audiobookDao.getAll()
+
+    suspend fun getById(id: Long): AudiobookEntity? = audiobookDao.getById(id)
 
     suspend fun syncAudiobooks() {
         try {
@@ -60,8 +63,12 @@ class AudiobookRepository @Inject constructor(
 
     suspend fun savePlaybackPosition(id: Long, position: Long) {
         audiobookDao.updatePlaybackPosition(id, position)
+        // Salvează și ca fiind ULTIMA redare
+        audiobookDao.setLastPlayback(LastPlayback(audiobookId = id, positionMillis = position))
     }
-    suspend fun getById(id: Long): AudiobookEntity? {
-        return audiobookDao.getById(id)
+
+    // --- FUNCȚIE NOUĂ PENTRU A OBȚINE ULTIMA REDARE ---
+    fun getLastPlaybackInfo(): Flow<LastPlayback?> {
+        return audiobookDao.getLastPlayback()
     }
 }

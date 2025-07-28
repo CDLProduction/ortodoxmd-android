@@ -6,13 +6,14 @@ import androidx.room.TypeConverters
 import md.ortodox.ortodoxmd.data.dao.*
 import md.ortodox.ortodoxmd.data.model.*
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
+import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback // <-- IMPORT NOU
 import md.ortodox.ortodoxmd.data.model.bible.*
 
 @Database(entities = [
     CalendarData::class, Prayer::class, BibleBook::class, BibleChapter::class,
     BibleVerse::class, BibleBookmark::class, AudiobookEntity::class,
-    BibleTestament::class // *** CORECȚIE APLICATĂ AICI: Am adăugat entitatea lipsă ***
-], version = 3, exportSchema = false) // Asigură-te că versiunea este incrementată dacă faci modificări
+    BibleTestament::class, LastPlayback::class // <-- ENTITATE NOUĂ ADĂUGATĂ
+], version = 4, exportSchema = false) // <-- VERSIUNE INCREMENTATĂ LA 4
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun calendarDao(): CalendarDao

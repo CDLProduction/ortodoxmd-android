@@ -18,6 +18,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +49,7 @@ class AudiobookPlayerViewModel @Inject constructor(
 
     private var mediaController: MediaController? = null
     private lateinit var controllerFuture: ListenableFuture<MediaController>
+    private var progressUpdateJob: Job? = null
 
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -94,7 +96,6 @@ class AudiobookPlayerViewModel @Inject constructor(
                 Log.d("PlayerVM", "Playing from local file: ${book.localFilePath}")
                 book.localFilePath!!.toUri()
             } else {
-                // CORECȚIE: Se folosește 127.0.0.1 pentru dispozitive fizice cu 'adb reverse'.
                 val url = "http://127.0.0.1:8081/api/audiobooks/${book.id}/stream"
                 Log.d("PlayerVM", "Playing from remote URL: $url")
                 url.toUri()
@@ -107,7 +108,6 @@ class AudiobookPlayerViewModel @Inject constructor(
                 mediaController?.addListener(playerListener)
                 Log.d("PlayerVM", "MediaController connected. Preparing to play.")
 
-                // CORECȚIE: Verificăm dacă mediaUri nu este null înainte de a-l pasa mai departe.
                 if (mediaUri != null) {
                     prepareAndPlay(mediaUri, book)
                 } else {
@@ -136,7 +136,8 @@ class AudiobookPlayerViewModel @Inject constructor(
     }
 
     private fun startPlaybackPositionUpdates() {
-        viewModelScope.launch {
+        progressUpdateJob?.cancel()
+        progressUpdateJob = viewModelScope.launch {
             while (true) {
                 val controller = mediaController
                 if (controller?.isPlaying == true) {
@@ -150,30 +151,44 @@ class AudiobookPlayerViewModel @Inject constructor(
     }
 
     fun onPlayPauseToggle() {
-        if (mediaController?.isPlaying == true) mediaController?.pause() else mediaController?.play()
+        if (mediaController?.isPlaying == true) {
+            mediaController?.pause()
+            saveCurrentProgress() // Salvează la pauză
+        } else {
+            mediaController?.play()
+        }
     }
 
     fun onSeek(position: Long) {
         mediaController?.seekTo(position)
         _uiState.update { it.copy(currentPositionMillis = position) }
+        saveCurrentProgress() // Salvează după seek
     }
 
     fun onRewind() {
         mediaController?.seekBack()
+        saveCurrentProgress() // Salvează după rewind
     }
 
     fun onForward() {
         mediaController?.seekForward()
+        saveCurrentProgress() // Salvează după forward
+    }
+
+    private fun saveCurrentProgress() {
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            val currentPosition = mediaController?.currentPosition ?: currentState.currentPositionMillis
+            if (currentState.audiobook != null && currentPosition > 0) {
+                repository.savePlaybackPosition(currentState.audiobook.id, currentPosition)
+                Log.d("PlayerVM", "Saved playback position: $currentPosition for book ID: ${currentState.audiobook.id}")
+            }
+        }
     }
 
     override fun onCleared() {
-        viewModelScope.launch {
-            val currentState = _uiState.value
-            if (currentState.audiobook != null && currentState.currentPositionMillis > 0) {
-                repository.savePlaybackPosition(currentState.audiobook.id, currentState.currentPositionMillis)
-                Log.d("PlayerVM", "Saved playback position: ${currentState.currentPositionMillis} for book ID: ${currentState.audiobook.id}")
-            }
-        }
+        saveCurrentProgress() // Salvează progresul la ieșirea din ecran
+        progressUpdateJob?.cancel()
         mediaController?.removeListener(playerListener)
         MediaController.releaseFuture(controllerFuture)
         Log.d("PlayerVM", "ViewModel cleared and resources released.")

@@ -12,12 +12,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun HomeScreen(
@@ -55,7 +58,7 @@ fun HomeScreen(
             }
         }
 
-        // --- Carduri cu Informații ---
+        // --- Carduri cu Informații (codul existent) ---
         if (!uiState.isLoading && uiState.error == null) {
             item {
                 InfoCard(
@@ -66,23 +69,21 @@ fun HomeScreen(
                 )
             }
             item {
-                // *** CORECȚIE TEMPORARĂ DUBLĂ APLICATĂ AICI ***
                 val correctedFastingInfo = when {
                     uiState.fastingInfo.equals("Harti", ignoreCase = true) -> "Zi fără post"
                     uiState.fastingInfo.equals("Post", ignoreCase = true) -> "Zi de post"
                     else -> uiState.fastingInfo
                 }
-
                 InfoCard(
                     title = "Postul Zilei",
-                    content = correctedFastingInfo, // Folosim textul corectat
+                    content = correctedFastingInfo,
                     icon = Icons.Default.Restaurant,
                     color = MaterialTheme.colorScheme.secondaryContainer
                 )
             }
         }
 
-        // --- Versetul Zilei ---
+        // --- Versetul Zilei (codul existent) ---
         item {
             VerseOfTheDayCard(
                 verse = uiState.verseOfTheDay,
@@ -90,12 +91,85 @@ fun HomeScreen(
             )
         }
 
-        // --- Navigare Rapidă ---
+        // --- CARD RELUAȚI ASCULTAREA (NOUA POZIȚIE) ---
+        // Apare la final, înainte de secțiunea de navigare.
+        if (uiState.resumePlaybackInfo != null) {
+            item {
+                ResumeListeningCard(
+                    info = uiState.resumePlaybackInfo!!,
+                    onClick = {
+                        navController.navigate("audiobook_player/${uiState.resumePlaybackInfo!!.audiobook.id}")
+                    }
+                )
+            }
+        }
+
+        // --- Navigare Rapidă (codul existent) ---
         item {
             NavigationSection(navController = navController)
         }
     }
 }
+
+// --- COMPONENT NOU PENTRU CARDUL DE RELUARE ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ResumeListeningCard(
+    info: ResumePlaybackInfo,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayCircleFilled,
+                contentDescription = "Reluați Ascultarea",
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Reluați Ascultarea",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    text = info.audiobook.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Rămas la: ${formatDuration(info.resumePosition)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+}
+
+// Funcție ajutătoare pentru formatarea duratei
+private fun formatDuration(millis: Long): String {
+    if (millis < 0) return "00:00"
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(minutes)
+    return String.format("%02d:%02d", minutes, seconds)
+}
+
+
+// --- Componentele existente rămân neschimbate ---
 
 @Composable
 private fun HeaderSection(currentDate: String) {
@@ -113,7 +187,7 @@ private fun HeaderSection(currentDate: String) {
 }
 
 @Composable
-private fun InfoCard(title: String, content: String, icon: ImageVector, color: androidx.compose.ui.graphics.Color) {
+private fun InfoCard(title: String, content: String, icon: ImageVector, color: Color) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = color),
@@ -146,7 +220,7 @@ private fun VerseOfTheDayCard(verse: String, reference: String) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "\"${verse}\"",
+                text = "\"$verse\"",
                 style = MaterialTheme.typography.bodyLarge,
                 fontStyle = FontStyle.Italic
             )
