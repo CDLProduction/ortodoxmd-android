@@ -18,6 +18,9 @@ interface AudiobookDao {
     @Query("SELECT * FROM audiobooks WHERE id = :id")
     suspend fun getById(id: Long): AudiobookEntity?
 
+    @Query("SELECT * FROM audiobooks WHERE id = :id")
+    fun getByIdFlow(id: Long): Flow<AudiobookEntity?>
+
     @Query("UPDATE audiobooks SET lastPositionMillis = :position WHERE id = :id")
     suspend fun updatePlaybackPosition(id: Long, position: Long)
 
@@ -30,7 +33,6 @@ interface AudiobookDao {
     @Query("SELECT * FROM audiobooks WHERE downloadId = :downloadId")
     suspend fun getByDownloadId(downloadId: Long): AudiobookEntity?
 
-    // --- FUNCȚII NOI PENTRU BOOKMARKING ---
     @Upsert
     suspend fun setLastPlayback(lastPlayback: LastPlayback)
 

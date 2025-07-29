@@ -1,16 +1,24 @@
 package md.ortodox.ortodoxmd.data.repository
 
-import android.app.DownloadManager
 import android.content.Context
-import android.net.Uri
-import android.os.Environment
+import android.util.Log
+import androidx.work.BackoffPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import androidx.lifecycle.asFlow
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import md.ortodox.ortodoxmd.data.AudioDownloadWorker
 import md.ortodox.ortodoxmd.data.dao.AudiobookDao
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback
 import md.ortodox.ortodoxmd.data.network.AudiobookApiService
+import md.ortodox.ortodoxmd.data.network.NetworkModule
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class AudiobookRepository @Inject constructor(
@@ -18,11 +26,20 @@ class AudiobookRepository @Inject constructor(
     private val audiobookDao: AudiobookDao,
     @ApplicationContext private val context: Context
 ) {
-    private val baseUrl = "http://127.0.0.1:8081" // Sau 10.0.2.2 pentru emulator
+    private val workManager = WorkManager.getInstance(context)
+
+    fun getDownloadWorkInfoFlow(): Flow<List<WorkInfo>> {
+        // FIX: Convertim LiveData la Flow pentru compatibilitate cu WorkManager 2.7.1
+        return workManager.getWorkInfosByTagLiveData(DOWNLOAD_TAG).asFlow()
+    }
 
     fun getAudiobooks(): Flow<List<AudiobookEntity>> = audiobookDao.getAll()
 
     suspend fun getById(id: Long): AudiobookEntity? = audiobookDao.getById(id)
+
+    fun getByIdFlow(id: Long): Flow<AudiobookEntity?> = audiobookDao.getByIdFlow(id)
+
+    fun getLastPlaybackInfo(): Flow<LastPlayback?> = audiobookDao.getLastPlayback()
 
     suspend fun syncAudiobooks() {
         try {
@@ -44,31 +61,50 @@ class AudiobookRepository @Inject constructor(
             }
             audiobookDao.insertAll(entitiesToInsert)
         } catch (e: Exception) {
-            // Handle error
+            Log.e("AudiobookRepository", "Failed to sync audiobooks: ${e.message}", e)
         }
     }
 
-    suspend fun startDownload(audiobook: AudiobookEntity) {
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val uri = Uri.parse("$baseUrl/api/audiobooks/${audiobook.id}/stream")
+    fun startDownload(audiobook: AudiobookEntity) {
+        if (audiobook.isDownloaded) {
+            Log.d("AudiobookRepository", "Audiobook ${audiobook.id} is already downloaded.")
+            return
+        }
+
+        val downloadUrl = "${NetworkModule.BASE_URL_AUDIOBOOKS}api/audiobooks/${audiobook.id}/stream"
         val fileName = audiobook.remoteUrlPath.substringAfterLast('/')
-        val request = DownloadManager.Request(uri)
-            .setTitle(audiobook.title)
-            .setDescription("Descărcare...")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_PODCASTS, fileName)
-        val downloadId = downloadManager.enqueue(request)
-        audiobookDao.updateDownloadId(audiobook.id, downloadId)
+
+        val inputData = workDataOf(
+            AudioDownloadWorker.KEY_AUDIOBOOK_ID to audiobook.id,
+            AudioDownloadWorker.KEY_DOWNLOAD_URL to downloadUrl,
+            AudioDownloadWorker.KEY_FILE_NAME to fileName
+        )
+
+        val downloadWorkRequest = OneTimeWorkRequestBuilder<AudioDownloadWorker>()
+            .setInputData(inputData)
+            .addTag(DOWNLOAD_TAG)
+            .addTag("audiobook_download_${audiobook.id}")
+            .setBackoffCriteria(
+                backoffPolicy = BackoffPolicy.EXPONENTIAL,
+                backoffDelay = 10_000L,
+                timeUnit = TimeUnit.MILLISECONDS
+            )
+            .build()
+
+        Log.d("AudiobookRepository", "Enqueuing download for audiobook ID: ${audiobook.id} with URL: $downloadUrl")
+        workManager.enqueueUniqueWork(
+            "download_${audiobook.id}",
+            ExistingWorkPolicy.KEEP,
+            downloadWorkRequest
+        )
     }
 
     suspend fun savePlaybackPosition(id: Long, position: Long) {
         audiobookDao.updatePlaybackPosition(id, position)
-        // Salvează și ca fiind ULTIMA redare
         audiobookDao.setLastPlayback(LastPlayback(audiobookId = id, positionMillis = position))
     }
 
-    // --- FUNCȚIE NOUĂ PENTRU A OBȚINE ULTIMA REDARE ---
-    fun getLastPlaybackInfo(): Flow<LastPlayback?> {
-        return audiobookDao.getLastPlayback()
+    companion object {
+        const val DOWNLOAD_TAG = "audiobook_download"
     }
 }

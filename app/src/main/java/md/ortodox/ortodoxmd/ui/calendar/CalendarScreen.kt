@@ -1,4 +1,4 @@
-
+@file:Suppress("DEPRECATION")
 
 package md.ortodox.ortodoxmd.ui.calendar
 

@@ -1,7 +1,6 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,24 +17,18 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @Composable
-fun AudiobookBooksScreen(
-    navController: NavController,
-    testamentName: String,
-    books: List<AudiobookBook>
-) {
-    val booksInTestament = books.filter { it.testament == testamentName }
-
+fun AudiobookTestamentsScreen(navController: NavController, testaments: List<String>) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)
     ) {
-        items(booksInTestament, key = { it.name }) { book ->
+        items(testaments, key = { it }) { testament ->
             ListItem(
-                headlineContent = { Text(book.name) },
+                headlineContent = { Text(testament) },
                 trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier.clickable {
-                    val encodedBookName = URLEncoder.encode(book.name, StandardCharsets.UTF_8.toString())
-                    navController.navigate("audiobook_chapters/$encodedBookName")
+                    val encodedTestamentName = URLEncoder.encode(testament, StandardCharsets.UTF_8.toString())
+                    navController.navigate("audiobook_books/$encodedTestamentName")
                 }
             )
         }

@@ -17,7 +17,6 @@ object DatabaseModule {
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, "ortodox_calendar_db")
-            .fallbackToDestructiveMigration(false)
             .build()
     }
 

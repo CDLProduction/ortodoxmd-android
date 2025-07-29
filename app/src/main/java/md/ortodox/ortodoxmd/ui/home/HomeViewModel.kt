@@ -12,16 +12,15 @@ import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.repository.AudiobookRepository
 import md.ortodox.ortodoxmd.data.repository.CalendarRepository
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
-// --- CLASĂ NOUĂ PENTRU A REȚINE INFORMAȚIILE DE RELUARE ---
 data class ResumePlaybackInfo(
     val audiobook: AudiobookEntity,
     val resumePosition: Long
 )
 
-// --- STAREA UI A FOST EXTINSĂ ---
 data class HomeUiState(
     val isLoading: Boolean = true,
     val currentDate: String = "",
@@ -30,14 +29,14 @@ data class HomeUiState(
     val verseOfTheDay: String = "Căci unde sunt doi sau trei, adunaţi în numele Meu, acolo sunt şi Eu în mijlocul lor.",
     val verseReference: String = "Matei 18:20",
     val error: String? = null,
-    val resumePlaybackInfo: ResumePlaybackInfo? = null // Câmp nou pentru bookmark
+    val resumePlaybackInfo: ResumePlaybackInfo? = null
 )
 
 @Suppress("DEPRECATION")
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val calendarRepository: CalendarRepository,
-    private val audiobookRepository: AudiobookRepository // <-- REPOSITORY NOU INJECTAT
+    private val audiobookRepository: AudiobookRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -57,12 +56,10 @@ class HomeViewModel @Inject constructor(
 
             _uiState.update { it.copy(currentDate = dateDisplayFormat.replaceFirstChar { char -> char.uppercase() }) }
 
-            // --- COMBINAREA SURSELOR DE DATE ---
+            // Logica pentru reluarea ascultării
             val lastPlaybackFlow = audiobookRepository.getLastPlaybackInfo()
             val allAudiobooksFlow = audiobookRepository.getAudiobooks()
 
-            // Combinăm flow-ul pentru ultima redare cu cel pentru toate cărțile audio
-            // pentru a găsi detaliile complete ale cărții de reluat.
             val resumeInfoFlow = combine(lastPlaybackFlow, allAudiobooksFlow) { lastPlayback, allBooks ->
                 if (lastPlayback != null) {
                     val bookToResume = allBooks.find { it.id == lastPlayback.audiobookId }
@@ -73,16 +70,15 @@ class HomeViewModel @Inject constructor(
                 null
             }
 
-            // Ascultăm schimbările pentru informațiile de reluare
             launch {
                 resumeInfoFlow.collect { resumeInfo ->
                     _uiState.update { it.copy(resumePlaybackInfo = resumeInfo) }
                 }
             }
 
-            // Încărcăm datele calendaristice, la fel ca înainte
+            // Logica pentru datele calendaristice
             try {
-                val calendarData = calendarRepository.getCalendarData(dateApiFormat)
+                val calendarData = calendarRepository.getCalendarData(dateApiFormat) // Presupunând că această metodă există și funcționează
                 if (calendarData != null) {
                     _uiState.update {
                         it.copy(

@@ -1,11 +1,10 @@
+// Fișier complet: AudiobookPlayerViewModel.kt
 package md.ortodox.ortodoxmd.ui.audiobook
 
 import android.app.Application
 import android.content.ComponentName
 import android.net.Uri
 import android.util.Log
-import androidx.annotation.OptIn
-import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,11 +21,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
+import md.ortodox.ortodoxmd.data.network.NetworkModule
 import md.ortodox.ortodoxmd.data.repository.AudiobookRepository
 import md.ortodox.ortodoxmd.ui.playback.PlaybackService
+import java.io.File
 import javax.inject.Inject
 
 data class PlayerUiState(
@@ -38,6 +40,7 @@ data class PlayerUiState(
 )
 
 @HiltViewModel
+@UnstableApi // Adaugă adnotarea la nivel de clasă pentru a simplifica
 class AudiobookPlayerViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val repository: AudiobookRepository,
@@ -54,6 +57,11 @@ class AudiobookPlayerViewModel @Inject constructor(
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _uiState.update { it.copy(isPlaying = isPlaying) }
+            if (isPlaying) {
+                startPlaybackPositionUpdates()
+            } else {
+                progressUpdateJob?.cancel()
+            }
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -70,80 +78,83 @@ class AudiobookPlayerViewModel @Inject constructor(
 
     init {
         initializeController()
-        startPlaybackPositionUpdates()
+        observeAudiobookChanges()
     }
 
-    @OptIn(UnstableApi::class)
     private fun initializeController() {
         val chapterId = savedStateHandle.get<String>("chapterId")?.toLongOrNull()
-        Log.d("PlayerVM", "Attempting to load chapter with ID from route: $chapterId")
+        Log.d("AudiobookPlayerVM", "Initializing for chapter ID: $chapterId")
 
         if (chapterId == null) {
-            Log.e("PlayerVM", "Error: chapterId is null or invalid from SavedStateHandle.")
+            Log.e("AudiobookPlayerVM", "Invalid chapterId from SavedStateHandle")
             return
         }
 
         viewModelScope.launch {
-            val book = repository.getById(chapterId)
-            if (book == null) {
-                Log.e("PlayerVM", "Error: AudiobookEntity not found in database for ID: $chapterId")
+            val audiobook = repository.getById(chapterId)
+            if (audiobook == null) {
+                Log.e("AudiobookPlayerVM", "Audiobook not found for ID: $chapterId")
                 return@launch
             }
-            Log.d("PlayerVM", "Found chapter in DB: ${book.title}")
-            _uiState.update { it.copy(audiobook = book) }
+            Log.d("AudiobookPlayerVM", "Loaded audiobook: ${audiobook.title}, isDownloaded: ${audiobook.isDownloaded}")
+            _uiState.update { it.copy(audiobook = audiobook) }
 
-            val mediaUri: Uri? = if (book.isDownloaded && book.localFilePath != null) {
-                Log.d("PlayerVM", "Playing from local file: ${book.localFilePath}")
-                book.localFilePath!!.toUri()
-            } else {
-                val url = "http://127.0.0.1:8081/api/audiobooks/${book.id}/stream"
-                Log.d("PlayerVM", "Playing from remote URL: $url")
-                url.toUri()
-            }
-
-            val sessionToken = SessionToken(application, ComponentName(application, PlaybackService::class.java))
-            controllerFuture = MediaController.Builder(application, sessionToken).buildAsync()
-            controllerFuture.addListener({
-                mediaController = controllerFuture.get()
-                mediaController?.addListener(playerListener)
-                Log.d("PlayerVM", "MediaController connected. Preparing to play.")
-
-                if (mediaUri != null) {
-                    prepareAndPlay(mediaUri, book)
-                } else {
-                    Log.e("PlayerVM", "Cannot start playback, mediaUri is null.")
-                }
-
-            }, MoreExecutors.directExecutor())
+            setupMediaController(audiobook)
         }
     }
 
-    private fun prepareAndPlay(uri: Uri, book: AudiobookEntity) {
+    private fun getMediaUri(audiobook: AudiobookEntity): Uri? {
+        return if (audiobook.isDownloaded && audiobook.localFilePath != null && File(audiobook.localFilePath!!).exists()) {
+            Log.d("AudiobookPlayerVM", "Using local file: ${audiobook.localFilePath}")
+            Uri.fromFile(File(audiobook.localFilePath!!))
+        } else {
+            // FIX: Folosește endpoint-ul corect pentru streaming de pe server
+            val remoteUrl = "${NetworkModule.BASE_URL_AUDIOBOOKS}api/audiobooks/${audiobook.id}/stream"
+            Log.d("AudiobookPlayerVM", "Using remote URL: $remoteUrl")
+            Uri.parse(remoteUrl)
+        }
+    }
+
+    private fun setupMediaController(audiobook: AudiobookEntity) {
+        val sessionToken = SessionToken(application, ComponentName(application, PlaybackService::class.java))
+        controllerFuture = MediaController.Builder(application, sessionToken).buildAsync()
+        controllerFuture.addListener({
+            mediaController = controllerFuture.get()
+            mediaController?.addListener(playerListener)
+
+            val mediaUri = getMediaUri(audiobook)
+            if (mediaUri != null) {
+                prepareAndPlay(mediaUri, audiobook)
+            } else {
+                Log.e("AudiobookPlayerVM", "Media URI is null, cannot play")
+            }
+        }, MoreExecutors.directExecutor())
+    }
+
+    private fun prepareAndPlay(uri: Uri, audiobook: AudiobookEntity) {
         val mediaItem = MediaItem.Builder()
             .setUri(uri)
+            .setMediaId(audiobook.id.toString())
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle(book.title)
-                    .setArtist(book.author)
+                    .setTitle(audiobook.title)
+                    .setArtist(audiobook.author)
                     .build()
             )
             .build()
 
-        mediaController?.setMediaItem(mediaItem)
+        mediaController?.setMediaItem(mediaItem, audiobook.lastPositionMillis)
         mediaController?.prepare()
-        mediaController?.seekTo(book.lastPositionMillis)
-        mediaController?.play()
+        mediaController?.playWhenReady = true
     }
 
     private fun startPlaybackPositionUpdates() {
         progressUpdateJob?.cancel()
         progressUpdateJob = viewModelScope.launch {
             while (true) {
-                val controller = mediaController
-                if (controller?.isPlaying == true) {
-                    _uiState.update {
-                        it.copy(currentPositionMillis = controller.currentPosition.coerceAtLeast(0))
-                    }
+                val currentPosition = mediaController?.currentPosition?.coerceAtLeast(0) ?: 0
+                if (_uiState.value.currentPositionMillis != currentPosition) {
+                    _uiState.update { it.copy(currentPositionMillis = currentPosition) }
                 }
                 delay(500)
             }
@@ -151,47 +162,63 @@ class AudiobookPlayerViewModel @Inject constructor(
     }
 
     fun onPlayPauseToggle() {
-        if (mediaController?.isPlaying == true) {
-            mediaController?.pause()
-            saveCurrentProgress() // Salvează la pauză
-        } else {
-            mediaController?.play()
+        mediaController?.let {
+            if (it.isPlaying) {
+                it.pause()
+            } else {
+                it.play()
+            }
         }
     }
 
     fun onSeek(position: Long) {
         mediaController?.seekTo(position)
         _uiState.update { it.copy(currentPositionMillis = position) }
-        saveCurrentProgress() // Salvează după seek
     }
 
-    fun onRewind() {
-        mediaController?.seekBack()
-        saveCurrentProgress() // Salvează după rewind
-    }
+    fun onRewind() = mediaController?.seekBack()
 
-    fun onForward() {
-        mediaController?.seekForward()
-        saveCurrentProgress() // Salvează după forward
-    }
+    fun onForward() = mediaController?.seekForward()
 
     private fun saveCurrentProgress() {
         viewModelScope.launch {
             val currentState = _uiState.value
             val currentPosition = mediaController?.currentPosition ?: currentState.currentPositionMillis
-            if (currentState.audiobook != null && currentPosition > 0) {
-                repository.savePlaybackPosition(currentState.audiobook.id, currentPosition)
-                Log.d("PlayerVM", "Saved playback position: $currentPosition for book ID: ${currentState.audiobook.id}")
+            currentState.audiobook?.let { audiobook ->
+                if (currentPosition > 0 && currentPosition != audiobook.lastPositionMillis) {
+                    repository.savePlaybackPosition(audiobook.id, currentPosition)
+                    Log.d("AudiobookPlayerVM", "Saved position: $currentPosition for ID: ${audiobook.id}")
+                }
+            }
+        }
+    }
+
+    private fun observeAudiobookChanges() {
+        viewModelScope.launch {
+            val chapterId = savedStateHandle.get<String>("chapterId")?.toLongOrNull() ?: return@launch
+            repository.getByIdFlow(chapterId).collectLatest { audiobook ->
+                audiobook?.let {
+                    Log.d("AudiobookPlayerVM", "Audiobook updated: ${it.title}, isDownloaded: ${it.isDownloaded}")
+                    _uiState.update { state -> state.copy(audiobook = it) }
+
+                    // Verifică dacă URI-ul s-a schimbat (ex: de la remote la local după descărcare)
+                    val newUri = getMediaUri(it)
+                    val currentUri = mediaController?.currentMediaItem?.localConfiguration?.uri
+                    if (newUri != null && newUri != currentUri) {
+                        Log.d("AudiobookPlayerVM", "Media source changed. Reloading player.")
+                        prepareAndPlay(newUri, it)
+                    }
+                }
             }
         }
     }
 
     override fun onCleared() {
-        saveCurrentProgress() // Salvează progresul la ieșirea din ecran
+        saveCurrentProgress()
         progressUpdateJob?.cancel()
         mediaController?.removeListener(playerListener)
         MediaController.releaseFuture(controllerFuture)
-        Log.d("PlayerVM", "ViewModel cleared and resources released.")
+        Log.d("AudiobookPlayerVM", "ViewModel cleared")
         super.onCleared()
     }
 }

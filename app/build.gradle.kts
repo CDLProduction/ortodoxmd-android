@@ -6,15 +6,10 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
 }
-hilt {
-    enableAggregatingTask = false
-}
 
 android {
     namespace = "md.ortodox.ortodoxmd"
     compileSdk = 36
-
-    java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))  // Aliniat la Java 21
 
     defaultConfig {
         applicationId = "md.ortodox.ortodoxmd"
@@ -22,7 +17,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,20 +36,30 @@ android {
     }
     kotlinOptions {
         jvmTarget = "21"
-        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
-        // Aliniat la Java 21
     }
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3"
+    }
     buildToolsVersion = "36.0.0"
 }
+
+hilt {
+    enableAggregatingTask = false
+}
+
 configurations.all {
     resolutionStrategy {
         force(libs.androidx.media3.common)
         force(libs.androidx.media3.exoplayer)
         force(libs.androidx.media3.session)
         force(libs.androidx.media3.ui)
+        force("androidx.work:work-runtime-ktx:2.8.1")
+        force("androidx.hilt:hilt-work:1.1.0")
+        force("com.google.dagger:hilt-android:2.52")
+        force("com.google.dagger:hilt-compiler:2.52")
     }
 }
 
@@ -63,13 +67,12 @@ room {
     schemaDirectory("$projectDir/schemas")
 }
 
-// ... (secțiunea plugins și android rămân neschimbate)
-
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -101,24 +104,24 @@ dependencies {
 
     // Coroutines
     implementation(libs.coroutines.android)
-
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.material.icons.extended)
 
-    // --- CORECȚIE APLICATĂ AICI ---
-    // Dependențe pentru Media Player
+    // Media Player
     implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.ui)
-
-    // Dependență pentru descărcări
-    implementation(libs.androidx.work.runtime.ktx)
-
-    // Dependența de compatibilitate necesară pentru PlayerNotificationManager
     implementation(libs.androidx.media)
 
-    // Adaugă această linie pentru încărcarea imaginilor
-    implementation(libs.coil.compose)
+    // WorkManager & Hilt Integration
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
+    // ADAUGAT: Dependență critică pentru a rezolva erorile KSP
+    implementation(libs.kotlin.reflect)
+
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }
