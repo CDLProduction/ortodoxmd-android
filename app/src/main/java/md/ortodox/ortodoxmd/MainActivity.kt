@@ -254,16 +254,32 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                 icon = { Icon(item.icon, contentDescription = item.title) },
                 label = { Text(item.title) },
                 selected = isGroupSelected && item.subItems == null,
+
+                // --- START CORECȚIE ---
                 onClick = {
-                    coroutineScope.launch { drawerState.close() }
                     if (item.subItems == null) {
+                        // Dacă elementul NU are sub-meniu, închidem sertarul și navigăm
+                        coroutineScope.launch { drawerState.close() }
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     } else {
+                        // Dacă ARE sub-meniu, doar îl extindem/restrângem
                         expandedItem = if (expandedItem == item.title) null else item.title
+                    }
+                },
+                // --- FINAL CORECȚIE ---
+
+                badge = {
+                    if (item.subItems != null) {
+                        IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {
+                            Icon(
+                                imageVector = if (expandedItem == item.title || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = "Expand"
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -276,6 +292,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                             label = { Text(subItem.title) },
                             selected = currentRoute == subItem.route,
                             onClick = {
+                                // Click-ul pe un sub-item închide sertarul și navighează (acest cod era deja corect)
                                 coroutineScope.launch { drawerState.close() }
                                 navController.navigate(subItem.route) {
                                     popUpTo(navController.graph.findStartDestination().id)
