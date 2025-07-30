@@ -1,8 +1,9 @@
-package md.ortodox.ortodoxmd.data
+package md.ortodox.ortodoxmd.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import md.ortodox.ortodoxmd.data.converter.Converters
 import md.ortodox.ortodoxmd.data.dao.*
 import md.ortodox.ortodoxmd.data.model.*
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity

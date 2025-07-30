@@ -1,5 +1,6 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -26,7 +28,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,11 +43,12 @@ import androidx.navigation.NavController
 import androidx.work.WorkInfo
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudiobookChaptersScreen(
     navController: NavController,
     book: AudiobookBook?,
-    viewModel: AudiobookViewModel // Acum primește ViewModel-ul ca parametru
+    viewModel: AudiobookViewModel
 ) {
     if (book == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -53,21 +59,45 @@ fun AudiobookChaptersScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(book.chapters, key = { it.id }) { chapter ->
-            val downloadState = uiState.downloadStates[chapter.id]
-            val progress = uiState.downloadProgress[chapter.id] ?: 0
-
-            ChapterItem(
-                chapter = chapter,
-                downloadState = downloadState,
-                progress = progress,
-                onClick = { navController.navigate("audiobook_player/${chapter.id}") },
-                onDownload = { viewModel.downloadAudiobook(chapter) }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(book.name) },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        Log.d("AudiobookChaptersScreen", "Back button clicked")
+                        navController.popBackStack()
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Înapoi",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            items(book.chapters, key = { it.id }) { chapter ->
+                val downloadState = uiState.downloadStates[chapter.id]
+                val progress = uiState.downloadProgress[chapter.id] ?: 0
+
+                ChapterItem(
+                    chapter = chapter,
+                    downloadState = downloadState,
+                    progress = progress,
+                    onClick = { navController.navigate("audiobook_player/${chapter.id}") },
+                    onDownload = { viewModel.downloadAudiobook(chapter) }
+                )
+            }
         }
     }
 }

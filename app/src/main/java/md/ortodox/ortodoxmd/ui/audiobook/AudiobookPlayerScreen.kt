@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import java.util.concurrent.TimeUnit
+import android.util.Log
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
@@ -59,8 +60,15 @@ fun AudiobookPlayerScreen(
             TopAppBar(
                 title = { Text(uiState.audiobook?.title ?: "Se încarcă...") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
+                    IconButton(onClick = {
+                        Log.d("AudiobookPlayerScreen", "Back button clicked")
+                        navController.popBackStack()
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Înapoi",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

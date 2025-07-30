@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import md.ortodox.ortodoxmd.data.AudioDownloadWorker
+import md.ortodox.ortodoxmd.data.worker.AudioDownloadWorker
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.repository.AudiobookRepository
 import javax.inject.Inject

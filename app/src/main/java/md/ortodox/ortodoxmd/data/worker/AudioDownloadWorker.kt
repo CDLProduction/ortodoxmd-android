@@ -1,4 +1,4 @@
-package md.ortodox.ortodoxmd.data
+package md.ortodox.ortodoxmd.data.worker
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

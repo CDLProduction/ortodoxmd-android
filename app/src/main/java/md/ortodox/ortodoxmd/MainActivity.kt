@@ -11,20 +11,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -40,12 +33,13 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
@@ -70,11 +64,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.ui.audiobook.AudiobookBook
 import md.ortodox.ortodoxmd.ui.audiobook.AudiobookBooksScreen
+import md.ortodox.ortodoxmd.ui.audiobook.AudiobookCategoriesScreen
 import md.ortodox.ortodoxmd.ui.audiobook.AudiobookCategory
 import md.ortodox.ortodoxmd.ui.audiobook.AudiobookChaptersScreen
 import md.ortodox.ortodoxmd.ui.audiobook.AudiobookPlayerScreen
@@ -115,7 +111,7 @@ val drawerItems = listOf(
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
     DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
     DrawerItem("Radio", Icons.Default.Radio, "radio"),
-    DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow") // Schimbat pentru a naviga la flux
+    DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow")
 )
 
 @Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
@@ -128,7 +124,7 @@ class MainActivity : ComponentActivity() {
         val mediaGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions[Manifest.permission.READ_MEDIA_AUDIO] ?: false
         } else {
-            true // Nu este necesară permisiunea pe versiuni mai vechi
+            true
         }
         val notificationGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
@@ -170,7 +166,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OrtodoxmdandroidTheme {
-                AppScaffold()
+                AppScaffold(navController = rememberNavController())
             }
         }
     }
@@ -178,8 +174,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppScaffold() {
-    val navController = rememberNavController()
+fun AppScaffold(navController: NavHostController) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -205,14 +200,15 @@ fun AppScaffold() {
                     title = { Text(topBarTitle) },
                     navigationIcon = {
                         IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, "Deschide Meniul")
+                            Icon(Icons.Filled.Menu, "Deschide Meniul", tint = MaterialTheme.colorScheme.onBackground)
                         }
                     }
                 )
+            },
+            content = { innerPadding ->
+                AppNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
             }
-        ) { innerPadding ->
-            AppNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
-        }
+        )
     }
 }
 
@@ -245,40 +241,51 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                             CircularProgressIndicator()
                         }
                     } else {
-                        AudiobookCategoriesScreen(navController, uiState.categories)
+                        AudiobookCategoriesScreen(
+                            navController = navController,
+                            categories = uiState.categories,
+                            categoryName = "Cărți Audio" // Titlu static fix
+                        )
                     }
                 }
             }
 
-            composable("audiobook_testaments/{categoryName}") { navBackStackEntry ->
+            composable(
+                "audiobook_testaments/{categoryName}",
+                arguments = listOf(navArgument("categoryName") { defaultValue = "Cărți Audio" })
+            ) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
                 val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
                 val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
 
-                val categoryName = navBackStackEntry.arguments?.getString("categoryName") ?: ""
+                val categoryName = navBackStackEntry.arguments?.getString("categoryName") ?: "Cărți Audio"
                 val category = uiState.categories.find { it.name == categoryName }
                 val testaments = category?.books?.map { it.testament }?.distinct() ?: emptyList()
-                AudiobookTestamentsScreen(navController, testaments)
+                AudiobookTestamentsScreen(navController, testaments, categoryName)
             }
 
-            composable("audiobook_books/{testamentName}") { navBackStackEntry ->
+            composable(
+                "audiobook_books/{testamentName}",
+                arguments = listOf(navArgument("testamentName") { defaultValue = "Noul Testament" })
+            ) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
                 val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
                 val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
 
                 val testamentName = navBackStackEntry.arguments?.getString("testamentName")
-                    ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
-
+                    ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Noul Testament"
                 AudiobookBooksScreen(navController, testamentName, uiState.categories.flatMap { it.books })
             }
 
-            composable("audiobook_chapters/{bookName}") { navBackStackEntry ->
+            composable(
+                "audiobook_chapters/{bookName}",
+                arguments = listOf(navArgument("bookName") { defaultValue = "Evanghelia după Ioan" })
+            ) { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
                 val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
 
                 val bookName = navBackStackEntry.arguments?.getString("bookName")
-                    ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
-
+                    ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "Evanghelia după Ioan"
                 val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
                 val book = uiState.categories.flatMap { it.books }.find { it.name == bookName }
 
@@ -290,7 +297,8 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             }
         }
 
-        composable("audiobook_player/{chapterId}") {
+        composable("audiobook_player/{chapterId}") { navBackStackEntry ->
+            val chapterId = navBackStackEntry.arguments?.getString("chapterId")?.toLongOrNull() ?: 1L
             AudiobookPlayerScreen(navController = navController)
         }
     }
@@ -318,7 +326,7 @@ fun NavigationDrawerContent(
                 selected = isGroupSelected && item.subItems == null,
                 onClick = {
                     coroutineScope.launch {
-                        // drawerState.close() - Nu se poate apela direct pe DrawerValue
+                        drawerState.close()
                     }
                     if (item.route != currentRoute) {
                         navController.navigate(item.route) {
@@ -349,7 +357,7 @@ fun NavigationDrawerContent(
                             selected = currentRoute == subItem.route,
                             onClick = {
                                 coroutineScope.launch {
-                                    // drawerState.close()
+                                    drawerState.close()
                                 }
                                 if (currentRoute != subItem.route) {
                                     navController.navigate(subItem.route) {
@@ -363,69 +371,6 @@ fun NavigationDrawerContent(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun AudiobookCategoriesScreen(navController: NavController, categories: List<AudiobookCategory>) {
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        items(categories, key = { it.name }) { category ->
-            ListItem(
-                headlineContent = { Text(category.name) },
-                leadingContent = { Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable {
-                    navController.navigate("audiobook_testaments/${category.name}")
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun AudiobookTestamentsScreen(navController: NavController, testaments: List<String>) {
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        items(testaments, key = { it }) { testament ->
-            ListItem(
-                headlineContent = { Text(testament) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable {
-                    val encodedTestamentName = URLEncoder.encode(testament, StandardCharsets.UTF_8.toString())
-                    navController.navigate("audiobook_books/$encodedTestamentName")
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun AudiobookBooksScreen(
-    navController: NavController,
-    testamentName: String,
-    books: List<AudiobookBook>
-) {
-    val booksInTestament = books.filter { it.testament == testamentName }
-
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        items(booksInTestament, key = { it.name }) { book ->
-            ListItem(
-                headlineContent = { Text(book.name) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
-                modifier = Modifier.clickable {
-                    val encodedBookName = URLEncoder.encode(book.name, StandardCharsets.UTF_8.toString())
-                    navController.navigate("audiobook_chapters/$encodedBookName")
-                }
-            )
         }
     }
 }

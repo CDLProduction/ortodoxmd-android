@@ -12,7 +12,7 @@ import androidx.lifecycle.asFlow
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import md.ortodox.ortodoxmd.data.AudioDownloadWorker
+import md.ortodox.ortodoxmd.data.worker.AudioDownloadWorker
 import md.ortodox.ortodoxmd.data.dao.AudiobookDao
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback

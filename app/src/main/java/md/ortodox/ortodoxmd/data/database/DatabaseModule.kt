@@ -1,4 +1,4 @@
-package md.ortodox.ortodoxmd.data
+package md.ortodox.ortodoxmd.data.database
 
 import android.content.Context
 import androidx.room.Room

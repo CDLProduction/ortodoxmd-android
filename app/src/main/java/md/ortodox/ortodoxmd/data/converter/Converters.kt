@@ -1,4 +1,4 @@
-package md.ortodox.ortodoxmd.data
+package md.ortodox.ortodoxmd.data.converter
 
 import androidx.room.TypeConverter
 import com.google.gson.Gson
