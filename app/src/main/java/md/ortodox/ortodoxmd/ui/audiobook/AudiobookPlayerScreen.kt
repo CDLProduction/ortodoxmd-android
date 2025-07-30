@@ -1,3 +1,5 @@
+@file:Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
+
 package md.ortodox.ortodoxmd.ui.audiobook
 
 import androidx.compose.animation.Crossfade
