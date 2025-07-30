@@ -36,13 +36,11 @@ class AudioDownloadWorker @AssistedInject constructor(
         const val KEY_DOWNLOAD_URL = "download_url"
         const val KEY_FILE_NAME = "file_name"
         const val KEY_PROGRESS = "progress"
-        const val NOTIFICATION_ID = 1001
         const val NOTIFICATION_CHANNEL_ID = "audio_download_channel"
         const val PROGRESS_MAX = 100
     }
 
     override suspend fun doWork(): Result {
-        Log.d("AudioDownloadWorker", "Worker initialized - audiobookDao: $audiobookDao, okHttpClient: $okHttpClient")
         val audiobookId = inputData.getLong(KEY_AUDIOBOOK_ID, -1L)
         val downloadUrl = inputData.getString(KEY_DOWNLOAD_URL) ?: ""
         val fileName = inputData.getString(KEY_FILE_NAME) ?: ""
@@ -52,11 +50,14 @@ class AudioDownloadWorker @AssistedInject constructor(
             return Result.failure()
         }
 
+        // **CORECTIE**: Folosim ID-ul cărții audio ca ID unic pentru notificare.
+        val notificationId = audiobookId.toInt()
+
         return try {
-            val initialForegroundInfo = createForegroundInfo(0, "Descărcare în curs...")
-            Log.d("AudioDownloadWorker", "Setting foreground info: $initialForegroundInfo")
+            // Inițiem serviciul în prim-plan cu progres inițial
+            val initialForegroundInfo = createForegroundInfo(notificationId, 0, "Descărcare în așteptare...")
             setForeground(initialForegroundInfo)
-            Log.d("AudioDownloadWorker", "Starting download for audiobook ID: $audiobookId from URL: $downloadUrl")
+            Log.d("AudioDownloadWorker", "Starting download for audiobook ID: $audiobookId")
 
             val request = Request.Builder().url(downloadUrl).build()
             val response = okHttpClient.newCall(request).execute()
@@ -81,53 +82,62 @@ class AudioDownloadWorker @AssistedInject constructor(
                             output.write(buffer, 0, bytesRead)
                             downloadedBytes += bytesRead
                             val progress = if (totalBytes > 0) (downloadedBytes * PROGRESS_MAX / totalBytes).toInt() else 0
+
+                            // Publicăm progresul pentru UI
                             val progressData = Data.Builder().putInt(KEY_PROGRESS, progress).build()
                             setProgress(progressData)
-                            setForeground(createForegroundInfo(progress, "Descărcare... $progress%"))
+
+                            // Actualizăm notificarea cu progresul curent
+                            val foregroundInfo = createForegroundInfo(notificationId, progress, "Descărcare... $progress%")
+                            setForeground(foregroundInfo)
                         }
                     }
                 }
             }
 
+            // Marcăm în baza de date ca descărcat
             val filePath = destinationFile.absolutePath
             audiobookDao.setAsDownloaded(audiobookId, filePath)
             Log.d("AudioDownloadWorker", "SUCCESS for ID $audiobookId, saved at: $filePath")
 
-            val outputData = Data.Builder().putLong(KEY_AUDIOBOOK_ID, audiobookId).build()
-            Result.success(outputData)
+            Result.success()
 
         } catch (e: Exception) {
             Log.e("AudioDownloadWorker", "Exception for ID $audiobookId", e)
-            val outputData = Data.Builder().putLong(KEY_AUDIOBOOK_ID, audiobookId).build()
-            if (runAttemptCount < 3) Result.retry() else Result.failure(outputData)
+            // Încercăm din nou de câteva ori înainte de a eșua
+            if (runAttemptCount < 3) Result.retry() else Result.failure()
         }
     }
 
-    private fun createForegroundInfo(progress: Int, progressText: String): ForegroundInfo {
+    /**
+     * Creează ForegroundInfo pentru a rula worker-ul ca un serviciu în prim-plan.
+     * @param notificationId ID-ul unic pentru notificare.
+     * @param progress Progresul curent (0-100).
+     * @param progressText Textul afișat în notificare.
+     */
+    private fun createForegroundInfo(notificationId: Int, progress: Int, progressText: String): ForegroundInfo {
         val channelId = NOTIFICATION_CHANNEL_ID
-        Log.d("AudioDownloadWorker", "Creating foreground info with channelId: $channelId, progress: $progress")
+        val channelName = "Descărcări Audio"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelName = "Descărcări Audio"
             val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW)
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle("Descărcare Audio")
+            .setContentTitle("Descărcare: ${inputData.getString(KEY_FILE_NAME)}") // Titlu mai specific
             .setContentText(progressText)
-            .setSmallIcon(R.drawable.ic_notification_radio)
-            .setProgress(PROGRESS_MAX, progress, progress == 0)
+            .setSmallIcon(R.drawable.ic_notification_radio) // Asigură-te că această resursă există
+            .setProgress(PROGRESS_MAX, progress, false)
             .setOngoing(true)
             .setSilent(true)
             .build()
 
-        // CORECȚIE: Specificăm tipul serviciului în prim-plan direct aici, cu verificare pentru compatibilitate
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            ForegroundInfo(notificationId, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else {
-            ForegroundInfo(NOTIFICATION_ID, notification) // Compatibilitate pentru API < 29
+            ForegroundInfo(notificationId, notification)
         }
     }
 }

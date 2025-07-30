@@ -1,12 +1,7 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
 import android.util.Log
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,11 +25,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.net.URLEncoder
@@ -72,33 +64,18 @@ fun AudiobookTestamentsScreen(navController: NavController, testaments: List<Str
             modifier = Modifier.padding(paddingValues)
         ) {
             items(testaments, key = { it }) { testament ->
-                val interactionSource = remember { MutableInteractionSource() }
-                val isHovered by interactionSource.collectIsHoveredAsState()
-                val scale = animateFloatAsState(
-                    targetValue = if (isHovered) 1.02f else 1f,
-                    animationSpec = tween(durationMillis = 200)
-                )
-
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .scale(scale.value)
-                        .padding(vertical = 4.dp)
-                        .hoverable(interactionSource = interactionSource),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = if (isHovered) 8.dp else 2.dp
-                    ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
+                        .padding(vertical = 4.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
                             .clickable(
-                                enabled = true,
-                                onClickLabel = "Navighează la $testament",
                                 onClick = {
                                     val encodedTestamentName = URLEncoder.encode(testament, StandardCharsets.UTF_8.toString())
                                     navController.navigate("audiobook_books/$encodedTestamentName?testamentName=$encodedTestamentName")
@@ -120,13 +97,11 @@ fun AudiobookTestamentsScreen(navController: NavController, testaments: List<Str
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (isHovered) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "Navighează",
-                                tint = MaterialTheme.colorScheme.secondary
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Navighează",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
                     }
                 }
             }

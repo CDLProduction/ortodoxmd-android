@@ -9,6 +9,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import androidx.lifecycle.asFlow
+import androidx.work.OneTimeWorkRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -65,36 +66,41 @@ class AudiobookRepository @Inject constructor(
         }
     }
 
-    fun startDownload(audiobook: AudiobookEntity) {
-        if (audiobook.isDownloaded) {
-            Log.d("AudiobookRepository", "Audiobook ${audiobook.id} is already downloaded.")
-            return
-        }
+    // În interiorul clasei AudiobookRepository
 
+    fun createDownloadWorkRequest(audiobook: AudiobookEntity): OneTimeWorkRequest {
         val downloadUrl = "${NetworkModule.BASE_URL_AUDIOBOOKS}api/audiobooks/${audiobook.id}/stream"
         val fileName = audiobook.remoteUrlPath.substringAfterLast('/')
 
-        val inputData = workDataOf(
-            AudioDownloadWorker.KEY_AUDIOBOOK_ID to audiobook.id,
-            AudioDownloadWorker.KEY_DOWNLOAD_URL to downloadUrl,
-            AudioDownloadWorker.KEY_FILE_NAME to fileName
-        )
-
-        val downloadWorkRequest = OneTimeWorkRequestBuilder<AudioDownloadWorker>()
-            .setInputData(inputData)
-            .addTag(DOWNLOAD_TAG)
-            .addTag("audiobook_download_${audiobook.id}")
+        return OneTimeWorkRequestBuilder<AudioDownloadWorker>()
+            .setInputData(workDataOf(
+                AudioDownloadWorker.KEY_AUDIOBOOK_ID to audiobook.id,
+                AudioDownloadWorker.KEY_DOWNLOAD_URL to downloadUrl,
+                AudioDownloadWorker.KEY_FILE_NAME to fileName
+            ))
+            .addTag(DOWNLOAD_TAG) // Tag-ul general
+            .addTag("audiobook_download_${audiobook.id}") // Tag-ul specific
             .setBackoffCriteria(
                 backoffPolicy = BackoffPolicy.EXPONENTIAL,
                 backoffDelay = 10_000L,
                 timeUnit = TimeUnit.MILLISECONDS
             )
             .build()
+    }
 
-        Log.d("AudiobookRepository", "Enqueuing download for audiobook ID: ${audiobook.id} with URL: $downloadUrl")
+    // Funcția startDownload devine mai simplă
+    fun startDownload(audiobook: AudiobookEntity) {
+        if (audiobook.isDownloaded) {
+            Log.d("AudiobookRepository", "Audiobook ${audiobook.id} is already downloaded.")
+            return
+        }
+
+        val downloadWorkRequest = createDownloadWorkRequest(audiobook)
+
+        Log.d("AudiobookRepository", "Enqueuing unique download work for audiobook ID: ${audiobook.id}")
         workManager.enqueueUniqueWork(
-            "download_${audiobook.id}",
-            ExistingWorkPolicy.KEEP,
+            "download_${audiobook.id}", // Nume unic pentru a nu dubla descărcarea individuală
+            ExistingWorkPolicy.REPLACE,
             downloadWorkRequest
         )
     }
