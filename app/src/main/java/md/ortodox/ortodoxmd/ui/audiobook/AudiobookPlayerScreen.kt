@@ -1,5 +1,3 @@
-@file:Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
-
 package md.ortodox.ortodoxmd.ui.audiobook
 
 import androidx.compose.animation.Crossfade
@@ -21,6 +19,8 @@ import androidx.compose.material.icons.filled.Forward30
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -80,7 +80,9 @@ fun AudiobookPlayerScreen(
                     onPlayPauseToggle = viewModel::onPlayPauseToggle,
                     onSeek = viewModel::onSeek,
                     onRewind = viewModel::onRewind,
-                    onForward = viewModel::onForward
+                    onForward = viewModel::onForward,
+                    onNext = viewModel::onNext,
+                    onPrevious = viewModel::onPrevious
                 )
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -98,7 +100,9 @@ private fun PlayerContent(
     onPlayPauseToggle: () -> Unit,
     onSeek: (Long) -> Unit,
     onRewind: () -> Unit,
-    onForward: () -> Unit
+    onForward: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit
 ) {
     Column(
         modifier = modifier,
@@ -116,7 +120,9 @@ private fun PlayerContent(
             onPlayPauseToggle = onPlayPauseToggle,
             onSeek = onSeek,
             onRewind = onRewind,
-            onForward = onForward
+            onForward = onForward,
+            onNext = onNext,
+            onPrevious = onPrevious
         )
     }
 }
@@ -158,7 +164,9 @@ private fun PlayerControls(
     onPlayPauseToggle: () -> Unit,
     onSeek: (Long) -> Unit,
     onRewind: () -> Unit,
-    onForward: () -> Unit
+    onForward: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit
 ) {
     val controlsEnabled = totalDurationMillis > 0
 
@@ -185,6 +193,9 @@ private fun PlayerControls(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(onClick = onPrevious, enabled = controlsEnabled) {
+                Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(32.dp))
+            }
             IconButton(onClick = onRewind, enabled = controlsEnabled) {
                 Icon(Icons.Default.Replay10, "Înapoi 10s", modifier = Modifier.size(32.dp))
             }
@@ -205,6 +216,9 @@ private fun PlayerControls(
             }
             IconButton(onClick = onForward, enabled = controlsEnabled) {
                 Icon(Icons.Default.Forward30, "Înainte 30s", modifier = Modifier.size(32.dp))
+            }
+            IconButton(onClick = onNext, enabled = controlsEnabled) {
+                Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(32.dp))
             }
         }
         Spacer(Modifier.height(32.dp))
