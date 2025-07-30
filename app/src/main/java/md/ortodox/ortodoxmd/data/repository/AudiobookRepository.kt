@@ -19,6 +19,7 @@ import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback
 import md.ortodox.ortodoxmd.data.network.AudiobookApiService
 import md.ortodox.ortodoxmd.data.network.NetworkModule
+import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -112,5 +113,39 @@ class AudiobookRepository @Inject constructor(
 
     companion object {
         const val DOWNLOAD_TAG = "audiobook_download"
+    }
+
+    // NOU: Funcție pentru a șterge un singur capitol
+    suspend fun deleteChapter(chapter: AudiobookEntity) {
+        deleteChapters(listOf(chapter))
+    }
+
+    // NOU: Funcție pentru a șterge o listă de capitole
+    suspend fun deleteChapters(chapters: List<AudiobookEntity>) {
+        val chapterIdsToDelete = mutableListOf<Long>()
+
+        chapters.forEach { chapter ->
+            if (chapter.isDownloaded && !chapter.localFilePath.isNullOrEmpty()) {
+                try {
+                    val fileToDelete = File(chapter.localFilePath!!)
+                    if (fileToDelete.exists()) {
+                        if (fileToDelete.delete()) {
+                            // Adaugă la listă doar dacă fișierul a fost șters cu succes
+                            chapterIdsToDelete.add(chapter.id)
+                            Log.d("AudiobookRepository", "Deleted file: ${chapter.localFilePath}")
+                        } else {
+                            Log.e("AudiobookRepository", "Failed to delete file: ${chapter.localFilePath}")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("AudiobookRepository", "Error deleting file for chapter ${chapter.id}", e)
+                }
+            }
+        }
+
+        // Actualizează baza de date pentru fișierele șterse
+        if (chapterIdsToDelete.isNotEmpty()) {
+            audiobookDao.markAsNotDownloaded(chapterIdsToDelete)
+        }
     }
 }

@@ -18,7 +18,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,11 +40,13 @@ fun AudiobookChaptersScreen(
     }
 
     val book = chapterUiState.book
-    val hasDownloadableChapters = remember(book, mainUiState.downloadStates) {
+    val hasDownloadableChapters = remember(book, mainUiState) {
         book?.chapters?.any {
-            val state = mainUiState.downloadStates[it.id]
-            !it.isDownloaded && state != WorkInfo.State.ENQUEUED && state != WorkInfo.State.RUNNING
+            !it.isDownloaded
         } ?: false
+    }
+    val hasDeletableChapters = remember(book, mainUiState) {
+        book?.chapters?.any { it.isDownloaded } ?: false
     }
 
     Scaffold(
@@ -59,19 +60,24 @@ fun AudiobookChaptersScreen(
         },
         floatingActionButton = {
             AnimatedVisibility(
-                visible = isDownloading || hasDownloadableChapters,
+                visible = isDownloading || hasDeletableChapters || hasDownloadableChapters,
                 enter = slideInVertically { it } + fadeIn(),
                 exit = slideOutVertically { it } + fadeOut()
             ) {
-                if (isDownloading) {
-                    ExtendedFloatingActionButton(
+                when {
+                    isDownloading -> ExtendedFloatingActionButton(
                         onClick = { viewModel.cancelAllDownloads() },
                         icon = { Icon(Icons.Default.Cancel, "Anulează") },
                         text = { Text("Anulează") },
-                        containerColor = MaterialTheme.colorScheme.error
+                        containerColor = MaterialTheme.colorScheme.errorContainer
                     )
-                } else {
-                    ExtendedFloatingActionButton(
+                    hasDeletableChapters -> ExtendedFloatingActionButton(
+                        onClick = { book?.chapters?.let { viewModel.deleteAllDownloadedChapters(it) } },
+                        icon = { Icon(Icons.Default.Delete, "Șterge") },
+                        text = { Text("Șterge Descărcările") },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                    hasDownloadableChapters -> ExtendedFloatingActionButton(
                         onClick = { book?.chapters?.let { viewModel.downloadAllChapters(it) } },
                         icon = { Icon(Icons.Default.Download, "Descarcă") },
                         text = { Text("Descarcă") }
@@ -96,7 +102,8 @@ fun AudiobookChaptersScreen(
                             downloadState = mainUiState.downloadStates[chapter.id],
                             progress = mainUiState.downloadProgress[chapter.id] ?: 0,
                             onClick = { onNavigateToPlayer(chapter.id) },
-                            onDownload = { viewModel.downloadChapter(chapter) }
+                            onDownload = { viewModel.downloadChapter(chapter) },
+                            onDelete = { viewModel.deleteChapter(chapter) }
                         )
                     }
                 }
@@ -115,9 +122,10 @@ private fun ChapterItem(
     downloadState: WorkInfo.State?,
     progress: Int,
     onClick: () -> Unit,
-    onDownload: () -> Unit
+    onDownload: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    val isDownloaded = chapter.isDownloaded || downloadState == WorkInfo.State.SUCCEEDED
+    val isDownloaded = chapter.isDownloaded
 
     Card(
         onClick = onClick,
@@ -126,7 +134,7 @@ private fun ChapterItem(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -144,21 +152,37 @@ private fun ChapterItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Spacer(Modifier.width(16.dp))
-            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier.size(60.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 when {
-                    isDownloaded -> Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Descărcat",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    isDownloaded -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Descărcat",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(onClick = onDelete) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Șterge",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
                     downloadState == WorkInfo.State.RUNNING -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val animatedProgress by animateFloatAsState(targetValue = progress / 100f, label = "progressAnimation")
                         CircularProgressIndicator(
-                            progress = { progress / 100f },
+                            progress = { animatedProgress },
                             modifier = Modifier.size(24.dp),
                             strokeWidth = 2.dp
                         )
+                        Text(text = "$progress%", fontSize = 10.sp)
                     }
+                    // --> AICI ESTE LOGICA PENTRU STAREA "ÎN AȘTEPTARE" <--
                     downloadState == WorkInfo.State.ENQUEUED -> Icon(
                         imageVector = Icons.Default.HourglassTop,
                         contentDescription = "În așteptare",

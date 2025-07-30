@@ -38,4 +38,7 @@ interface AudiobookDao {
 
     @Query("SELECT * FROM last_playback WHERE id = 1")
     fun getLastPlayback(): Flow<LastPlayback?>
+
+    @Query("UPDATE audiobooks SET isDownloaded = 0, localFilePath = NULL WHERE id IN (:chapterIds)")
+    suspend fun markAsNotDownloaded(chapterIds: List<Long>)
 }

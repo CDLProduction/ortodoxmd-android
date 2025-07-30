@@ -69,6 +69,10 @@ class AudiobookViewModel @Inject constructor(
         viewModelScope.launch { repository.startDownload(chapter) }
     }
 
+    fun deleteChapter(chapter: AudiobookEntity) {
+        viewModelScope.launch { repository.deleteChapter(chapter) }
+    }
+
     fun downloadAllChapters(chapters: List<AudiobookEntity>) {
         viewModelScope.launch {
             val currentStates = uiState.value.downloadStates
@@ -87,6 +91,15 @@ class AudiobookViewModel @Inject constructor(
                     for (i in 1 until queue.size) { continuation = continuation.then(repository.createDownloadWorkRequest(queue[i])) }
                     continuation.enqueue()
                 }
+            }
+        }
+    }
+
+    fun deleteAllDownloadedChapters(chapters: List<AudiobookEntity>) {
+        viewModelScope.launch {
+            val downloadedChapters = chapters.filter { it.isDownloaded }
+            if (downloadedChapters.isNotEmpty()) {
+                repository.deleteChapters(downloadedChapters)
             }
         }
     }
