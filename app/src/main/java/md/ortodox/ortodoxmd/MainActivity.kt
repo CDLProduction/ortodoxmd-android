@@ -94,6 +94,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @androidx.annotation.OptIn(UnstableApi::class)
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
