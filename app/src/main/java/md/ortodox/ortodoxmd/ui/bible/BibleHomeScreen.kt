@@ -15,6 +15,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 private enum class BibleTab(val title: String, val icon: ImageVector, val route: String) {
     BROWSE("Răsfoire", Icons.AutoMirrored.Filled.MenuBook, "bible_testaments_entry"),
@@ -25,7 +27,6 @@ private enum class BibleTab(val title: String, val icon: ImageVector, val route:
 
 @Composable
 fun BibleHomeScreen(mainNavController: NavHostController) {
-    // Acest NavController este DOAR pentru secțiunea de Biblie
     val bibleNavController = rememberNavController()
     var selectedTab by remember { mutableStateOf(BibleTab.BROWSE) }
 
@@ -47,34 +48,22 @@ fun BibleHomeScreen(mainNavController: NavHostController) {
             }
         }
 
-        // --- START CORECȚIE ---
-        // Acest NavHost intern va gestiona ACUM toată navigația din Biblie
         NavHost(
             navController = bibleNavController,
             startDestination = BibleTab.BROWSE.route
         ) {
-            // Tab 1: Răsfoire (începe cu Testamentele)
             composable(BibleTab.BROWSE.route) {
-                // Îi pasăm NavController-ul intern (bibleNavController)
                 TestamentsScreen(navController = bibleNavController)
             }
-
-            // Tab 2: Căutare Globală
             composable(BibleTab.SEARCH.route) {
-                GlobalSearchScreen(navController = mainNavController)
+                GlobalSearchScreen(navController = bibleNavController)
             }
-
-            // Tab 3: Semne de Carte
             composable(BibleTab.BOOKMARKS.route) {
-                BookmarksScreen(navController = mainNavController)
+                BookmarksScreen(navController = bibleNavController)
             }
-
-            // Tab 4: Descărcare Offline
             composable(BibleTab.OFFLINE.route) {
                 BibleDownloadScreen()
             }
-
-            // Rutele adânci, care nu sunt direct în tab-uri, dar sunt parte din fluxul Bibliei
             composable(
                 route = "bible/books/{testamentId}",
                 arguments = listOf(navArgument("testamentId") { type = NavType.LongType })
@@ -82,7 +71,6 @@ fun BibleHomeScreen(mainNavController: NavHostController) {
                 val testamentId = backStackEntry.arguments?.getLong("testamentId")
                 BooksScreen(navController = bibleNavController, testamentId = testamentId)
             }
-
             composable(
                 route = "bible/chapters/{bookId}/{bookName}",
                 arguments = listOf(
@@ -91,10 +79,11 @@ fun BibleHomeScreen(mainNavController: NavHostController) {
                 )
             ) { backStackEntry ->
                 val bookId = backStackEntry.arguments?.getLong("bookId") ?: 0L
-                val bookName = backStackEntry.arguments?.getString("bookName") ?: ""
+                val bookName = backStackEntry.arguments?.getString("bookName")?.let {
+                    URLDecoder.decode(it, StandardCharsets.UTF_8.toString())
+                } ?: ""
                 ChaptersScreen(navController = bibleNavController, bookId = bookId, bookName = bookName)
             }
-
             composable(
                 route = "bible/verses/{bookId}/{bookName}/{chapterNumber}",
                 arguments = listOf(
@@ -106,6 +95,5 @@ fun BibleHomeScreen(mainNavController: NavHostController) {
                 VersesScreen(onBackClick = { bibleNavController.popBackStack() })
             }
         }
-        // --- FINAL CORECȚIE ---
     }
 }

@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.model.bible.BibleVerse
 import md.ortodox.ortodoxmd.data.repository.BibleRepository
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 // Model de UI pentru a include starea de "marcat"
@@ -25,7 +27,6 @@ data class VersesUiState(
     val searchQuery: String = "",
     val error: String? = null
 ) {
-    // Căutare locală, în versetele deja încărcate
     val filteredVerses: List<UiVerse>
         get() = if (searchQuery.isBlank()) {
             verses
@@ -43,12 +44,16 @@ class VersesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // --- START CORECȚIE ---
-    // Citim fiecare argument cu tipul său corect, definit în NavHost.
     private val bookId: Long = savedStateHandle.get<Long>("bookId") ?: 0L
-    private val bookName: String = savedStateHandle.get<String>("bookName") ?: "Biblia"
-    private val chapterNumber: Int = savedStateHandle.get<Int>("chapterNumber") ?: 0
+
+    // --- START CORECȚIE ---
+    // Decodăm numele cărții pentru a transforma '+' înapoi în spații
+    private val bookName: String = savedStateHandle.get<String>("bookName")?.let {
+        URLDecoder.decode(it, StandardCharsets.UTF_8.toString())
+    } ?: "Biblia"
     // --- FINAL CORECȚIE ---
+
+    private val chapterNumber: Int = savedStateHandle.get<Int>("chapterNumber") ?: 0
 
     private val _uiState = MutableStateFlow(VersesUiState(bookName = bookName, chapterNumber = chapterNumber))
     val uiState: StateFlow<VersesUiState> = _uiState.asStateFlow()

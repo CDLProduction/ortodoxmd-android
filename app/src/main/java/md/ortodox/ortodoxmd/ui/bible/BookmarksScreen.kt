@@ -12,22 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import md.ortodox.ortodoxmd.data.model.bible.VerseWithBookInfo
-import md.ortodox.ortodoxmd.data.repository.BibleRepository
-import javax.inject.Inject
-
-@HiltViewModel
-class BookmarksViewModel @Inject constructor(repository: BibleRepository) : ViewModel() {
-    val bookmarks: StateFlow<List<VerseWithBookInfo>> = repository.getAllBookmarksWithDetails()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-}
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun BookmarksScreen(
@@ -45,12 +32,12 @@ fun BookmarksScreen(
             items(bookmarks, key = { it.verse.id }) { item ->
                 Card(
                     modifier = Modifier.fillMaxWidth().clickable {
-                        val route = "bible/verses/${item.verse.bookId}/${item.bookNameRo}/${item.verse.chapterNumber}"
+                        val encodedBookName = URLEncoder.encode(item.bookNameRo, StandardCharsets.UTF_8.toString())
+                        val route = "bible/verses/${item.verse.bookId}/$encodedBookName/${item.verse.chapterNumber}"
                         navController.navigate(route)
                     },
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    // Apelul către VerseItem, care acum este public și vizibil
                     VerseItem(
                         verseNumber = item.verse.verseNumber.toString(),
                         verseText = item.verse.formattedTextRo,

@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,20 +42,13 @@ fun ChaptersScreen(
                 title = { Text(bookName) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
                     }
                 }
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
+        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
             if (chapters == null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -66,11 +61,10 @@ fun ChaptersScreen(
                 ) {
                     items(chapters!!, key = { it.id }) { chapter ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    navController.navigate("bible/verses/${bookId}/${bookName}/${chapter.chapterNumber}")
-                                },
+                            modifier = Modifier.fillMaxWidth().clickable {
+                                val encodedBookName = URLEncoder.encode(bookName, StandardCharsets.UTF_8.toString())
+                                navController.navigate("bible/verses/$bookId/$encodedBookName/${chapter.chapterNumber}")
+                            },
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Text(

@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,15 +33,12 @@ fun BooksScreen(
     }
 
     val uiState by viewModel.uiState.collectAsState()
-
-    // Titlu dinamic bazat pe testamentul selectat
     val title = when (testamentId) {
         1L -> "Vechiul Testament"
         2L -> "Noul Testament"
         else -> "Cărți"
     }
 
-    // NOU: Am adăugat Scaffold pentru a putea include TopAppBar cu buton de "înapoi"
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -47,20 +46,13 @@ fun BooksScreen(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi la Testamente"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi la Testamente")
                     }
                 }
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
+        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
             when (val state = uiState) {
                 is BooksUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -68,40 +60,29 @@ fun BooksScreen(
                     }
                 }
                 is BooksUiState.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp), contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                         Text(state.message, color = MaterialTheme.colorScheme.error)
                     }
                 }
                 is BooksUiState.Success -> {
-                    if (state.books.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Nu s-au găsit cărți.")
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(state.books, key = { it.id }) { book ->
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("bible/chapters/${book.id}/${book.nameRo}")
-                                        },
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                ) {
-                                    Text(
-                                        text = book.nameRo,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(state.books, key = { it.id }) { book ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().clickable {
+                                    val encodedBookName = URLEncoder.encode(book.nameRo, StandardCharsets.UTF_8.toString())
+                                    navController.navigate("bible/chapters/${book.id}/$encodedBookName")
+                                },
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Text(
+                                    text = book.nameRo,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(16.dp)
+                                )
                             }
                         }
                     }
