@@ -1,6 +1,5 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +41,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.work.WorkInfo
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
+import android.util.Log
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
