@@ -1,10 +1,18 @@
 package md.ortodox.ortodoxmd
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
@@ -13,29 +21,41 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import md.ortodox.ortodoxmd.ui.bible.*
+import md.ortodox.ortodoxmd.ui.audiobook.*
+import md.ortodox.ortodoxmd.ui.bible.BibleHomeScreen
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
 import md.ortodox.ortodoxmd.ui.home.HomeScreen
+import md.ortodox.ortodoxmd.ui.playback.PlaybackService
 import md.ortodox.ortodoxmd.ui.prayer.PrayerCategoriesScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
 import md.ortodox.ortodoxmd.ui.radio.RadioScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
+// --- Data classes pentru Meniu (Drawer) ---
 data class DrawerItem(
     val title: String,
     val icon: ImageVector,
     val route: String,
     val subItems: List<SubDrawerItem>? = null
 )
-
 data class SubDrawerItem(val title: String, val route: String)
 
 val prayerCategories = listOf(
@@ -45,23 +65,45 @@ val prayerCategories = listOf(
     SubDrawerItem("Rugăciuni Generale", "prayer/general")
 )
 
-// NOU: Adăugat "Radio" în listă
 val drawerItems = listOf(
     DrawerItem("Acasă", Icons.Default.Home, "home"),
     DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
     DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
-    DrawerItem("Radio", Icons.Default.Radio, "radio") // Element nou
+    DrawerItem("Radio", Icons.Default.Radio, "radio"),
+    DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow")
 )
 
+@Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { /* ... logica pentru permisiuni ... */ }
+
+    private fun askPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permissionsToRequest = mutableListOf<String>()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            if (permissionsToRequest.isNotEmpty()) {
+                requestPermissionLauncher.launch(permissionsToRequest.toTypedArray())
+            }
+        }
+    }
+
+    @androidx.annotation.OptIn(UnstableApi::class)
+    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        askPermissions()
+        startService(Intent(this, PlaybackService::class.java))
         enableEdgeToEdge()
         setContent {
             OrtodoxmdandroidTheme {
-                AppScaffold()
+                AppScaffold(navController = rememberNavController())
             }
         }
     }
@@ -69,11 +111,9 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppScaffold() {
-    val navController = rememberNavController()
+fun AppScaffold(navController: NavHostController) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -81,14 +121,15 @@ fun AppScaffold() {
         "home" -> "OrtodoxMD"
         "calendar" -> "Calendar"
         "prayer_categories", "prayer" -> "Rugăciuni"
-        "bible_home", "bible_testaments", "bible" -> "Sfânta Scriptură"
-        "radio" -> "Radio Ortodox" // Titlu nou
+        "bible_home" -> "Sfânta Scriptură"
+        "radio" -> "Radio Ortodox"
+        "audiobook_flow" -> "Cărți Audio"
         else -> "OrtodoxMD"
     }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = { NavigationDrawerContent(navController, drawerState) },
+        drawerContent = { NavigationDrawerContent(navController, drawerState) }
     ) {
         Scaffold(
             topBar = {
@@ -100,23 +141,17 @@ fun AppScaffold() {
                         }
                     }
                 )
+            },
+            content = { innerPadding ->
+                AppNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
             }
-        ) { innerPadding ->
-            AppNavHost(
-                navController = navController,
-                modifier = Modifier.padding(innerPadding)
-            )
-        }
+        )
     }
 }
 
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
-    NavHost(
-        navController = navController,
-        startDestination = "home",
-        modifier = modifier
-    ) {
+    NavHost(navController = navController, startDestination = "home", modifier = modifier) {
         composable("home") { HomeScreen(navController = navController) }
         composable("calendar") { CalendarScreen() }
         composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
@@ -124,35 +159,88 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             val category = backStackEntry.arguments?.getString("category") ?: "general"
             PrayerScreen(category = category)
         }
-        composable("bible_home") {
-            BibleHomeScreen(mainNavController = navController)
-        }
-        composable("radio") { RadioScreen() } // Rută nouă
+        composable("bible_home") { BibleHomeScreen(mainNavController = navController) }
+        composable("radio") { RadioScreen() }
 
-        // --- Restul rutelor pentru Biblie ---
-        composable("bible_testaments") { TestamentsScreen(navController = navController) }
-        composable("bible/books/{testamentId}") { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("testamentId")?.toLongOrNull()
-            BooksScreen(navController = navController, testamentId = id)
+        // --- Graf de Navigație Corectat pentru Cărți Audio ---
+        navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
+
+            composable("audiobook_categories") { navBackStackEntry ->
+                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
+
+                AudiobookCategoriesScreen(
+                    navController = navController,
+                    categories = uiState.categories,
+                    categoryName = "Cărți Audio"
+                )
+            }
+
+            composable(
+                "audiobook_testaments/{categoryName}",
+                arguments = listOf(navArgument("categoryName") { defaultValue = "Cărți Audio" })
+            ) { navBackStackEntry ->
+                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
+
+                val categoryName = navBackStackEntry.arguments?.getString("categoryName") ?: "Cărți Audio"
+                val category = uiState.categories.find { it.name == categoryName }
+                val testaments = category?.books?.map { it.testament }?.distinct() ?: emptyList()
+                AudiobookTestamentsScreen(navController, testaments, categoryName)
+            }
+
+            composable(
+                "audiobook_books/{testamentName}",
+                arguments = listOf(navArgument("testamentName") { type = NavType.StringType })
+            ) { navBackStackEntry ->
+                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
+
+                val testamentName = navBackStackEntry.arguments?.getString("testamentName")
+                    ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
+                AudiobookBooksScreen(navController, testamentName, uiState.categories.flatMap { it.books })
+            }
+
+            composable(
+                route = "audiobook_chapters/{bookName}",
+                arguments = listOf(navArgument("bookName") { type = NavType.StringType })
+            ) { navBackStackEntry ->
+                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+
+                val bookName = navBackStackEntry.arguments?.getString("bookName")?.let {
+                    URLDecoder.decode(it, StandardCharsets.UTF_8.toString())
+                }
+
+                LaunchedEffect(bookName) {
+                    if (bookName != null) {
+                        audiobookViewModel.selectBook(bookName)
+                    }
+                }
+
+                AudiobookChaptersScreen( // Apelul corectat
+                    viewModel = audiobookViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPlayer = { chapterId ->
+                        navController.navigate("audiobook_player/$chapterId")
+                    }
+                )
+            }
         }
-        composable("bible/chapters/{bookId}/{bookName}") { backStackEntry ->
-            val bookId = backStackEntry.arguments?.getString("bookId")?.toLongOrNull() ?: return@composable
-            val bookName = backStackEntry.arguments?.getString("bookName") ?: "Carte"
-            ChaptersScreen(navController = navController, bookId = bookId, bookName = bookName)
+
+        composable("audiobook_player/{chapterId}") { backStackEntry ->
+            val chapterId = backStackEntry.arguments?.getString("chapterId")?.toLongOrNull() ?: -1L
+            // Aici ar trebui să pasezi ID-ul la PlayerScreen/ViewModel dacă este necesar
+            AudiobookPlayerScreen(navController = navController)
         }
-        composable("bible/verses/{bookId}/{bookName}/{chapterNumber}") {
-            VersesScreen(onBackClick = { navController.popBackStack() })
-        }
-        composable("search") { GlobalSearchScreen(navController = navController) }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NavigationDrawerContent(
-    navController: NavHostController,
-    drawerState: DrawerState
-) {
+fun NavigationDrawerContent(navController: NavHostController, drawerState: DrawerState) {
     val coroutineScope = rememberCoroutineScope()
     var expandedItem by remember { mutableStateOf<String?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -161,14 +249,16 @@ fun NavigationDrawerContent(
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
         drawerItems.forEach { item ->
-            val isGroupSelected = currentRoute?.startsWith(item.route.split("/").first()) == true
-
+            val isGroupSelected = currentRoute?.startsWith(item.route) == true
             NavigationDrawerItem(
                 icon = { Icon(item.icon, contentDescription = item.title) },
                 label = { Text(item.title) },
                 selected = isGroupSelected && item.subItems == null,
+
+                // --- START CORECȚIE ---
                 onClick = {
-                    if (item.subItems != null) {
+                    if (item.subItems == null) {
+                        // Dacă elementul NU are sub-meniu, închidem sertarul și navigăm
                         coroutineScope.launch { drawerState.close() }
                         navController.navigate(item.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -176,19 +266,17 @@ fun NavigationDrawerContent(
                             restoreState = true
                         }
                     } else {
-                        coroutineScope.launch { drawerState.close() }
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        // Dacă ARE sub-meniu, doar îl extindem/restrângem
+                        expandedItem = if (expandedItem == item.title) null else item.title
                     }
                 },
+                // --- FINAL CORECȚIE ---
+
                 badge = {
                     if (item.subItems != null) {
                         IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {
                             Icon(
-                                imageVector = if (expandedItem == item.title) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                imageVector = if (expandedItem == item.title || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                 contentDescription = "Expand"
                             )
                         }
@@ -197,18 +285,18 @@ fun NavigationDrawerContent(
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
             )
 
-            if (item.subItems != null && expandedItem == item.title) {
+            if (item.subItems != null && (expandedItem == item.title || isGroupSelected)) {
                 Column(modifier = Modifier.padding(start = 24.dp)) {
                     item.subItems.forEach { subItem ->
                         NavigationDrawerItem(
                             label = { Text(subItem.title) },
                             selected = currentRoute == subItem.route,
                             onClick = {
+                                // Click-ul pe un sub-item închide sertarul și navighează (acest cod era deja corect)
                                 coroutineScope.launch { drawerState.close() }
                                 navController.navigate(subItem.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    popUpTo(navController.graph.findStartDestination().id)
                                     launchSingleTop = true
-                                    restoreState = false
                                 }
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)

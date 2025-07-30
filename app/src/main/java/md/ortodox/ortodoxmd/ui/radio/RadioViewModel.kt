@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata // Asigură-te că ai acest import
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -13,12 +14,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import md.ortodox.ortodoxmd.ui.playback.PlaybackService // MODIFICARE: Importăm noul serviciu
 import javax.inject.Inject
 
-/**
- * Starea UI pentru ecranul Radio.
- * Am adăugat o stare nouă, 'isBuffering', pentru a oferi feedback utilizatorului.
- */
 data class RadioUiState(
     val stations: List<RadioStation> = emptyList(),
     val currentStation: RadioStation? = null,
@@ -36,22 +34,18 @@ class RadioViewModel @Inject constructor(
 
     private var mediaController: MediaController? = null
 
-    // NOU: Listener pentru a primi actualizări de la player
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            super.onIsPlayingChanged(isPlaying)
             _uiState.update { it.copy(isPlaying = isPlaying) }
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            super.onPlaybackStateChanged(playbackState)
             val isBuffering = playbackState == Player.STATE_BUFFERING
             _uiState.update { it.copy(isBuffering = isBuffering) }
         }
     }
 
     init {
-        // *** CORECȚIE APLICATĂ AICI: Am actualizat lista de radiouri ***
         val radioStations = listOf(
             RadioStation("Radio Logos Moldova", "https://www.radio.md/stream/radiologos"),
             RadioStation("Ancient Faith Radio", "https://ancientfaith.streamguys1.com/music"),
@@ -59,17 +53,13 @@ class RadioViewModel @Inject constructor(
         )
         _uiState.update { it.copy(stations = radioStations) }
 
-        // Conectarea la serviciul media
-        val sessionToken = SessionToken(context, ComponentName(context, RadioService::class.java))
+        // MODIFICARE 1: Ne conectăm la noul PlaybackService în loc de vechiul RadioService
+        val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-        controllerFuture.addListener(
-            {
-                mediaController = controllerFuture.get()
-                // NOU: Adăugăm listener-ul la controller odată ce este gata
-                mediaController?.addListener(playerListener)
-            },
-            MoreExecutors.directExecutor()
-        )
+        controllerFuture.addListener({
+            mediaController = controllerFuture.get()
+            mediaController?.addListener(playerListener)
+        }, MoreExecutors.directExecutor())
     }
 
     fun onStationSelected(station: RadioStation) {
@@ -77,30 +67,31 @@ class RadioViewModel @Inject constructor(
         mediaController?.let {
             val mediaItem = MediaItem.Builder()
                 .setUri(station.streamUrl)
-                .setMediaId(station.name) // Setăm un ID pentru notificare
+                .setMediaId(station.name)
+                // MODIFICARE 2: Adăugăm metadate pentru ca notificarea să arate corect
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(station.name)
+                        .setArtist("Radio Live")
+                        .build()
+                )
                 .build()
             it.setMediaItem(mediaItem)
             it.prepare()
             it.play()
-            // Nu mai actualizăm 'isPlaying' manual aici; listener-ul o va face.
         }
     }
 
     fun togglePlayback() {
         mediaController?.let {
-            if (it.isPlaying) {
-                it.pause()
-            } else {
-                it.play()
-            }
-            // Nu mai actualizăm 'isPlaying' manual aici; listener-ul o va face.
+            if (it.isPlaying) it.pause() else it.play()
         }
     }
 
     override fun onCleared() {
-        // NOU: Eliminăm listener-ul pentru a preveni memory leaks
         mediaController?.removeListener(playerListener)
-        mediaController?.release()
+        // MediaController este eliberat de sistem, dar e o practică bună să nu lăsăm referințe
+        mediaController = null
         super.onCleared()
     }
 }

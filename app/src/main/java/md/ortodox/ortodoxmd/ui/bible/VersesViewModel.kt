@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.model.bible.BibleVerse
 import md.ortodox.ortodoxmd.data.repository.BibleRepository
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 // Model de UI pentru a include starea de "marcat"
@@ -25,7 +27,6 @@ data class VersesUiState(
     val searchQuery: String = "",
     val error: String? = null
 ) {
-    // Căutare locală, în versetele deja încărcate
     val filteredVerses: List<UiVerse>
         get() = if (searchQuery.isBlank()) {
             verses
@@ -40,12 +41,19 @@ data class VersesUiState(
 @HiltViewModel
 class VersesViewModel @Inject constructor(
     private val repository: BibleRepository,
-    savedStateHandle: SavedStateHandle // Pentru a prelua argumentele de navigare
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val bookId: Long = savedStateHandle.get<String>("bookId")?.toLongOrNull() ?: 0
-    private val bookName: String = savedStateHandle.get<String>("bookName") ?: "Biblia"
-    private val chapterNumber: Int = savedStateHandle.get<String>("chapterNumber")?.toIntOrNull() ?: 0
+    private val bookId: Long = savedStateHandle.get<Long>("bookId") ?: 0L
+
+    // --- START CORECȚIE ---
+    // Decodăm numele cărții pentru a transforma '+' înapoi în spații
+    private val bookName: String = savedStateHandle.get<String>("bookName")?.let {
+        URLDecoder.decode(it, StandardCharsets.UTF_8.toString())
+    } ?: "Biblia"
+    // --- FINAL CORECȚIE ---
+
+    private val chapterNumber: Int = savedStateHandle.get<Int>("chapterNumber") ?: 0
 
     private val _uiState = MutableStateFlow(VersesUiState(bookName = bookName, chapterNumber = chapterNumber))
     val uiState: StateFlow<VersesUiState> = _uiState.asStateFlow()
@@ -59,7 +67,6 @@ class VersesViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val versesFromDb = repository.getVerses(bookId, chapterNumber)
-                // Combină versetele cu starea semnelor de carte
                 repository.getBookmarkedVerseIds()
                     .map { bookmarkedIds ->
                         versesFromDb.map { verse ->
@@ -84,7 +91,6 @@ class VersesViewModel @Inject constructor(
     fun toggleBookmark(verseId: Long) {
         viewModelScope.launch {
             repository.toggleBookmark(verseId)
-            // UI-ul se va actualiza automat datorită `collect` pe Flow
         }
     }
 }

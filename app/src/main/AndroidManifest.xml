@@ -2,12 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permisiune necesară pentru a accesa stream-urile online -->
+    <!-- Permisiuni necesare -->
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Permisiuni pentru a rula serviciul în prim-plan (necesar pentru redare audio în fundal) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- ADAUGAT: Permisiune nouă necesară pentru serviciile în prim-plan de tip dataSync -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
 
     <application
         android:name=".OrtodoxMDApplication"
@@ -32,15 +37,37 @@
             </intent-filter>
         </activity>
 
-        <!-- NOU: Declarația pentru serviciul de redare radio -->
         <service
-            android:name=".ui.radio.RadioService"
+            android:name=".ui.playback.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService"/>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </service>
+
+        <!--
+            ADAUGAT: Declarație de serviciu pentru WorkManager,
+            cu tipul corect pentru a preveni crash-ul pe versiunile noi de Android.
+        -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
+        <!-- Metoda modernă pentru a dezactiva inițializarea automată a WorkManager -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <!-- Eliminăm inițializatorul specific pentru WorkManager -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
     </application>
 
