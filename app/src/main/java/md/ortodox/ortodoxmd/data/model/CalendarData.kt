@@ -17,13 +17,13 @@ data class CalendarData(
     @SerializedName("titlesEn") val titlesEn: String,
     @SerializedName("titlesRo") val titlesRo: String,
     @SerializedName("titlesRu") val titlesRu: String,
-    @SerializedName("saints") val saints: List<Saint>,  // Room nu suportă direct List, va necesita conversie
+    @SerializedName("saints") val saints: List<Saint>,
     @SerializedName("fastingDay") val fastingDay: Boolean
 )
 
-data class Saint(
-    @SerializedName("id") val id: Int,
-    @SerializedName("nameAndDescriptionEn") val nameAndDescriptionEn: String,
-    @SerializedName("nameAndDescriptionRo") val nameAndDescriptionRo: String,
-    @SerializedName("nameAndDescriptionRu") val nameAndDescriptionRu: String
-)
+//data class Saint(
+//    @SerializedName("id") val id: Int,
+//    @SerializedName("nameAndDescriptionEn") val nameAndDescriptionEn: String,
+//    @SerializedName("nameAndDescriptionRo") val nameAndDescriptionRo: String,
+//    @SerializedName("nameAndDescriptionRu") val nameAndDescriptionRu: String
+//)

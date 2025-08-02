@@ -3,6 +3,7 @@ package md.ortodox.ortodoxmd.data.converter
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import md.ortodox.ortodoxmd.data.model.Icon
 import md.ortodox.ortodoxmd.data.model.Saint
 import md.ortodox.ortodoxmd.data.model.Prayer
 import md.ortodox.ortodoxmd.data.model.bible.BibleBook
@@ -77,5 +78,15 @@ class Converters {
     fun toBibleTestament(json: String): BibleTestament {
         val type = object : TypeToken<BibleTestament>() {}.type
         return Gson().fromJson(json, type)
+    }
+    @TypeConverter
+    fun fromIconList(icons: List<Icon>): String {
+        return Gson().toJson(icons)
+    }
+
+    @TypeConverter
+    fun toIconList(json: String): List<Icon> {
+        val type = object : TypeToken<List<Icon>>() {}.type
+        return Gson().fromJson(json, type) ?: emptyList()
     }
 }

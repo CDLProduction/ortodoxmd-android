@@ -13,12 +13,26 @@ import md.ortodox.ortodoxmd.data.model.bible.*
 @Database(entities = [
     CalendarData::class, Prayer::class, BibleBook::class, BibleChapter::class,
     BibleVerse::class, BibleBookmark::class, AudiobookEntity::class,
-    BibleTestament::class, LastPlayback::class
-], version = 4, exportSchema = false)
+    BibleTestament::class, LastPlayback::class,
+    Saint::class,
+    Icon::class,
+    SaintLife::class,
+    LiturgicalService::class,
+    Monastery::class,
+    Sacrament::class,
+    Apologetic::class
+], version = 6, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun calendarDao(): CalendarDao
     abstract fun prayerDao(): PrayerDao
     abstract fun bibleDao(): BibleDao
     abstract fun audiobookDao(): AudiobookDao
+    abstract fun saintDao(): SaintDao
+    abstract fun iconDao(): IconDao
+    abstract fun saintLifeDao(): SaintLifeDao
+    abstract fun liturgicalServiceDao(): LiturgicalServiceDao
+    abstract fun monasteryDao(): MonasteryDao
+    abstract fun sacramentDao(): SacramentDao
+    abstract fun apologeticDao(): ApologeticDao
 }

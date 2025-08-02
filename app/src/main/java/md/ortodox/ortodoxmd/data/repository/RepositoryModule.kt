@@ -35,4 +35,41 @@ object RepositoryModule {
     ): AudiobookRepository {
         return AudiobookRepository(apiService, audiobookDao, context)
     }
+
+    @Provides
+    @Singleton
+    fun provideSaintLifeRepository(
+        apiService: SaintLifeApiService,
+        dao: SaintLifeDao
+    ): SaintLifeRepository {
+        return SaintLifeRepository(apiService, dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideIconRepository(
+        apiService: IconApiService,
+        iconDao: IconDao
+    ): IconRepository {
+        return IconRepository(apiService, iconDao)
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideLiturgicalRepository(api: LiturgicalApiService, dao: LiturgicalServiceDao) = LiturgicalRepository(api, dao)
+
+    @Provides
+    @Singleton
+    fun provideMonasteryRepository(api: MonasteryApiService, dao: MonasteryDao) = MonasteryRepository(api, dao)
+
+    @Provides
+    @Singleton
+    fun provideSacramentRepository(api: SacramentApiService, dao: SacramentDao) = SacramentRepository(api, dao)
+
+    @Provides
+    @Singleton
+    fun provideApologeticRepository(api: ApologeticApiService, dao: ApologeticDao) = ApologeticRepository(api, dao)
+
+
 }
