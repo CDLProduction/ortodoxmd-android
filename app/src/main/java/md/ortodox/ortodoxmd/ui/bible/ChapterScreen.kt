@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,9 +15,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.data.model.bible.BibleChapter
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -25,21 +29,20 @@ fun ChaptersScreen(
     navController: NavHostController,
     bookId: Long,
     bookName: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ChaptersViewModel = hiltViewModel()
 ) {
-    val viewModel: ChaptersViewModel = hiltViewModel()
-
     LaunchedEffect(bookId) {
         viewModel.fetchChapters(bookId)
     }
 
-    val chapters by viewModel.chapters.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(bookName) },
+                title = { Text(bookName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
@@ -49,7 +52,7 @@ fun ChaptersScreen(
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
-            if (chapters == null) {
+            if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
@@ -57,25 +60,53 @@ fun ChaptersScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(chapters!!, key = { it.id }) { chapter ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth().clickable {
+                    items(uiState.chapters, key = { it.id }) { chapter ->
+                        ChapterCardItem(
+                            chapter = chapter,
+                            onClick = {
                                 val encodedBookName = URLEncoder.encode(bookName, StandardCharsets.UTF_8.toString())
                                 navController.navigate("bible/verses/$bookId/$encodedBookName/${chapter.chapterNumber}")
-                            },
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Text(
-                                text = "Capitolul ${chapter.chapterNumber}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChapterCardItem(chapter: BibleChapter, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                contentDescription = "Capitol",
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "Capitolul ${chapter.chapterNumber}",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Vezi versete",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

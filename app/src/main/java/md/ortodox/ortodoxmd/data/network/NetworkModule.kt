@@ -78,4 +78,14 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideAudiobookApiService(@Named("AudiobookRetrofit") retrofit: Retrofit): AudiobookApiService = retrofit.create(AudiobookApiService::class.java)
+
+    // Înlocuiește provideSaintApiService cu provideSaintLifeApiService
+    @Provides
+    @Singleton
+    fun provideSaintLifeApiService(retrofit: Retrofit): SaintLifeApiService = retrofit.create(SaintLifeApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideIconApiService(@Named("AudiobookRetrofit") retrofit: Retrofit): IconApiService = retrofit.create(IconApiService::class.java)
+
 }

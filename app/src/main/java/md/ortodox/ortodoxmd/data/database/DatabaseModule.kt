@@ -13,12 +13,17 @@ import md.ortodox.ortodoxmd.data.dao.*
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, "ortodox_calendar_db")
+            // Permite Room să recreeze baza de date la migrare, util în dezvoltare
+            .fallbackToDestructiveMigration()
             .build()
     }
+
+    // --- Provider-ele care lipseau au fost adăugate/restaurate mai jos ---
 
     @Provides
     fun provideCalendarDao(db: AppDatabase): CalendarDao = db.calendarDao()
@@ -31,4 +36,14 @@ object DatabaseModule {
 
     @Provides
     fun provideAudiobookDao(db: AppDatabase): AudiobookDao = db.audiobookDao()
+
+    @Provides
+    fun provideSaintDao(db: AppDatabase): SaintDao = db.saintDao()
+
+    @Provides
+    fun provideIconDao(db: AppDatabase): IconDao = db.iconDao()
+
+    // **PROVIDER NOU ADĂUGAT PENTRU SaintLifeDao**
+    @Provides
+    fun provideSaintLifeDao(db: AppDatabase): SaintLifeDao = db.saintLifeDao()
 }

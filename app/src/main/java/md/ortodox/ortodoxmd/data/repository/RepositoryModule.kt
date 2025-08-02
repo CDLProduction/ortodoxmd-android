@@ -35,4 +35,23 @@ object RepositoryModule {
     ): AudiobookRepository {
         return AudiobookRepository(apiService, audiobookDao, context)
     }
+
+    @Provides
+    @Singleton
+    fun provideSaintLifeRepository(
+        apiService: SaintLifeApiService,
+        dao: SaintLifeDao
+    ): SaintLifeRepository {
+        return SaintLifeRepository(apiService, dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideIconRepository(
+        apiService: IconApiService,
+        iconDao: IconDao
+    ): IconRepository {
+        return IconRepository(apiService, iconDao)
+    }
+
 }

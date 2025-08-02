@@ -20,27 +20,25 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(modifier: Modifier = Modifier) {
     val viewModel: CalendarViewModel = hiltViewModel()
-    val calendarData by viewModel.calendarData.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val currentMonth by viewModel.currentMonth.collectAsState()
-    val currentYear by viewModel.currentYear.collectAsState()
-    val selectedDate by viewModel.selectedDate.collectAsState()
-
+    val calendarData by viewModel.calendarData.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val currentMonth by viewModel.currentMonth.collectAsStateWithLifecycle()
+    val currentYear by viewModel.currentYear.collectAsStateWithLifecycle()
+    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
     var showDetails by remember { mutableStateOf(true) }
     val currentDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
     var showDatePicker by remember { mutableStateOf(false) }
-
     val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale("ro")) }
-
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-
         // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -51,7 +49,6 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                 set(Calendar.MONTH, currentMonth)
             }
             val monthYearTitle = monthFormatter.format(calendar.time).replaceFirstChar { it.uppercase() }
-
             Text(
                 text = monthYearTitle,
                 style = MaterialTheme.typography.titleLarge,
@@ -65,7 +62,6 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                 Text("Selectează")
             }
         }
-
         // Date Picker
         if (showDatePicker) {
             val datePickerState = rememberDatePickerState(
@@ -90,9 +86,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                 DatePicker(state = datePickerState)
             }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
         // Zilele săptămânii
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -109,9 +103,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(8.dp))
-
         // Grila calendarului cu swipe
         Crossfade(
             targetState = "$currentYear-$currentMonth",
@@ -143,9 +135,7 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(8.dp))
-
         // Detaliile zilei
         AnimatedVisibility(
             visible = showDetails && (calendarData != null || errorMessage != null),
@@ -177,14 +167,11 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-
-                            // *** CORECȚIE TEMPORARĂ DUBLĂ APLICATĂ AICI ***
                             val correctedFastingDescription = when {
                                 calendarData!!.fastingDescriptionRo.equals("Harti", ignoreCase = true) -> "Zi fără post"
                                 calendarData!!.fastingDescriptionRo.equals("Post", ignoreCase = true) -> "Zi de post"
                                 else -> calendarData!!.fastingDescriptionRo
                             }
-
                             Text(
                                 text = "Post: $correctedFastingDescription",
                                 style = MaterialTheme.typography.bodyLarge,
@@ -219,7 +206,6 @@ fun CalendarScreen(modifier: Modifier = Modifier) {
         }
     }
 }
-
 @Composable
 private fun CalendarGrid(
     currentYear: Int,
@@ -231,19 +217,16 @@ private fun CalendarGrid(
     val viewModel: CalendarViewModel = hiltViewModel()
     val daysInMonth = viewModel.getDaysInMonth(currentYear, currentMonth)
     val firstDayOfWeek = viewModel.getFirstDayOfWeek(currentYear, currentMonth)
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
         userScrollEnabled = false
     ) {
         items(count = firstDayOfWeek) { Box(Modifier) }
-
         items(count = daysInMonth) { dayIndex ->
             val day = dayIndex + 1
             val dateStr = String.format("%04d-%02d-%02d", currentYear, currentMonth + 1, day)
             val isCurrentDay = dateStr == currentDate
             val isSelectedDay = dateStr == selectedDate
-
             Box(
                 modifier = Modifier
                     .aspectRatio(1f)
