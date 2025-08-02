@@ -18,7 +18,8 @@ import md.ortodox.ortodoxmd.data.model.bible.*
     Icon::class,
     SaintLife::class,
     LiturgicalService::class,
-    Monastery::class
+    Monastery::class,
+    Sacrament::class
 ], version = 5, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -31,4 +32,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun saintLifeDao(): SaintLifeDao
     abstract fun liturgicalServiceDao(): LiturgicalServiceDao
     abstract fun monasteryDao(): MonasteryDao
+    abstract fun sacramentDao(): SacramentDao
 }

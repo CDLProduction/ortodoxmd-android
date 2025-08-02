@@ -50,6 +50,7 @@ import md.ortodox.ortodoxmd.ui.playback.PlaybackService
 import md.ortodox.ortodoxmd.ui.prayer.PrayerCategoriesScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
 import md.ortodox.ortodoxmd.ui.radio.RadioScreen
+import md.ortodox.ortodoxmd.ui.sacrament.SacramentScreen
 import md.ortodox.ortodoxmd.ui.saints.SaintLifeDetailScreen
 import md.ortodox.ortodoxmd.ui.saints.SaintLivesScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
@@ -77,6 +78,7 @@ val drawerItems = listOf(
     DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
     DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar"),
     DrawerItem("Mănăstiri", Icons.Default.LocationCity, "monastery_list"),
+    DrawerItem("Taine și Slujbe", Icons.Default.AutoStories, "sacraments"),
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
     DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
     DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives"),
@@ -131,6 +133,7 @@ fun AppScaffold(navController: NavHostController) {
         "calendar" -> "Calendar"
         "anuar" -> "Anuar Bisericesc"
         "monastery_list" -> "Mănăstiri"
+        "sacraments" -> "Taine și Slujbe"
         "prayer_categories", "prayer" -> "Rugăciuni"
         "bible_home" -> "Sfânta Scriptură"
         "saint_lives" -> "Vieți Sfinți"
@@ -168,6 +171,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable("home") { HomeScreen(navController = navController) }
         composable("calendar") { CalendarScreen() }
         composable("anuar") { AnuarScreen() }
+        composable("sacraments") { SacramentScreen() }
         composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
         composable("prayer/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "general"
