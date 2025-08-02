@@ -13,6 +13,15 @@
     <!-- ADAUGAT: Permisiune nouă necesară pentru serviciile în prim-plan de tip dataSync -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
+    <queries>
+        <intent>
+            <action android:name="android.content.Intent.ACTION_VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+
+        <package android:name="com.google.android.apps.maps" />
+        <package android:name="com.waze" />
+    </queries>
 
     <application
         android:name=".OrtodoxMDApplication"

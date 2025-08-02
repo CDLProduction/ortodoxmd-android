@@ -37,13 +37,15 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import md.ortodox.ortodoxmd.ui.anuar.AnuarScreen // <-- IMPORT NOU
+import md.ortodox.ortodoxmd.ui.anuar.AnuarScreen
 import md.ortodox.ortodoxmd.ui.audiobook.*
 import md.ortodox.ortodoxmd.ui.bible.BibleHomeScreen
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
 import md.ortodox.ortodoxmd.ui.home.HomeScreen
 import md.ortodox.ortodoxmd.ui.icons.IconDetailScreen
 import md.ortodox.ortodoxmd.ui.icons.IconsScreen
+import md.ortodox.ortodoxmd.ui.monastery.MonasteryDetailScreen
+import md.ortodox.ortodoxmd.ui.monastery.MonasteryListScreen
 import md.ortodox.ortodoxmd.ui.playback.PlaybackService
 import md.ortodox.ortodoxmd.ui.prayer.PrayerCategoriesScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
@@ -73,7 +75,8 @@ val prayerCategories = listOf(
 val drawerItems = listOf(
     DrawerItem("Acasă", Icons.Default.Home, "home"),
     DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
-    DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar"), // <-- ELEMENT NOU ÎN MENIU
+    DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar"),
+    DrawerItem("Mănăstiri", Icons.Default.LocationCity, "monastery_list"),
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
     DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
     DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives"),
@@ -126,7 +129,8 @@ fun AppScaffold(navController: NavHostController) {
     val topBarTitle = when (currentRoute?.split("/")?.first()) {
         "home" -> "OrtodoxMD"
         "calendar" -> "Calendar"
-        "anuar" -> "Anuar Bisericesc" // <-- TITLU NOU PENTRU TOPAPPBAR
+        "anuar" -> "Anuar Bisericesc"
+        "monastery_list" -> "Mănăstiri"
         "prayer_categories", "prayer" -> "Rugăciuni"
         "bible_home" -> "Sfânta Scriptură"
         "saint_lives" -> "Vieți Sfinți"
@@ -163,7 +167,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
     NavHost(navController = navController, startDestination = "home", modifier = modifier) {
         composable("home") { HomeScreen(navController = navController) }
         composable("calendar") { CalendarScreen() }
-        composable("anuar") { AnuarScreen() } // <-- RUTĂ NOUĂ PENTRU ANUAR
+        composable("anuar") { AnuarScreen() }
         composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
         composable("prayer/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "general"
@@ -173,15 +177,38 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable("radio") { RadioScreen() }
 
         composable("saint_lives") { SaintLivesScreen(navController = navController) }
-        composable("saint_life_detail/{saintLifeId}") { backStackEntry ->
-            val saintLifeId = backStackEntry.arguments?.getString("saintLifeId")?.toLongOrNull() ?: 0L
-            SaintLifeDetailScreen(navController = navController, saintLifeId = saintLifeId)
+        composable(
+            route = "saint_life_detail/{saintLifeId}",
+            arguments = listOf(navArgument("saintLifeId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            SaintLifeDetailScreen(
+                navController = navController,
+                saintLifeId = backStackEntry.arguments?.getLong("saintLifeId") ?: 0L
+            )
         }
 
         composable("icons") { IconsScreen(navController = navController) }
-        composable("icon_detail/{iconId}") { backStackEntry ->
-            val iconId = backStackEntry.arguments?.getString("iconId")?.toLongOrNull() ?: 0L
-            IconDetailScreen(navController = navController, iconId = iconId)
+        composable(
+            route = "icon_detail/{iconId}",
+            arguments = listOf(navArgument("iconId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            IconDetailScreen(
+                navController = navController,
+                iconId = backStackEntry.arguments?.getLong("iconId") ?: 0L
+            )
+        }
+
+        composable("monastery_list") {
+            MonasteryListScreen(navController = navController)
+        }
+        composable(
+            route = "monastery_detail/{monasteryId}",
+            arguments = listOf(navArgument("monasteryId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            MonasteryDetailScreen(
+                navController = navController,
+                monasteryId = backStackEntry.arguments?.getLong("monasteryId") ?: 0L
+            )
         }
 
         navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
@@ -241,8 +268,10 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 )
             }
         }
-        composable("audiobook_player/{chapterId}") { backStackEntry ->
-            val chapterId = backStackEntry.arguments?.getString("chapterId")?.toLongOrNull() ?: -1L
+        composable(
+            route = "audiobook_player/{chapterId}",
+            arguments = listOf(navArgument("chapterId") { type = NavType.LongType })
+        ) { backStackEntry ->
             AudiobookPlayerScreen(navController = navController)
         }
     }

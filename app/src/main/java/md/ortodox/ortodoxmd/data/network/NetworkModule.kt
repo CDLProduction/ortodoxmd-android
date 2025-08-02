@@ -92,4 +92,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideLiturgicalApiService(retrofit: Retrofit): LiturgicalApiService = retrofit.create(LiturgicalApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideMonasteryApiService(retrofit: Retrofit): MonasteryApiService = retrofit.create(MonasteryApiService::class.java)
 }
