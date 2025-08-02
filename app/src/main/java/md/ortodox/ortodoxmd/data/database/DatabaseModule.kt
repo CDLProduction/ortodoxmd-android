@@ -54,4 +54,8 @@ object DatabaseModule {
 
     @Provides
     fun provideSacramentDao(db: AppDatabase): SacramentDao = db.sacramentDao()
+    @Provides
+    fun provideApologeticDao(db: AppDatabase): ApologeticDao = db.apologeticDao()
+
+
 }

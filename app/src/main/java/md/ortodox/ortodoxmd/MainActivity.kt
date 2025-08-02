@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -38,6 +39,7 @@ import androidx.navigation.navigation
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.ui.anuar.AnuarScreen
+import md.ortodox.ortodoxmd.ui.apologetics.ApologeticScreen
 import md.ortodox.ortodoxmd.ui.audiobook.*
 import md.ortodox.ortodoxmd.ui.bible.BibleHomeScreen
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
@@ -80,6 +82,7 @@ val drawerItems = listOf(
     DrawerItem("Mănăstiri", Icons.Default.LocationCity, "monastery_list"),
     DrawerItem("Taine și Slujbe", Icons.Default.AutoStories, "sacraments"),
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
+    DrawerItem("Apologetică", Icons.Default.ContactSupport, "apologetics"),
     DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
     DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives"),
     DrawerItem("Icoane", Icons.Default.Image, "icons"),
@@ -106,6 +109,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,6 +124,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(navController: NavHostController) {
@@ -135,6 +140,7 @@ fun AppScaffold(navController: NavHostController) {
         "monastery_list" -> "Mănăstiri"
         "sacraments" -> "Taine și Slujbe"
         "prayer_categories", "prayer" -> "Rugăciuni"
+        "apologetics" -> "Apologetică"
         "bible_home" -> "Sfânta Scriptură"
         "saint_lives" -> "Vieți Sfinți"
         "icons" -> "Icoane"
@@ -165,6 +171,7 @@ fun AppScaffold(navController: NavHostController) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(navController = navController, startDestination = "home", modifier = modifier) {
@@ -172,6 +179,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable("calendar") { CalendarScreen() }
         composable("anuar") { AnuarScreen() }
         composable("sacraments") { SacramentScreen() }
+        composable("apologetics") { ApologeticScreen() }
         composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
         composable("prayer/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "general"
@@ -202,9 +210,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             )
         }
 
-        composable("monastery_list") {
-            MonasteryListScreen(navController = navController)
-        }
+        composable("monastery_list") { MonasteryListScreen(navController = navController) }
         composable(
             route = "monastery_detail/{monasteryId}",
             arguments = listOf(navArgument("monasteryId") { type = NavType.LongType })

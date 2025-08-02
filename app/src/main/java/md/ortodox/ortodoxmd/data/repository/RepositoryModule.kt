@@ -67,4 +67,9 @@ object RepositoryModule {
     @Singleton
     fun provideSacramentRepository(api: SacramentApiService, dao: SacramentDao) = SacramentRepository(api, dao)
 
+    @Provides
+    @Singleton
+    fun provideApologeticRepository(api: ApologeticApiService, dao: ApologeticDao) = ApologeticRepository(api, dao)
+
+
 }
