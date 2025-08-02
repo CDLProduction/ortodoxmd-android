@@ -84,14 +84,19 @@ class AudiobookPlayerViewModel @Inject constructor(
     }
 
     private fun initializeController() {
-        val chapterId = savedStateHandle.get<String>("chapterId")?.toLongOrNull() ?: return
+        // **CORECTAT: Citim argumentul direct ca Long**
+        val chapterId: Long? = savedStateHandle["chapterId"]
+        if (chapterId == null) return
+
         viewModelScope.launch {
             val audiobook = repository.getById(chapterId) ?: return@launch
             // Găsește toate capitolele din aceeași carte
             val bookPathPrefix = audiobook.remoteUrlPath.split("/").take(4).joinToString("/")
+
+            // **CORECTAT: Folosim funcția de sortare corectă**
             val allChapters = repository.getAudiobooks().first()
                 .filter { it.remoteUrlPath.startsWith(bookPathPrefix) }
-                .sortedBy { it.id }
+                .sortedByChapterNumber()
 
             val currentIndex = allChapters.indexOfFirst { it.id == chapterId }
 

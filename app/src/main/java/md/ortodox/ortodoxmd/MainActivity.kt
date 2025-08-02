@@ -10,7 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -109,7 +108,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,7 +122,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(navController: NavHostController) {
@@ -145,7 +142,7 @@ fun AppScaffold(navController: NavHostController) {
         "saint_lives" -> "Vieți Sfinți"
         "icons" -> "Icoane"
         "radio" -> "Radio Ortodox"
-        "audiobook_flow" -> "Cărți Audio"
+        "audiobook_flow", "audiobook_player" -> "Cărți Audio"
         else -> "OrtodoxMD"
     }
 
@@ -171,7 +168,6 @@ fun AppScaffold(navController: NavHostController) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(navController = navController, startDestination = "home", modifier = modifier) {
@@ -221,6 +217,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             )
         }
 
+        // --- GRAFUL DE NAVIGARE PENTRU CĂRȚI AUDIO (RESTAURAT ȘI COMPLET) ---
         navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
             composable("audiobook_categories") { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
@@ -281,7 +278,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(
             route = "audiobook_player/{chapterId}",
             arguments = listOf(navArgument("chapterId") { type = NavType.LongType })
-        ) { backStackEntry ->
+        ) {
             AudiobookPlayerScreen(navController = navController)
         }
     }

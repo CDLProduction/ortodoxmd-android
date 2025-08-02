@@ -1,21 +1,23 @@
-// In ui/theme/Color.kt
-
 package md.ortodox.ortodoxmd.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Light Theme Colors
-val GoldLight = Color(0xFFB09141) // A rich, warm gold
-val RedLight = Color(0xFFA63C3C)
-val ParchmentLight = Color(0xFFFFF8E1) // A soft, parchment-like background
-val SurfaceLight = Color(0xFFFFFFFF) // Cards can be slightly brighter
-val TextPrimaryLight = Color(0xFF333333)
-val TextSecondaryLight = Color(0xFF5C5C5C)
+// --- Temă Deschisă (Light Theme) ---
+val LightBackground = Color(0xFFFDFBF8)
+val LightText = Color(0xFF292524)
+val LightAccent = Color(0xFFB45309)
+val LightSecondary = Color(0xFF075985)
+val LightHighlight = Color(0xFF991B1B)
+val LightSubtleText = Color(0xFF78716C)
+val LightCard = Color(0xFFFFFFFF)
+val LightBorder = Color(0xFFF5F5F4)
 
-// Dark Theme Colors
-val GoldDark = Color(0xFFD4AF37) // A brighter gold for dark backgrounds
-val RedDark = Color(0xFFD35D5D)
-val CharcoalDark = Color(0xFF1B1B1B) // A very dark, soft black
-val SurfaceDark = Color(0xFF2C2C2C) // Cards are slightly lighter than the background
-val TextPrimaryDark = Color(0xFFEAEAEA)
-val TextSecondaryDark =  Color(0xFFBDBDBD)
+// --- Temă Întunecată (Dark Theme) ---
+val DarkBackground = Color(0xFF1c1917)
+val DarkText = Color(0xFFe7e5e4)
+val DarkAccent = Color(0xFFfbbf24)
+val DarkSecondary = Color(0xFF38bdf8)
+val DarkHighlight = Color(0xFFf87171)
+val DarkSubtleText = Color(0xFF78716c)
+val DarkCard = Color(0xFF292524)
+val DarkBorder = Color(0xFF44403c)
