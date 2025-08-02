@@ -16,7 +16,8 @@ import md.ortodox.ortodoxmd.data.model.bible.*
     BibleTestament::class, LastPlayback::class,
     Saint::class,
     Icon::class,
-    SaintLife::class
+    SaintLife::class,
+    LiturgicalService::class
 ], version = 5, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -28,4 +29,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun iconDao(): IconDao
     abstract fun saintLifeDao(): SaintLifeDao
 
+    abstract fun liturgicalServiceDao(): LiturgicalServiceDao
 }

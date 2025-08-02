@@ -54,4 +54,8 @@ object RepositoryModule {
         return IconRepository(apiService, iconDao)
     }
 
+
+    @Provides
+    @Singleton
+    fun provideLiturgicalRepository(api: LiturgicalApiService, dao: LiturgicalServiceDao) = LiturgicalRepository(api, dao)
 }

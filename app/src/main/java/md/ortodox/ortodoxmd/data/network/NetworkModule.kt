@@ -88,4 +88,8 @@ object NetworkModule {
     @Singleton
     fun provideIconApiService(@Named("AudiobookRetrofit") retrofit: Retrofit): IconApiService = retrofit.create(IconApiService::class.java)
 
+
+    @Provides
+    @Singleton
+    fun provideLiturgicalApiService(retrofit: Retrofit): LiturgicalApiService = retrofit.create(LiturgicalApiService::class.java)
 }

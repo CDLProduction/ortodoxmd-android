@@ -46,4 +46,6 @@ object DatabaseModule {
     // **PROVIDER NOU ADĂUGAT PENTRU SaintLifeDao**
     @Provides
     fun provideSaintLifeDao(db: AppDatabase): SaintLifeDao = db.saintLifeDao()
+    @Provides
+    fun provideLiturgicalServiceDao(db: AppDatabase): LiturgicalServiceDao = db.liturgicalServiceDao()
 }

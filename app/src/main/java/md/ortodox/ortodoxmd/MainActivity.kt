@@ -1,5 +1,6 @@
 @file:Suppress("DEPRECATION")
 package md.ortodox.ortodoxmd
+
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -24,42 +25,32 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-
+import md.ortodox.ortodoxmd.ui.anuar.AnuarScreen // <-- IMPORT NOU
+import md.ortodox.ortodoxmd.ui.audiobook.*
 import md.ortodox.ortodoxmd.ui.bible.BibleHomeScreen
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
 import md.ortodox.ortodoxmd.ui.home.HomeScreen
+import md.ortodox.ortodoxmd.ui.icons.IconDetailScreen
+import md.ortodox.ortodoxmd.ui.icons.IconsScreen
 import md.ortodox.ortodoxmd.ui.playback.PlaybackService
 import md.ortodox.ortodoxmd.ui.prayer.PrayerCategoriesScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
 import md.ortodox.ortodoxmd.ui.radio.RadioScreen
-
-import md.ortodox.ortodoxmd.ui.icons.IconDetailScreen
-import md.ortodox.ortodoxmd.ui.icons.IconsScreen
-import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
-
-import androidx.navigation.compose.navigation
-import androidx.navigation.navArgument
-import md.ortodox.ortodoxmd.ui.audiobook.AudiobookBooksScreen
-import md.ortodox.ortodoxmd.ui.audiobook.AudiobookCategoriesScreen
-import md.ortodox.ortodoxmd.ui.audiobook.AudiobookChaptersScreen
-import md.ortodox.ortodoxmd.ui.audiobook.AudiobookPlayerScreen
-import md.ortodox.ortodoxmd.ui.audiobook.AudiobookTestamentsScreen
-import md.ortodox.ortodoxmd.ui.audiobook.AudiobookViewModel
-
 import md.ortodox.ortodoxmd.ui.saints.SaintLifeDetailScreen
 import md.ortodox.ortodoxmd.ui.saints.SaintLivesScreen
+import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -82,9 +73,10 @@ val prayerCategories = listOf(
 val drawerItems = listOf(
     DrawerItem("Acasă", Icons.Default.Home, "home"),
     DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
+    DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar"), // <-- ELEMENT NOU ÎN MENIU
     DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
     DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
-    DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives"), // <-- RUTĂ ACTUALIZATĂ AICI
+    DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives"),
     DrawerItem("Icoane", Icons.Default.Image, "icons"),
     DrawerItem("Radio", Icons.Default.Radio, "radio"),
     DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow")
@@ -134,9 +126,10 @@ fun AppScaffold(navController: NavHostController) {
     val topBarTitle = when (currentRoute?.split("/")?.first()) {
         "home" -> "OrtodoxMD"
         "calendar" -> "Calendar"
+        "anuar" -> "Anuar Bisericesc" // <-- TITLU NOU PENTRU TOPAPPBAR
         "prayer_categories", "prayer" -> "Rugăciuni"
         "bible_home" -> "Sfânta Scriptură"
-        "saint_lives" -> "Vieți Sfinți" // <-- RUTĂ ACTUALIZATĂ AICI
+        "saint_lives" -> "Vieți Sfinți"
         "icons" -> "Icoane"
         "radio" -> "Radio Ortodox"
         "audiobook_flow" -> "Cărți Audio"
@@ -170,6 +163,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
     NavHost(navController = navController, startDestination = "home", modifier = modifier) {
         composable("home") { HomeScreen(navController = navController) }
         composable("calendar") { CalendarScreen() }
+        composable("anuar") { AnuarScreen() } // <-- RUTĂ NOUĂ PENTRU ANUAR
         composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
         composable("prayer/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "general"
@@ -178,23 +172,18 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable("bible_home") { BibleHomeScreen(mainNavController = navController) }
         composable("radio") { RadioScreen() }
 
-        // --- RUTele PENTRU VIEȚI SFINȚI (CORECTATE) ---
-        composable("saint_lives") {
-            SaintLivesScreen(navController = navController)
-        }
+        composable("saint_lives") { SaintLivesScreen(navController = navController) }
         composable("saint_life_detail/{saintLifeId}") { backStackEntry ->
             val saintLifeId = backStackEntry.arguments?.getString("saintLifeId")?.toLongOrNull() ?: 0L
             SaintLifeDetailScreen(navController = navController, saintLifeId = saintLifeId)
         }
 
-        // --- RUTele PENTRU ICOANE ---
         composable("icons") { IconsScreen(navController = navController) }
         composable("icon_detail/{iconId}") { backStackEntry ->
             val iconId = backStackEntry.arguments?.getString("iconId")?.toLongOrNull() ?: 0L
             IconDetailScreen(navController = navController, iconId = iconId)
         }
 
-        // --- GRAFUL DE NAVIGARE PENTRU CĂRȚI AUDIO (RESTAURAT) ---
         navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
             composable("audiobook_categories") { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
@@ -265,6 +254,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
     var expandedItem by remember { mutableStateOf<String?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
     ModalDrawerSheet {
         Spacer(Modifier.height(12.dp))
         drawerItems.forEach { item ->
