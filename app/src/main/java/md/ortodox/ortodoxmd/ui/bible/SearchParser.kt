@@ -1,5 +1,7 @@
 package md.ortodox.ortodoxmd.ui.bible
 
+import java.util.regex.Pattern
+
 data class ParsedReference(
     val bookName: String,
     val chapter: Int,
@@ -8,21 +10,33 @@ data class ParsedReference(
 )
 
 object SearchParser {
-    // Expresie regulată pentru "NumeCarte Capitol:Verset" sau "NumeCarte Capitol:Verset-Verset"
-    private val referenceRegex = """^(.+?)\s+(\d+):(\d+)(?:-(\d+))?$""".toRegex()
+    // Expresie regulată pentru a extrage numerele (capitol, verset-verset)
+    // Ex: "2:15", "2:15-16", "2"
+    private val REF_PATTERN = Pattern.compile("^(\\d+)(?:\\s*:\\s*(\\d+)(?:\\s*-\\s*(\\d+))?)?")
 
     fun parse(query: String): ParsedReference? {
-        val match = referenceRegex.find(query.trim()) ?: return null
+        // Pasul 1: Încercăm să găsim numele cărții folosind noul nostru mapper
+        val bookMatch = BibleBookMapper.findBook(query) ?: return null
+
+        val canonicalBookName = bookMatch.first
+        val numbersPart = bookMatch.second
+
+        // Pasul 2: Aplicăm expresia regulată pe restul textului (partea cu numere)
+        val matcher = REF_PATTERN.matcher(numbersPart)
+        if (!matcher.find()) return null
 
         return try {
-            // Extrage grupurile: 1=Nume Carte, 2=Capitol, 3=Verset Start, 4=Verset Sfârșit (opțional)
-            val bookName = match.groupValues[1].trim()
-            val chapter = match.groupValues[2].toInt()
-            val startVerse = match.groupValues[3].toInt()
-            val endVerse = match.groupValues[4].takeIf { it.isNotEmpty() }?.toInt()
+            val chapter = matcher.group(1)?.toInt() ?: return null
+            val startVerse = matcher.group(2)?.toInt() ?: 1 // Dacă nu e specificat versetul, începem cu 1
+            val endVerse = matcher.group(3)?.toInt()
 
-            ParsedReference(bookName, chapter, startVerse, endVerse)
-        } catch (e: Exception) {
+            ParsedReference(
+                bookName = canonicalBookName,
+                chapter = chapter,
+                startVerse = startVerse,
+                endVerse = endVerse
+            )
+        } catch (e: NumberFormatException) {
             null
         }
     }

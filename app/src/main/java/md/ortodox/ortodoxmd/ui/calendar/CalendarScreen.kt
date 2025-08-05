@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package md.ortodox.ortodoxmd.ui.calendar
 
 import androidx.compose.animation.*
@@ -17,240 +15,198 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import md.ortodox.ortodoxmd.data.model.CalendarData
+import md.ortodox.ortodoxmd.domain.model.HolidayRank
+import md.ortodox.ortodoxmd.domain.model.RedLetterDays
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalendarScreen(modifier: Modifier = Modifier) {
-    val viewModel: CalendarViewModel = hiltViewModel()
-    val calendarData by viewModel.calendarData.collectAsStateWithLifecycle()
-    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
-    val currentMonth by viewModel.currentMonth.collectAsStateWithLifecycle()
-    val currentYear by viewModel.currentYear.collectAsStateWithLifecycle()
-    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
-    var showDetails by remember { mutableStateOf(true) }
-    val currentDate = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
+fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
     val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale("ro")) }
+
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val calendar = Calendar.getInstance().apply {
-                set(Calendar.YEAR, currentYear)
-                set(Calendar.MONTH, currentMonth)
-            }
-            val monthYearTitle = monthFormatter.format(calendar.time).replaceFirstChar { it.uppercase() }
-            Text(
-                text = monthYearTitle,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            val monthYearTitle = monthFormatter.format(uiState.selectedDate.time).replaceFirstChar { it.uppercase() }
+            Text(monthYearTitle, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = { viewModel.goToToday() }, modifier = Modifier.padding(end = 8.dp)) {
-                Text("Azi")
-            }
-            Button(onClick = { showDatePicker = true }) {
-                Text("Selectează")
-            }
+            OutlinedButton(onClick = viewModel::goToToday) { Text("Azi") }
+            Spacer(Modifier.width(8.dp))
+            Button(onClick = { showDatePicker = true }) { Text("Selectează") }
         }
-        // Date Picker
+
         if (showDatePicker) {
-            val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = Calendar.getInstance().apply {
-                    set(currentYear, currentMonth, 1)
-                }.timeInMillis
-            )
+            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.selectedDate.timeInMillis)
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
                 confirmButton = {
                     Button(onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            viewModel.updateFromPicker(millis)
-                        }
+                        datePickerState.selectedDateMillis?.let { viewModel.updateFromPicker(it) }
                         showDatePicker = false
                     }) { Text("OK") }
                 },
-                dismissButton = {
-                    TextButton(onClick = { showDatePicker = false }) { Text("Anulează") }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
+                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Anulează") } }
+            ) { DatePicker(state = datePickerState) }
         }
+
         Spacer(modifier = Modifier.height(16.dp))
-        // Zilele săptămânii
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            val daysOfWeek = listOf("D", "L", "Ma", "Mi", "J", "V", "S")
-            daysOfWeek.forEach { day ->
-                Text(
-                    text = day,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f)
-                )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+            listOf("L", "Ma", "Mi", "J", "V", "S", "D").forEach { day ->
+                Text(day, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        // Grila calendarului cu swipe
-        Crossfade(
-            targetState = "$currentYear-$currentMonth",
-            label = "month-transition"
-        ) { key ->
-            var dragAmount by remember { mutableStateOf(0f) }
-            Box(
-                modifier = Modifier.pointerInput(key) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { dragAmount = 0f },
-                        onHorizontalDrag = { _, drag -> dragAmount += drag },
-                        onDragEnd = {
-                            val swipeThreshold = 150
-                            if (dragAmount > swipeThreshold) viewModel.goToPreviousMonth()
-                            else if (dragAmount < -swipeThreshold) viewModel.goToNextMonth()
-                        }
-                    )
+
+        Box(
+            modifier = Modifier.pointerInput(uiState.selectedDate.get(Calendar.MONTH)) {
+                detectHorizontalDragGestures { _, dragAmount ->
+                    if (dragAmount < -50) viewModel.goToNextMonth()
+                    if (dragAmount > 50) viewModel.goToPreviousMonth()
                 }
+            }
+        ) {
+            AnimatedContent(
+                targetState = "${uiState.selectedDate.get(Calendar.YEAR)}-${uiState.selectedDate.get(Calendar.MONTH)}",
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        slideInHorizontally { width -> -width } togetherWith slideOutHorizontally { width -> width }
+                    } else {
+                        slideInHorizontally { width -> width } togetherWith slideOutHorizontally { width -> -width }
+                    }
+                }, label = "month_swipe"
             ) {
                 CalendarGrid(
-                    currentYear = currentYear,
-                    currentMonth = currentMonth,
-                    selectedDate = selectedDate,
-                    currentDate = currentDate,
-                    onDateSelected = { dateStr ->
-                        viewModel.selectDate(dateStr)
-                        showDetails = true
+                    calendar = uiState.selectedDate,
+                    dataForMonth = uiState.dataForVisibleMonth,
+                    onDateSelected = { day ->
+                        val newDate = (uiState.selectedDate.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
+                        viewModel.selectDate(newDate)
                     }
                 )
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        // Detaliile zilei
-        AnimatedVisibility(
-            visible = showDetails && (calendarData != null || errorMessage != null),
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+
+        AnimatedVisibility(visible = !uiState.isLoading, enter = fadeIn(), exit = fadeOut()) {
+            DayDetails(data = uiState.dataForSelectedDay)
+        }
+    }
+}
+
+@Composable
+private fun CalendarGrid(
+    calendar: Calendar,
+    dataForMonth: Map<String, CalendarData>,
+    onDateSelected: (Int) -> Unit
+) {
+    val tempCalendar = calendar.clone() as Calendar
+    tempCalendar.set(Calendar.DAY_OF_MONTH, 1)
+
+    var firstDayOfWeek = tempCalendar.get(Calendar.DAY_OF_WEEK) - Calendar.MONDAY
+    if (firstDayOfWeek < 0) firstDayOfWeek += 7
+
+    val daysInMonth = tempCalendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val today = Calendar.getInstance()
+    val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+
+    LazyVerticalGrid(columns = GridCells.Fixed(7), userScrollEnabled = false) {
+        items(firstDayOfWeek) { Box(Modifier.aspectRatio(1f)) }
+        items(daysInMonth) { dayIndex ->
+            val day = dayIndex + 1
+            tempCalendar.set(Calendar.DAY_OF_MONTH, day)
+            val dateStr = dateFormat.format(tempCalendar.time)
+
+            val isToday = today.get(Calendar.YEAR) == tempCalendar.get(Calendar.YEAR) &&
+                    today.get(Calendar.DAY_OF_YEAR) == tempCalendar.get(Calendar.DAY_OF_YEAR)
+            val isSelected = calendar.get(Calendar.DAY_OF_MONTH) == day
+
+            val holidayRank = RedLetterDays.getHolidayInfo(dataForMonth[dateStr], tempCalendar)
+            val isRedHoliday = holidayRank != null
+
+            val dayColor = when {
+                isSelected -> MaterialTheme.colorScheme.onPrimary
+                isRedHoliday -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurface
+            }
+            val fontWeight = when {
+                holidayRank == HolidayRank.GREAT_FEAST -> FontWeight.ExtraBold
+                isRedHoliday -> FontWeight.Bold
+                else -> FontWeight.Normal
+            }
+            val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+            val borderModifier = if (isToday) Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier
+
+            Box(
+                modifier = Modifier.aspectRatio(1f).padding(2.dp).then(borderModifier)
+                    .background(backgroundColor, CircleShape)
+                    .clickable { onDateSelected(day) },
+                contentAlignment = Alignment.Center
             ) {
-                when {
-                    errorMessage != null -> {
-                        Text(
-                            text = errorMessage!!,
-                            modifier = Modifier.padding(16.dp),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    calendarData != null -> {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = calendarData!!.date,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-                            val correctedFastingDescription = when {
-                                calendarData!!.fastingDescriptionRo.equals("Harti", ignoreCase = true) -> "Zi fără post"
-                                calendarData!!.fastingDescriptionRo.equals("Post", ignoreCase = true) -> "Zi de post"
-                                else -> calendarData!!.fastingDescriptionRo
-                            }
-                            Text(
-                                text = "Post: $correctedFastingDescription",
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                            Text(
-                                text = "Rezumat: ${calendarData!!.summaryTitleRo}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            Text(
-                                text = "Titluri: ${calendarData!!.titlesRo}",
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            if (calendarData!!.saints.isNotEmpty()) {
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    text = "Sfinți:",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                calendarData!!.saints.forEach { saint ->
-                                    Text(
-                                        text = "• ${saint.nameAndDescriptionRo}",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                Text(text = day.toString(), color = dayColor, fontWeight = fontWeight)
             }
         }
     }
 }
+
 @Composable
-private fun CalendarGrid(
-    currentYear: Int,
-    currentMonth: Int,
-    selectedDate: String,
-    currentDate: String,
-    onDateSelected: (String) -> Unit
-) {
-    val viewModel: CalendarViewModel = hiltViewModel()
-    val daysInMonth = viewModel.getDaysInMonth(currentYear, currentMonth)
-    val firstDayOfWeek = viewModel.getFirstDayOfWeek(currentYear, currentMonth)
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(7),
-        userScrollEnabled = false
-    ) {
-        items(count = firstDayOfWeek) { Box(Modifier) }
-        items(count = daysInMonth) { dayIndex ->
-            val day = dayIndex + 1
-            val dateStr = String.format("%04d-%02d-%02d", currentYear, currentMonth + 1, day)
-            val isCurrentDay = dateStr == currentDate
-            val isSelectedDay = dateStr == selectedDate
-            Box(
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .padding(2.dp)
-                    .background(
-                        color = if (isSelectedDay) MaterialTheme.colorScheme.secondary else Color.Transparent,
-                        shape = CircleShape
-                    )
-                    .border(
-                        width = if (isCurrentDay) 1.5.dp else 0.dp,
-                        color = if (isCurrentDay) MaterialTheme.colorScheme.primary else Color.Transparent,
-                        shape = CircleShape
-                    )
-                    .clickable { onDateSelected(dateStr) },
-                contentAlignment = Alignment.Center
-            ) {
+private fun DayDetails(data: CalendarData?) {
+    if (data == null) return
+
+    val calendar = remember(data.date) {
+        Calendar.getInstance().apply {
+            time = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(data.date) ?: Date()
+        }
+    }
+    val holidayRank = RedLetterDays.getHolidayInfo(data, calendar)
+
+    // **AICI ESTE CORECȚIA**
+    // Reintroducem logica pentru a înlocui "Harti" cu un text mai clar.
+    val correctedFastingDescription = when (data.fastingDescriptionRo.lowercase(Locale.ROOT)) {
+        "harti" -> "Zi fără post"
+        "post" -> "Zi de post"
+        else -> data.fastingDescriptionRo
+    }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = day.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = when {
-                        isSelectedDay -> MaterialTheme.colorScheme.onSecondary
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
+                    text = data.summaryTitleRo,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
                 )
+                if (holidayRank != null) {
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "✝️",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+            Divider()
+
+            // Folosim textul corectat
+            Text("Post: $correctedFastingDescription", style = MaterialTheme.typography.bodyLarge)
+
+            if (data.saints.isNotEmpty()) {
+                Text("Sfinții zilei:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Column {
+                    data.saints.forEach { saint ->
+                        Text("• ${saint.nameAndDescriptionRo}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
             }
         }
     }

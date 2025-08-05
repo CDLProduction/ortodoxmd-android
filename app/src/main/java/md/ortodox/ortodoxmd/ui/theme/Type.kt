@@ -13,9 +13,7 @@ val Inter = FontFamily(
     Font(R.font.inter_medium, FontWeight.Medium)
 )
 
-// Define the new Typography object with a full set of styles
 val AppTypography = Typography(
-    // Define heading styles using the Inter font
     displayLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Normal,
@@ -51,8 +49,6 @@ val AppTypography = Typography(
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
     ),
-
-    // Body text and labels will use the clean Inter font for readability
     bodyLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Normal,

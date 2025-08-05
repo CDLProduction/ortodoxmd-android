@@ -32,16 +32,20 @@ class GlobalSearchViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = SearchUiState.Loading
+
+            // Folosim noul parser robust
             val parsedRef = SearchParser.parse(query)
 
             try {
                 val results = if (parsedRef != null) {
                     // Căutare după referință
                     val verses = repository.getVersesByReference(parsedRef)
-                    // Convertim rezultatul la VerseWithBookInfo pentru a avea un tip de date consistent
-                    verses.map { v -> VerseWithBookInfo(verse = v, bookNameRo = parsedRef.bookName) }
+                    // Convertim la tipul de date necesar UI-ului
+                    verses.map { v ->
+                        VerseWithBookInfo(verse = v, bookNameRo = parsedRef.bookName)
+                    }
                 } else {
-                    // Căutare full-text
+                    // Căutare full-text (dacă parsarea a eșuat)
                     repository.searchVersesWithBookInfo(query)
                 }
 
