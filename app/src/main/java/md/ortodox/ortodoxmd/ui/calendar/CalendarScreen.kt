@@ -15,8 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -170,8 +173,6 @@ private fun DayDetails(data: CalendarData?) {
     }
     val holidayRank = RedLetterDays.getHolidayInfo(data, calendar)
 
-    // **AICI ESTE CORECȚIA**
-    // Reintroducem logica pentru a înlocui "Harti" cu un text mai clar.
     val correctedFastingDescription = when (data.fastingDescriptionRo.lowercase(Locale.ROOT)) {
         "harti" -> "Zi fără post"
         "post" -> "Zi de post"
@@ -180,24 +181,22 @@ private fun DayDetails(data: CalendarData?) {
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = data.summaryTitleRo,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            // **AICI ESTE MODIFICAREA**
+            // Folosim un AnnotatedString pentru a combina crucea (cu roșu) și titlul (cu culoarea primară).
+            val annotatedTitle = buildAnnotatedString {
                 if (holidayRank != null) {
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "✝️",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.error)) {
+                        append("✝️ ")
+                    }
+                }
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                    append(data.summaryTitleRo)
                 }
             }
+            Text(text = annotatedTitle, style = MaterialTheme.typography.titleMedium)
+
             Divider()
 
-            // Folosim textul corectat
             Text("Post: $correctedFastingDescription", style = MaterialTheme.typography.bodyLarge)
 
             if (data.saints.isNotEmpty()) {
