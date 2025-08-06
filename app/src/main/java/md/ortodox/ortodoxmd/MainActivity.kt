@@ -10,17 +10,24 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,7 +65,11 @@ import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
-// --- Data classes pentru Meniu (Drawer) ---
+// --- Structuri noi pentru Meniu (Drawer) ---
+sealed class DrawerMenu
+data class MenuItem(val item: DrawerItem) : DrawerMenu()
+data class MenuDivider(val title: String) : DrawerMenu()
+
 data class DrawerItem(
     val title: String,
     val icon: ImageVector,
@@ -74,19 +85,22 @@ val prayerCategories = listOf(
     SubDrawerItem("Rugăciuni Generale", "prayer/general")
 )
 
-val drawerItems = listOf(
-    DrawerItem("Acasă", Icons.Default.Home, "home"),
-    DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar"),
-    DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar"),
-    DrawerItem("Mănăstiri", Icons.Default.LocationCity, "monastery_list"),
-    DrawerItem("Taine și Slujbe", Icons.Default.AutoStories, "sacraments"),
-    DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories),
-    DrawerItem("Apologetică", Icons.Default.ContactSupport, "apologetics"),
-    DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home"),
-    DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives"),
-    DrawerItem("Icoane", Icons.Default.Image, "icons"),
-    DrawerItem("Radio", Icons.Default.Radio, "radio"),
-    DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow")
+val menuItems = listOf(
+    MenuItem(DrawerItem("Acasă", Icons.Default.Home, "home")),
+    MenuDivider("Principal"),
+    MenuItem(DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar")),
+    MenuItem(DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar")),
+    MenuItem(DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home")),
+    MenuDivider("Resurse Spirituale"),
+    MenuItem(DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories)),
+    MenuItem(DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives")),
+    MenuItem(DrawerItem("Icoane", Icons.Default.Image, "icons")),
+    MenuItem(DrawerItem("Mănăstiri", Icons.Default.LocationCity, "monastery_list")),
+    MenuItem(DrawerItem("Taine și Slujbe", Icons.Default.AutoStories, "sacraments")),
+    MenuItem(DrawerItem("Apologetică", Icons.Default.ContactSupport, "apologetics")),
+    MenuDivider("Media"),
+    MenuItem(DrawerItem("Radio", Icons.Default.Radio, "radio")),
+    MenuItem(DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow"))
 )
 
 @Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
@@ -108,6 +122,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,6 +137,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(navController: NavHostController) {
@@ -131,7 +147,7 @@ fun AppScaffold(navController: NavHostController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     val topBarTitle = when (currentRoute?.split("/")?.first()) {
-        "home" -> "OrtodoxMD"
+        "home" -> "Ortodox Moldova"
         "calendar" -> "Calendar"
         "anuar" -> "Anuar Bisericesc"
         "monastery_list" -> "Mănăstiri"
@@ -143,7 +159,7 @@ fun AppScaffold(navController: NavHostController) {
         "icons" -> "Icoane"
         "radio" -> "Radio Ortodox"
         "audiobook_flow", "audiobook_player" -> "Cărți Audio"
-        else -> "OrtodoxMD"
+        else -> "Ortodox Moldova"
     }
 
     ModalNavigationDrawer(
@@ -168,6 +184,7 @@ fun AppScaffold(navController: NavHostController) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(navController = navController, startDestination = "home", modifier = modifier) {
@@ -183,7 +200,6 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         }
         composable("bible_home") { BibleHomeScreen(mainNavController = navController) }
         composable("radio") { RadioScreen() }
-
         composable("saint_lives") { SaintLivesScreen(navController = navController) }
         composable(
             route = "saint_life_detail/{saintLifeId}",
@@ -194,7 +210,6 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 saintLifeId = backStackEntry.arguments?.getLong("saintLifeId") ?: 0L
             )
         }
-
         composable("icons") { IconsScreen(navController = navController) }
         composable(
             route = "icon_detail/{iconId}",
@@ -205,7 +220,6 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 iconId = backStackEntry.arguments?.getLong("iconId") ?: 0L
             )
         }
-
         composable("monastery_list") { MonasteryListScreen(navController = navController) }
         composable(
             route = "monastery_detail/{monasteryId}",
@@ -216,8 +230,6 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 monasteryId = backStackEntry.arguments?.getLong("monasteryId") ?: 0L
             )
         }
-
-        // --- GRAFUL DE NAVIGARE PENTRU CĂRȚI AUDIO (RESTAURAT ȘI COMPLET) ---
         navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
             composable("audiobook_categories") { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
@@ -292,52 +304,108 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
     val currentRoute = navBackStackEntry?.destination?.route
 
     ModalDrawerSheet {
-        Spacer(Modifier.height(12.dp))
-        drawerItems.forEach { item ->
-            val isGroupSelected = currentRoute?.startsWith(item.route) == true
-            NavigationDrawerItem(
-                icon = { Icon(item.icon, contentDescription = item.title) },
-                label = { Text(item.title) },
-                selected = isGroupSelected && item.subItems == null,
-                onClick = {
-                    if (item.subItems == null) {
-                        coroutineScope.launch { drawerState.close() }
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    } else {
-                        expandedItem = if (expandedItem == item.title) null else item.title
-                    }
-                },
-                badge = {
-                    if (item.subItems != null) {
-                        IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {
-                            Icon(
-                                imageVector = if (expandedItem == item.title || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = "Expand"
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            val bannerBackgroundColor = MaterialTheme.colorScheme.primaryContainer
+            val drawerBackgroundColor = MaterialTheme.colorScheme.surface
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    // **AICI ESTE CORECȚIA**
+                    .background(
+                        Brush.horizontalGradient(
+                            // Am eliminat parametrul 'stops' care cauza eroarea
+                            colors = listOf(
+                                drawerBackgroundColor,
+                                bannerBackgroundColor,
+                                bannerBackgroundColor,
+                                drawerBackgroundColor
                             )
-                        }
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.nav_drawer_banner),
+                        contentDescription = "Banner Ortodox Moldova",
+                        modifier = Modifier.size(90.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Text(
+                        text = "Ortodox Moldova",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            HorizontalDivider()
+
+            menuItems.forEach { menuItem ->
+                when (menuItem) {
+                    is MenuDivider -> {
+                        Text(
+                            text = menuItem.title,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
+                        )
                     }
-                },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-            )
-            if (item.subItems != null && (expandedItem == item.title || isGroupSelected)) {
-                Column(modifier = Modifier.padding(start = 24.dp)) {
-                    item.subItems.forEach { subItem ->
+                    is MenuItem -> {
+                        val item = menuItem.item
+                        val isGroupSelected = currentRoute?.startsWith(item.route) == true
                         NavigationDrawerItem(
-                            label = { Text(subItem.title) },
-                            selected = currentRoute == subItem.route,
+                            icon = { Icon(item.icon, contentDescription = item.title) },
+                            label = { Text(item.title) },
+                            selected = isGroupSelected && item.subItems == null,
                             onClick = {
-                                coroutineScope.launch { drawerState.close() }
-                                navController.navigate(subItem.route) {
-                                    popUpTo(navController.graph.findStartDestination().id)
-                                    launchSingleTop = true
+                                if (item.subItems == null) {
+                                    coroutineScope.launch { drawerState.close() }
+                                    navController.navigate(item.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                } else {
+                                    expandedItem = if (expandedItem == item.title) null else item.title
+                                }
+                            },
+                            badge = {
+                                if (item.subItems != null) {
+                                    IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {
+                                        Icon(
+                                            imageVector = if (expandedItem == item.title || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                            contentDescription = "Expand"
+                                        )
+                                    }
                                 }
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                         )
+                        if (item.subItems != null && (expandedItem == item.title || isGroupSelected)) {
+                            Column(modifier = Modifier.padding(start = 24.dp)) {
+                                item.subItems.forEach { subItem ->
+                                    NavigationDrawerItem(
+                                        label = { Text(subItem.title) },
+                                        selected = currentRoute == subItem.route,
+                                        onClick = {
+                                            coroutineScope.launch { drawerState.close() }
+                                            navController.navigate(subItem.route) {
+                                                popUpTo(navController.graph.findStartDestination().id)
+                                                launchSingleTop = true
+                                            }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

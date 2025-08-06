@@ -11,42 +11,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = DarkAccent,
-    onPrimary = DarkBackground, // Contrast bun pentru butoane
-    secondary = DarkSecondary,
-    onSecondary = DarkBackground,
-    error = DarkHighlight,
-    onError = DarkBackground,
-    background = DarkBackground,
-    onBackground = DarkText,
-    surface = DarkCard, // Fundalul card-urilor
-    onSurface = DarkText,
-    surfaceVariant = DarkCard, // Fundal pentru elemente subtile
-    onSurfaceVariant = DarkSubtleText, // Text secundar pe card-uri
-    outline = DarkBorder // Culoarea contururilor
+    primary = MochaPeach,
+    onPrimary = MochaCrust,
+    secondary = MochaBlue,
+    onSecondary = MochaCrust,
+    error = MochaRed,
+    onError = MochaCrust,
+    background = MochaBase,
+    onBackground = MochaText,
+    surface = MochaMantle,
+    onSurface = MochaText,
+    surfaceVariant = MochaSurface1,
+    onSurfaceVariant = MochaSubtext0,
+    outline = MochaOverlay0
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = LightAccent,
-    onPrimary = LightCard, // Contrast bun pentru butoane
-    secondary = LightSecondary,
-    onSecondary = LightCard,
-    error = LightHighlight,
-    onError = LightCard,
-    background = LightBackground,
-    onBackground = LightText,
-    surface = LightCard, // Fundalul card-urilor
-    onSurface = LightText,
-    surfaceVariant = LightCard, // Fundal pentru elemente subtile
-    onSurfaceVariant = LightSubtleText, // Text secundar pe card-uri
-    outline = LightBorder // Culoarea contururilor
+    primary = LattePeach,
+    onPrimary = LatteBase,
+    secondary = LatteBlue,
+    onSecondary = LatteBase,
+    error = LatteRed,
+    onError = LatteBase,
+    background = LatteBase,
+    onBackground = LatteText,
+    surface = LatteMantle,
+    onSurface = LatteText,
+    surfaceVariant = LatteMantle,
+    onSurfaceVariant = LatteSubtext0,
+    outline = LatteSurface1
 )
 
 @Composable
 fun OrtodoxmdandroidTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color este disponibil pe Android 12+
-    dynamicColor: Boolean = false, // Am setat pe 'false' pentru a folosi mereu tema noastră custom
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -60,7 +59,7 @@ fun OrtodoxmdandroidTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography, // Folosim tipografia definită în Type.kt
+        typography = AppTypography,
         content = content
     )
 }
