@@ -24,8 +24,8 @@ data class ResumePlaybackInfo(
 data class HomeUiState(
     val isLoading: Boolean = true,
     val calendarData: CalendarData? = null,
-    val verseOfTheDay: String = "Căci unde sunt doi sau trei, adunaţi în numele Meu, acolo sunt şi Eu în mijlocul lor.",
-    val verseReference: String = "Matei 18:20",
+    val verseOfTheDay: String = "",
+    val verseReference: String = "",
     val error: String? = null,
     val resumePlaybackInfo: ResumePlaybackInfo? = null
 )
@@ -34,12 +34,15 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val audiobookRepository: AudiobookRepository
-) : ViewModel() {
+    // Am eliminat BibleRepository de aici
+) : ViewModel(), DefaultLifecycleObserver {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
-    init {
+    // Datele se vor reîncărca de fiecare dată când ecranul devine activ
+    override fun onStart(owner: LifecycleOwner) {
+        super.onStart(owner)
         loadHomeScreenData()
     }
 
@@ -47,7 +50,16 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // Logica pentru datele calendaristice
+            // --- Logica pentru Versetul Zilei (acum doar statică) ---
+            val staticVerse = StaticVerseProvider.getRandomVerse()
+            _uiState.update {
+                it.copy(
+                    verseOfTheDay = staticVerse.text,
+                    verseReference = staticVerse.reference
+                )
+            }
+
+            // --- Logica pentru datele calendaristice ---
             val dateApiFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             try {
                 val calendarData = calendarRepository.getCalendarData(dateApiFormat)
@@ -62,15 +74,17 @@ class HomeViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false, error = "Eroare de conexiune.") }
             }
 
-            // Logica pentru reluarea ascultării (rulează în paralel)
+            // --- Logica pentru reluarea ascultării ---
             val lastPlayback = audiobookRepository.getLastPlaybackInfo().first()
-            if (lastPlayback != null) {
-                val bookToResume = audiobookRepository.getById(lastPlayback.audiobookId)
-                if (bookToResume != null) {
-                    _uiState.update {
-                        it.copy(resumePlaybackInfo = ResumePlaybackInfo(bookToResume, lastPlayback.positionMillis))
+            val bookToResume = lastPlayback?.let { audiobookRepository.getById(it.audiobookId) }
+            _uiState.update {
+                it.copy(
+                    resumePlaybackInfo = if (bookToResume != null && lastPlayback != null) {
+                        ResumePlaybackInfo(bookToResume, lastPlayback.positionMillis)
+                    } else {
+                        null
                     }
-                }
+                )
             }
         }
     }
