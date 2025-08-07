@@ -36,6 +36,8 @@ class OrtodoxMDApplication : Application() {
         WorkManager.initialize(this, config)
 
         Log.d("AudiobookDownload", "[Application] Hilt & WorkManager initialized manually.")
+        NotificationHelper.createNotificationChannel(this)
+        scheduleDailyNotification()
     }
 
     private fun scheduleDailyNotification() {
