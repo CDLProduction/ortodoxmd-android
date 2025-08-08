@@ -135,11 +135,11 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         runBlocking {
             val lang = languagePreferences.language.first()
             LocaleHelper.applyLanguage(this@MainActivity, lang)
         }
-        super.onCreate(savedInstanceState)
         askPermissions()
         startService(Intent(this, PlaybackService::class.java))
         enableEdgeToEdge()
