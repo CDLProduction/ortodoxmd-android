@@ -14,9 +14,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import md.ortodox.ortodoxmd.prayerCategories
+import md.ortodox.ortodoxmd.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,13 +29,13 @@ fun PrayerCategoriesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Categorii de Rugăciuni") },
+                title = { Text(stringResource(R.string.prayer_categories_title)) },
                 navigationIcon = {
                     // Buton pentru a te întoarce la ecranul anterior (ex: Home Screen)
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 }

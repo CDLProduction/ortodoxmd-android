@@ -2,4 +2,75 @@
     <string name="app_name">Ortodox Moldova</string>
     <string name="playback_channel_name">Redare Audio</string>
     <string name="playback_channel_description">Notificare pentru controlul redării audio</string>
+
+    <!-- Menu items -->
+    <string name="menu_home">Acasă</string>
+    <string name="menu_main">Principal</string>
+    <string name="menu_calendar">Calendar</string>
+    <string name="menu_anuar">Anuar Bisericesc</string>
+    <string name="menu_bible">Sfânta Scriptură</string>
+    <string name="menu_spiritual_resources">Resurse Spirituale</string>
+    <string name="menu_prayers">Rugăciuni</string>
+    <string name="menu_saint_lives">Vieți Sfinți</string>
+    <string name="menu_icons">Icoane</string>
+    <string name="menu_monasteries">Mănăstiri</string>
+    <string name="menu_sacraments">Taine și Slujbe</string>
+    <string name="menu_apologetics">Apologetică</string>
+    <string name="menu_media">Media</string>
+    <string name="menu_radio">Radio</string>
+    <string name="menu_audiobooks">Cărți Audio</string>
+    <string name="menu_language">Limba</string>
+
+    <!-- Prayer subcategories -->
+    <string name="prayer_morning">Rugăciuni de Dimineață</string>
+    <string name="prayer_evening">Rugăciuni de Seară</string>
+    <string name="prayer_illness">Rugăciuni pentru Boală</string>
+    <string name="prayer_general">Rugăciuni Generale</string>
+
+    <!-- Language selection -->
+    <string name="select_language">Selectați limba</string>
+    <string name="language_romanian">Română</string>
+    <string name="language_russian">Rusă</string>
+    <string name="language_english">Engleză</string>
+
+    <!-- Misc -->
+    <string name="banner_description">Banner Ortodox Moldova</string>
+    <string name="expand">Extinde</string>
+
+    <!-- Notifications -->
+    <string name="notification_daily_calendar_channel_name">Notificări Calendar Zilnic</string>
+    <string name="notification_daily_calendar_channel_description">Afișează informațiile zilnice din calendarul ortodox.</string>
+
+    <!-- Common actions -->
+    <string name="back">Înapoi</string>
+    <string name="today">Azi</string>
+    <string name="select">Selectează</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Anulează</string>
+
+    <!-- Calendar -->
+    <string-array name="weekdays_short">
+        <item>L</item>
+        <item>Ma</item>
+        <item>Mi</item>
+        <item>J</item>
+        <item>V</item>
+        <item>S</item>
+        <item>D</item>
+    </string-array>
+    <string name="fasting_none">Zi fără post</string>
+    <string name="fasting_day">Zi de post</string>
+    <string name="fasting">Post: %1$s</string>
+    <string name="saints_of_day">Sfinții zilei:</string>
+
+    <!-- Prayer -->
+    <string name="prayer_categories_title">Categorii de Rugăciuni</string>
+    <string name="no_prayers_found">Nu au fost găsite rugăciuni în această categorie.</string>
+    <string name="error_occurred">A apărut o eroare: %1$s</string>
+
+    <!-- Monastery -->
+    <string name="no_maps_app_found">Nu s-a găsit nicio aplicație de hărți.</string>
+    <string name="navigate">Navighează</string>
+    <string name="navigate_on_map">Navighează pe hartă</string>
+    <string name="data_not_loaded">Datele nu au putut fi încărcate.</string>
 </resources>

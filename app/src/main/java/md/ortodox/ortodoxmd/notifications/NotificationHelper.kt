@@ -17,8 +17,8 @@ object NotificationHelper {
 
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Notificări Calendar Zilnic"
-            val descriptionText = "Afișează informațiile zilnice din calendarul ortodox."
+            val name = context.getString(R.string.notification_daily_calendar_channel_name)
+            val descriptionText = context.getString(R.string.notification_daily_calendar_channel_description)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText

@@ -21,9 +21,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -78,7 +80,7 @@ fun HomeScreen(
 @Composable
 private fun TodayCard(calendarData: md.ortodox.ortodoxmd.data.model.CalendarData?, onClick: () -> Unit) {
     val calendar = Calendar.getInstance()
-    val dateDisplayFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale("ro")).format(calendar.time)
+    val dateDisplayFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault()).format(calendar.time)
     val title = dateDisplayFormat.replaceFirstChar { it.uppercase() }
 
     Card(
@@ -95,13 +97,13 @@ private fun TodayCard(calendarData: md.ortodox.ortodoxmd.data.model.CalendarData
             Divider()
             if (calendarData != null) {
                 val fastingInfo = when (calendarData.fastingDescriptionRo.lowercase(Locale.ROOT)) {
-                    "harti" -> "Zi fără post"
+                    "harti" -> stringResource(R.string.fasting_none)
                     else -> calendarData.fastingDescriptionRo
                 }
                 InfoRow(icon = Icons.Default.Restaurant, text = fastingInfo)
                 InfoRow(icon = Icons.Default.Person, text = calendarData.saints.firstOrNull()?.nameAndDescriptionRo ?: calendarData.summaryTitleRo)
             } else {
-                InfoRow(icon = Icons.Default.CloudOff, text = "Datele nu au putut fi încărcate.")
+                InfoRow(icon = Icons.Default.CloudOff, text = stringResource(R.string.data_not_loaded))
             }
         }
     }

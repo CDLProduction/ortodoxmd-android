@@ -1,0 +1,76 @@
+<resources>
+    <string name="app_name">Orthodox Moldova</string>
+    <string name="playback_channel_name">Audio Playback</string>
+    <string name="playback_channel_description">Notification for controlling audio playback</string>
+
+    <!-- Menu items -->
+    <string name="menu_home">Home</string>
+    <string name="menu_main">Main</string>
+    <string name="menu_calendar">Calendar</string>
+    <string name="menu_anuar">Church Yearbook</string>
+    <string name="menu_bible">Holy Scripture</string>
+    <string name="menu_spiritual_resources">Spiritual Resources</string>
+    <string name="menu_prayers">Prayers</string>
+    <string name="menu_saint_lives">Lives of Saints</string>
+    <string name="menu_icons">Icons</string>
+    <string name="menu_monasteries">Monasteries</string>
+    <string name="menu_sacraments">Sacraments and Services</string>
+    <string name="menu_apologetics">Apologetics</string>
+    <string name="menu_media">Media</string>
+    <string name="menu_radio">Radio</string>
+    <string name="menu_audiobooks">Audiobooks</string>
+    <string name="menu_language">Language</string>
+
+    <!-- Prayer subcategories -->
+    <string name="prayer_morning">Morning Prayers</string>
+    <string name="prayer_evening">Evening Prayers</string>
+    <string name="prayer_illness">Prayers for Illness</string>
+    <string name="prayer_general">General Prayers</string>
+
+    <!-- Language selection -->
+    <string name="select_language">Select Language</string>
+    <string name="language_romanian">Romanian</string>
+    <string name="language_russian">Russian</string>
+    <string name="language_english">English</string>
+
+    <!-- Misc -->
+    <string name="banner_description">Orthodox Moldova Banner</string>
+    <string name="expand">Expand</string>
+
+    <!-- Notifications -->
+    <string name="notification_daily_calendar_channel_name">Daily Calendar Notifications</string>
+    <string name="notification_daily_calendar_channel_description">Shows daily information from the Orthodox calendar.</string>
+
+    <!-- Common actions -->
+    <string name="back">Back</string>
+    <string name="today">Today</string>
+    <string name="select">Select</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Calendar -->
+    <string-array name="weekdays_short">
+        <item>M</item>
+        <item>Tu</item>
+        <item>W</item>
+        <item>Th</item>
+        <item>F</item>
+        <item>Sa</item>
+        <item>Su</item>
+    </string-array>
+    <string name="fasting_none">No fasting day</string>
+    <string name="fasting_day">Fasting day</string>
+    <string name="fasting">Fasting: %1$s</string>
+    <string name="saints_of_day">Saints of the day:</string>
+
+    <!-- Prayer -->
+    <string name="prayer_categories_title">Prayer Categories</string>
+    <string name="no_prayers_found">No prayers found in this category.</string>
+    <string name="error_occurred">An error occurred: %1$s</string>
+
+    <!-- Monastery -->
+    <string name="no_maps_app_found">No maps application found.</string>
+    <string name="navigate">Navigate</string>
+    <string name="navigate_on_map">Navigate on map</string>
+    <string name="data_not_loaded">Data could not be loaded.</string>
+</resources>
