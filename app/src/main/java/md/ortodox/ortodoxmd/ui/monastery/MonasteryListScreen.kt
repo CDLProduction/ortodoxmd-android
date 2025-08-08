@@ -12,10 +12,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Monastery
 
 @Composable
@@ -38,7 +40,6 @@ fun MonasteryListScreen(
                 MonasteryCardItem(
                     monastery = monastery,
                     onClick = {
-                        // Pasăm ID-ul către ecranul de detalii
                         navController.navigate("monastery_detail/${monastery.id}")
                     }
                 )
@@ -63,7 +64,7 @@ private fun MonasteryCardItem(monastery: Monastery, onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.Church,
-                contentDescription = "Mănăstire",
+                contentDescription = stringResource(R.string.monastery_list_icon_desc),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(32.dp)
             )
@@ -76,7 +77,7 @@ private fun MonasteryCardItem(monastery: Monastery, onClick: () -> Unit) {
             )
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi detalii",
+                contentDescription = stringResource(R.string.monastery_view_details),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

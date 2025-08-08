@@ -13,8 +13,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Prayer
 
 @Composable
@@ -37,14 +39,14 @@ fun PrayerScreen(category: String, modifier: Modifier = Modifier) {
             }
             is PrayerUiState.Empty -> {
                 Text(
-                    text = "Nu au fost găsite rugăciuni în această categorie.",
+                    text = stringResource(R.string.prayer_no_prayers_found),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
             is PrayerUiState.Error -> {
                 Text(
-                    text = "A apărut o eroare: ${state.message}",
+                    text = stringResource(R.string.prayer_error_message, state.message),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.align(Alignment.Center).padding(16.dp)
@@ -60,7 +62,6 @@ fun PrayerList(prayers: List<Prayer>, modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Folosim `items` pentru o implementare mai curată și performantă
         items(
             items = prayers,
             key = { it.id }
@@ -79,7 +80,6 @@ fun PrayerItem(prayer: Prayer, level: Int) {
     val hasContent = prayer.textRo.isNotBlank()
     val isClickable = hasContent || hasSubPrayers
 
-    // Folosim stiluri de text diferite pentru ierarhie vizuală
     val titleStyle = if (level == 0) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall
 
     Column {
@@ -87,7 +87,7 @@ fun PrayerItem(prayer: Prayer, level: Int) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    start = (12 * level).dp, // Indentare mai subtilă
+                    start = (12 * level).dp,
                     top = 8.dp,
                     bottom = if (expanded && hasSubPrayers) 0.dp else 8.dp
                 ),
@@ -103,13 +103,13 @@ fun PrayerItem(prayer: Prayer, level: Int) {
             ) {
                 Text(
                     text = prayer.titleRo,
-                    style = titleStyle, // Stilul se aplică direct
+                    style = titleStyle,
                     modifier = Modifier.weight(1f)
                 )
                 if (isClickable) {
                     Icon(
                         imageVector = Icons.Default.ExpandMore,
-                        contentDescription = "Expand",
+                        contentDescription = stringResource(R.string.prayer_expand_icon_desc),
                         modifier = Modifier.rotate(rotationAngle)
                     )
                 }

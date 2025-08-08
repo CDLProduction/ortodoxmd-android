@@ -3,21 +3,19 @@ package md.ortodox.ortodoxmd.ui.bible
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
 
-// NOU: Ecran pentru a alege între Vechiul și Noul Testament
 @Composable
 fun TestamentsScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val testaments = listOf(
-        "Vechiul Testament" to "1",
-        "Noul Testament" to "2"
+        stringResource(R.string.bible_old_testament) to "1",
+        stringResource(R.string.bible_new_testament) to "2"
     )
 
     LazyColumn(

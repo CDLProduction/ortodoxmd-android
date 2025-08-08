@@ -11,9 +11,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import md.ortodox.ortodoxmd.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,23 +31,21 @@ fun VersesScreen(
                 title = { Text("${uiState.bookName} ${uiState.chapterNumber}") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 }
             )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            // Câmp de căutare locală
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = viewModel::onSearchQueryChanged,
-                label = { Text("Caută în acest capitol...") },
+                label = { Text(stringResource(R.string.bible_search_in_chapter)) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 singleLine = true
             )
 
-            // Conținutul ecranului
             when {
                 uiState.isLoading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -60,7 +60,7 @@ fun VersesScreen(
                 else -> {
                     if (uiState.filteredVerses.isEmpty()) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Niciun rezultat găsit.")
+                            Text(stringResource(R.string.bible_no_results_found))
                         }
                     } else {
                         LazyColumn(contentPadding = PaddingValues(16.dp)) {
@@ -105,7 +105,7 @@ fun VerseItemWithBookmark(
         IconButton(onClick = onToggleBookmark) {
             Icon(
                 imageVector = if (uiVerse.isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                contentDescription = "Salvează semn de carte",
+                contentDescription = stringResource(R.string.bible_save_bookmark),
                 tint = if (uiVerse.isBookmarked) MaterialTheme.colorScheme.primary else LocalContentColor.current
             )
         }

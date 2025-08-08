@@ -13,16 +13,17 @@ import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import md.ortodox.ortodoxmd.R
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -39,10 +40,10 @@ fun MonasteryDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(monastery?.nameRo ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = { Text(stringResource(R.string.monastery_detail_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 }
             )
@@ -57,14 +58,12 @@ fun MonasteryDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Titlul Mănăstirii
                 Text(
                     text = m.nameRo,
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
 
-                // Card pentru Descriere
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -77,24 +76,18 @@ fun MonasteryDetailScreen(
                     )
                 }
 
-                // Card pentru Navigație
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            // **AICI ESTE CORECȚIA**
-                            // 1. Codificăm numele pentru a fi valid într-un URI
                             val encodedName = URLEncoder.encode(m.nameRo, StandardCharsets.UTF_8.toString())
-
-                            // 2. Construim URI-ul cu numele codificat
                             val uri = Uri.parse("geo:${m.latitude},${m.longitude}?q=${m.latitude},${m.longitude}($encodedName)")
-
                             val mapIntent = Intent(Intent.ACTION_VIEW, uri)
 
                             if (mapIntent.resolveActivity(context.packageManager) != null) {
                                 context.startActivity(mapIntent)
                             } else {
-                                Toast.makeText(context, "Nu s-a găsit nicio aplicație de hărți.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.monastery_no_maps_app_found), Toast.LENGTH_LONG).show()
                             }
                         },
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -109,11 +102,11 @@ fun MonasteryDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Navigation,
-                            contentDescription = "Navighează",
+                            contentDescription = stringResource(R.string.monastery_navigate_icon_desc),
                             tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = "Navighează pe hartă",
+                            text = stringResource(R.string.monastery_navigate_button),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.weight(1f)

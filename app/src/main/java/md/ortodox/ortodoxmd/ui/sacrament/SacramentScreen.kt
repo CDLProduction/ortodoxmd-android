@@ -13,10 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Sacrament
 
 @Composable
@@ -73,7 +74,7 @@ private fun SacramentCard(sacrament: Sacrament) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Bookmark,
-                    contentDescription = "Sacrament",
+                    contentDescription = stringResource(R.string.sacrament_icon_desc),
                     tint = MaterialTheme.colorScheme.secondary
                 )
                 Text(
@@ -83,7 +84,7 @@ private fun SacramentCard(sacrament: Sacrament) {
                 )
                 Icon(
                     imageVector = Icons.Default.ExpandMore,
-                    contentDescription = "Extinde",
+                    contentDescription = stringResource(R.string.sacrament_expand),
                     modifier = Modifier.rotate(rotationAngle)
                 )
             }

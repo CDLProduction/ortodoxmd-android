@@ -13,9 +13,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -24,19 +26,18 @@ import java.nio.charset.StandardCharsets
 fun BooksScreen(
     navController: NavHostController,
     testamentId: Long?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: BooksViewModel = hiltViewModel()
 ) {
-    val viewModel: BooksViewModel = hiltViewModel()
-
     LaunchedEffect(testamentId) {
         viewModel.fetchBooks(testamentId)
     }
 
     val uiState by viewModel.uiState.collectAsState()
     val title = when (testamentId) {
-        1L -> "Vechiul Testament"
-        2L -> "Noul Testament"
-        else -> "Cărți"
+        1L -> stringResource(R.string.bible_old_testament)
+        2L -> stringResource(R.string.bible_new_testament)
+        else -> stringResource(R.string.bible_books_title)
     }
 
     Scaffold(
@@ -46,7 +47,7 @@ fun BooksScreen(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi la Testamente")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.bible_back_to_testaments))
                     }
                 }
             )

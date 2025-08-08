@@ -14,9 +14,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import md.ortodox.ortodoxmd.R
 
 @Composable
 fun RadioScreen(
@@ -25,7 +27,6 @@ fun RadioScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Lista de posturi de radio
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(16.dp),
@@ -40,12 +41,11 @@ fun RadioScreen(
             }
         }
 
-        // Panoul de control al player-ului
         if (uiState.currentStation != null) {
             PlayerControls(
                 station = uiState.currentStation!!,
                 isPlaying = uiState.isPlaying,
-                isBuffering = uiState.isBuffering, // NOU: Pasăm starea de buffering
+                isBuffering = uiState.isBuffering,
                 onPlayPauseClick = { viewModel.togglePlayback() }
             )
         }
@@ -71,7 +71,7 @@ fun RadioStationItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(Icons.Default.Radio, contentDescription = null)
+            Icon(Icons.Default.Radio, contentDescription = stringResource(R.string.radio_station_icon_desc))
             Text(station.name, style = MaterialTheme.typography.bodyLarge)
         }
     }
@@ -81,7 +81,7 @@ fun RadioStationItem(
 fun PlayerControls(
     station: RadioStation,
     isPlaying: Boolean,
-    isBuffering: Boolean, // NOU: Primim starea de buffering
+    isBuffering: Boolean,
     onPlayPauseClick: () -> Unit
 ) {
     Surface(
@@ -99,9 +99,9 @@ fun PlayerControls(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = when {
-                        isBuffering -> "CONECTARE..."
-                        isPlaying -> "ACUM RULEAZĂ"
-                        else -> "OPRIT"
+                        isBuffering -> stringResource(R.string.radio_status_connecting)
+                        isPlaying -> stringResource(R.string.radio_status_playing)
+                        else -> stringResource(R.string.radio_status_stopped)
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
@@ -113,7 +113,6 @@ fun PlayerControls(
                 )
             }
 
-            // NOU: Afișăm un indicator de progres în timpul buffering-ului
             Box(
                 modifier = Modifier.size(56.dp),
                 contentAlignment = Alignment.Center
@@ -127,7 +126,7 @@ fun PlayerControls(
                     ) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Play/Pause",
+                            contentDescription = stringResource(R.string.radio_play_pause_desc),
                             modifier = Modifier.fillMaxSize()
                         )
                     }

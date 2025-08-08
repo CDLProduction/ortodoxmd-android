@@ -1,6 +1,7 @@
 package md.ortodox.ortodoxmd.ui.icons
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,10 +15,12 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.network.NetworkModule
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,7 +45,7 @@ fun IconDetailScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = Color.White
                         )
                     }
@@ -60,7 +63,6 @@ fun IconDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Imagine de fundal estompată
             if (imageUrl != null) {
                 AsyncImage(
                     model = imageUrl,
@@ -70,22 +72,18 @@ fun IconDetailScreen(
                         .fillMaxSize()
                         .blur(radius = 24.dp)
                 )
-                // Gradient pentru a întuneca marginile
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(Color.Black.copy(alpha = 0.4f), Color.Transparent, Color.Black.copy(alpha = 0.8f)),
-                                startY = 0.0f,
-                                endY = Float.POSITIVE_INFINITY
                             )
                         )
                 )
             }
 
-            // Conținutul principal (imaginea clară și textul)
-            AnimatedVisibility(visible = icon != null, enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(1000))) {
+            AnimatedVisibility(visible = icon != null, enter = fadeIn(animationSpec = tween(1000))) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -93,7 +91,6 @@ fun IconDetailScreen(
                 ) {
                     Spacer(modifier = Modifier.weight(0.5f))
 
-                    // Imaginea principală, clară
                     Card(
                         modifier = Modifier
                             .fillMaxWidth(0.8f)
@@ -102,7 +99,7 @@ fun IconDetailScreen(
                     ) {
                         AsyncImage(
                             model = imageUrl,
-                            contentDescription = icon?.nameRo,
+                            contentDescription = icon?.nameRo?.let { stringResource(R.string.icons_icon_image_desc, it) },
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -110,7 +107,6 @@ fun IconDetailScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Numele icoanei într-o casetă
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -128,7 +124,14 @@ fun IconDetailScreen(
             }
 
             if (icon == null) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = stringResource(id = R.string.icons_loading),
+                        modifier = Modifier.padding(top = 64.dp),
+                        color = Color.White
+                    )
+                }
             }
         }
     }

@@ -12,10 +12,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.SaintLife
 
 @Composable
@@ -27,7 +29,7 @@ fun SaintLivesScreen(
 
     if (saintLives.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            Text(stringResource(R.string.saints_no_lives_available))
         }
     } else {
         LazyColumn(
@@ -60,7 +62,7 @@ private fun SaintLifeCardItem(saintLife: SaintLife, onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.AutoAwesome,
-                contentDescription = "Icoană Sfânt",
+                contentDescription = stringResource(R.string.saints_saint_icon_desc),
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
@@ -72,7 +74,7 @@ private fun SaintLifeCardItem(saintLife: SaintLife, onClick: () -> Unit) {
             )
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi detalii",
+                contentDescription = stringResource(R.string.saints_view_details),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

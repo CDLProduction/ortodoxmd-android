@@ -9,9 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
 
 @Composable
 fun GlobalSearchScreen(
@@ -23,25 +25,21 @@ fun GlobalSearchScreen(
     var query by remember { mutableStateOf("") }
     var showHelpDialog by remember { mutableStateOf(false) }
 
-    // **ADAUGAT: Scaffold pentru a putea plasa butonul flotant**
     Scaffold(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(onClick = { showHelpDialog = true }) {
-                Icon(Icons.Default.HelpOutline, contentDescription = "Ajutor Căutare")
+                Icon(Icons.Default.HelpOutline, contentDescription = stringResource(R.string.bible_search_help_icon_desc))
             }
         }
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .padding(16.dp)
+            modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp)
         ) {
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("Ex: Matei 2:15 sau Iisus") },
+                label = { Text(stringResource(R.string.bible_search_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -50,14 +48,14 @@ fun GlobalSearchScreen(
                 onClick = { viewModel.search(query) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Caută")
+                Text(stringResource(R.string.bible_search_button))
             }
             Spacer(Modifier.height(16.dp))
 
             when (val state = uiState) {
                 is SearchUiState.Idle -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Introduceți un text pentru a căuta în Biblie.")
+                        Text(stringResource(R.string.bible_search_idle_text))
                     }
                 }
                 is SearchUiState.Loading -> {
@@ -85,42 +83,29 @@ fun GlobalSearchScreen(
         }
     }
 
-    // **ADAUGAT: Dialogul de ajutor care apare la apăsarea butonului**
     if (showHelpDialog) {
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
-            icon = { Icon(Icons.Default.HelpOutline, contentDescription = "Ajutor") },
-            title = { Text("Principii de Căutare") },
+            icon = { Icon(Icons.Default.HelpOutline, contentDescription = stringResource(R.string.bible_search_help_icon_desc)) },
+            title = { Text(stringResource(R.string.bible_search_help_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Puteți căuta în două moduri:", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.bible_search_help_intro), style = MaterialTheme.typography.bodyMedium)
 
-                    Text("1. După Referință", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        text = "Introduceți numele cărții (sau o abreviere), urmat de capitol și, opțional, verset.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "Exemple: Ioan 3:16, 1 Cor 13, Facerea 1:1-5",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(stringResource(R.string.bible_search_help_ref_title), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.bible_search_help_ref_desc), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.bible_search_help_ref_examples), style = MaterialTheme.typography.bodySmall)
 
                     Spacer(Modifier.height(8.dp))
 
-                    Text("2. După Cuvânt", style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        text = "Introduceți orice cuvânt sau expresie pentru a căuta în tot textul Bibliei.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = "Exemple: mântuire, păstorul cel bun",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(stringResource(R.string.bible_search_help_word_title), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.bible_search_help_word_desc), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.bible_search_help_word_examples), style = MaterialTheme.typography.bodySmall)
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showHelpDialog = false }) {
-                    Text("Am înțeles")
+                    Text(stringResource(R.string.bible_search_help_confirm))
                 }
             }
         )

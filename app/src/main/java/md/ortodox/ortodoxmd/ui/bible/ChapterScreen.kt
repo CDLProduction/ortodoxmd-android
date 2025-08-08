@@ -15,10 +15,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.bible.BibleChapter
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -45,7 +47,7 @@ fun ChaptersScreen(
                 title = { Text(bookName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back))
                     }
                 }
             )
@@ -77,7 +79,6 @@ fun ChaptersScreen(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChapterCardItem(chapter: BibleChapter, onClick: () -> Unit) {
@@ -94,17 +95,17 @@ private fun ChapterCardItem(chapter: BibleChapter, onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                contentDescription = "Capitol",
+                contentDescription = stringResource(R.string.bible_chapter_icon_desc),
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Capitolul ${chapter.chapterNumber}",
+                text = stringResource(R.string.bible_chapter_title, chapter.chapterNumber),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi versete",
+                contentDescription = stringResource(R.string.bible_verses_icon_desc),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

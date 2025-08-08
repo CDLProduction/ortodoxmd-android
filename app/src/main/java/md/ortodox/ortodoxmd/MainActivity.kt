@@ -23,10 +23,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -44,14 +44,16 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import md.ortodox.ortodoxmd.data.language.LanguageManager
 import md.ortodox.ortodoxmd.ui.anuar.AnuarScreen
-import md.ortodox.ortodoxmd.ui.apologetics.ApologeticScreen
+import md.ortodox.ortodoxmd.ui.apologetic.ApologeticScreen
 import md.ortodox.ortodoxmd.ui.audiobook.*
 import md.ortodox.ortodoxmd.ui.bible.BibleHomeScreen
 import md.ortodox.ortodoxmd.ui.calendar.CalendarScreen
 import md.ortodox.ortodoxmd.ui.home.HomeScreen
 import md.ortodox.ortodoxmd.ui.icons.IconDetailScreen
 import md.ortodox.ortodoxmd.ui.icons.IconsScreen
+import md.ortodox.ortodoxmd.ui.language.LanguageScreen
 import md.ortodox.ortodoxmd.ui.monastery.MonasteryDetailScreen
 import md.ortodox.ortodoxmd.ui.monastery.MonasteryListScreen
 import md.ortodox.ortodoxmd.ui.playback.PlaybackService
@@ -64,60 +66,40 @@ import md.ortodox.ortodoxmd.ui.saints.SaintLivesScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import javax.inject.Inject
 
-// --- Structuri noi pentru Meniu (Drawer) ---
+// --- Structuri actualizate pentru Meniu (Drawer) ---
 sealed class DrawerMenu
 data class MenuItem(val item: DrawerItem) : DrawerMenu()
-data class MenuDivider(val title: String) : DrawerMenu()
+data class MenuDivider(val titleResId: Int) : DrawerMenu()
 
 data class DrawerItem(
-    val title: String,
+    val titleResId: Int,
     val icon: ImageVector,
     val route: String,
     val subItems: List<SubDrawerItem>? = null
 )
-data class SubDrawerItem(val title: String, val route: String)
-
-val prayerCategories = listOf(
-    SubDrawerItem("Rugăciuni de Dimineață", "prayer/morning"),
-    SubDrawerItem("Rugăciuni de Seară", "prayer/evening"),
-    SubDrawerItem("Rugăciuni pentru Boală", "prayer/for_illness"),
-    SubDrawerItem("Rugăciuni Generale", "prayer/general")
+data class SubDrawerItem(
+    val titleResId: Int,
+    val route: String
 )
 
-val menuItems = listOf(
-    MenuItem(DrawerItem("Acasă", Icons.Default.Home, "home")),
-    MenuDivider("Principal"),
-    MenuItem(DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar")),
-    MenuItem(DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar")),
-    MenuItem(DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home")),
-    MenuDivider("Resurse Spirituale"),
-    MenuItem(DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories)),
-    MenuItem(DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives")),
-    MenuItem(DrawerItem("Icoane", Icons.Default.Image, "icons")),
-    MenuItem(DrawerItem("Mănăstiri", Icons.Default.LocationCity, "monastery_list")),
-    MenuItem(DrawerItem("Taine și Slujbe", Icons.Default.AutoStories, "sacraments")),
-    MenuItem(DrawerItem("Apologetică", Icons.Default.ContactSupport, "apologetics")),
-    MenuDivider("Media"),
-    MenuItem(DrawerItem("Radio", Icons.Default.Radio, "radio")),
-    MenuItem(DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow"))
-)
 
 @Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var languageManager: LanguageManager
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* ... logica pentru permisiuni ... */ }
+    ) { /* ... */ }
 
     private fun askPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val permissionsToRequest = mutableListOf<String>()
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            if (permissionsToRequest.isNotEmpty()) {
-                requestPermissionLauncher.launch(permissionsToRequest.toTypedArray())
+                requestPermissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
             }
         }
     }
@@ -126,12 +108,23 @@ class MainActivity : ComponentActivity() {
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        // Logica de setare a limbii a fost mutată în OrtodoxMDApplication
+        // și nu mai este necesară aici.
+
         askPermissions()
         startService(Intent(this, PlaybackService::class.java))
-        enableEdgeToEdge()
+
         setContent {
             OrtodoxmdandroidTheme {
-                AppScaffold(navController = rememberNavController())
+                val currentLanguage by languageManager.currentLanguage.collectAsState(initial = "ro")
+
+                // key() este încă util pentru a forța recompunerea UI-ului
+                // după ce activitatea este repornită.
+                key(currentLanguage) {
+                    AppScaffold(navController = rememberNavController())
+                }
             }
         }
     }
@@ -146,20 +139,21 @@ fun AppScaffold(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val topBarTitle = when (currentRoute?.split("/")?.first()) {
-        "home" -> "Ortodox Moldova"
-        "calendar" -> "Calendar"
-        "anuar" -> "Anuar Bisericesc"
-        "monastery_list" -> "Mănăstiri"
-        "sacraments" -> "Taine și Slujbe"
-        "prayer_categories", "prayer" -> "Rugăciuni"
-        "apologetics" -> "Apologetică"
-        "bible_home" -> "Sfânta Scriptură"
-        "saint_lives" -> "Vieți Sfinți"
-        "icons" -> "Icoane"
-        "radio" -> "Radio Ortodox"
-        "audiobook_flow", "audiobook_player" -> "Cărți Audio"
-        else -> "Ortodox Moldova"
+    val topBarTitleResId = when (currentRoute?.split("/")?.first()) {
+        "home" -> R.string.title_home
+        "calendar" -> R.string.menu_calendar
+        "anuar" -> R.string.menu_anuar
+        "monastery_list" -> R.string.menu_monasteries
+        "sacraments" -> R.string.menu_sacraments
+        "prayer_categories", "prayer" -> R.string.menu_prayers
+        "apologetics" -> R.string.menu_apologetics
+        "bible_home" -> R.string.menu_bible
+        "saint_lives" -> R.string.menu_saints_lives
+        "icons" -> R.string.menu_icons
+        "radio" -> R.string.menu_radio
+        "audiobook_flow", "audiobook_player" -> R.string.menu_audiobooks
+        "language_selection" -> R.string.title_language
+        else -> R.string.title_home
     }
 
     ModalNavigationDrawer(
@@ -169,10 +163,10 @@ fun AppScaffold(navController: NavHostController) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(topBarTitle) },
+                    title = { Text(stringResource(id = topBarTitleResId)) },
                     navigationIcon = {
                         IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, "Deschide Meniul")
+                            Icon(Icons.Filled.Menu, contentDescription = "Open Menu")
                         }
                     }
                 )
@@ -230,6 +224,8 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 monasteryId = backStackEntry.arguments?.getLong("monasteryId") ?: 0L
             )
         }
+        composable("language_selection") { LanguageScreen() }
+
         navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
             composable("audiobook_categories") { navBackStackEntry ->
                 val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
@@ -299,31 +295,44 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
 @Composable
 fun NavigationDrawerContent(navController: NavHostController, drawerState: DrawerState) {
     val coroutineScope = rememberCoroutineScope()
-    var expandedItem by remember { mutableStateOf<String?>(null) }
+    var expandedItem by remember { mutableStateOf<Int?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val prayerCategories = listOf(
+        SubDrawerItem(R.string.prayer_cat_morning, "prayer/morning"),
+        SubDrawerItem(R.string.prayer_cat_evening, "prayer/evening"),
+        SubDrawerItem(R.string.prayer_cat_illness, "prayer/for_illness"),
+        SubDrawerItem(R.string.prayer_cat_general, "prayer/general")
+    )
+
+    val menuItems = listOf(
+        MenuItem(DrawerItem(R.string.menu_home, Icons.Default.Home, "home")),
+        MenuDivider(R.string.menu_main_section),
+        MenuItem(DrawerItem(R.string.menu_calendar, Icons.Default.CalendarMonth, "calendar")),
+        MenuItem(DrawerItem(R.string.menu_anuar, Icons.Default.Today, "anuar")),
+        MenuItem(DrawerItem(R.string.menu_bible, Icons.Default.Book, "bible_home")),
+        MenuDivider(R.string.menu_spiritual_section),
+        MenuItem(DrawerItem(R.string.menu_prayers, Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories)),
+        MenuItem(DrawerItem(R.string.menu_saints_lives, Icons.Default.Person, "saint_lives")),
+        MenuItem(DrawerItem(R.string.menu_icons, Icons.Default.Image, "icons")),
+        MenuItem(DrawerItem(R.string.menu_monasteries, Icons.Default.LocationCity, "monastery_list")),
+        MenuItem(DrawerItem(R.string.menu_sacraments, Icons.Default.AutoStories, "sacraments")),
+        MenuItem(DrawerItem(R.string.menu_apologetics, Icons.Default.ContactSupport, "apologetics")),
+        MenuDivider(R.string.menu_media_section),
+        MenuItem(DrawerItem(R.string.menu_radio, Icons.Default.Radio, "radio")),
+        MenuItem(DrawerItem(R.string.menu_audiobooks, Icons.Default.Headset, "audiobook_flow")),
+        MenuDivider(R.string.menu_settings_section),
+        MenuItem(DrawerItem(R.string.menu_language, Icons.Default.Language, "language_selection"))
+    )
+
     ModalDrawerSheet {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            val bannerBackgroundColor = MaterialTheme.colorScheme.primaryContainer
-            val drawerBackgroundColor = MaterialTheme.colorScheme.surface
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    // **AICI ESTE CORECȚIA**
-                    .background(
-                        Brush.horizontalGradient(
-                            // Am eliminat parametrul 'stops' care cauza eroarea
-                            colors = listOf(
-                                drawerBackgroundColor,
-                                bannerBackgroundColor,
-                                bannerBackgroundColor,
-                                drawerBackgroundColor
-                            )
-                        )
-                    ),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -344,14 +353,13 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                     )
                 }
             }
-
             HorizontalDivider()
 
             menuItems.forEach { menuItem ->
                 when (menuItem) {
                     is MenuDivider -> {
                         Text(
-                            text = menuItem.title,
+                            text = stringResource(id = menuItem.titleResId),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
@@ -361,8 +369,8 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                         val item = menuItem.item
                         val isGroupSelected = currentRoute?.startsWith(item.route) == true
                         NavigationDrawerItem(
-                            icon = { Icon(item.icon, contentDescription = item.title) },
-                            label = { Text(item.title) },
+                            icon = { Icon(item.icon, contentDescription = stringResource(id = item.titleResId)) },
+                            label = { Text(stringResource(id = item.titleResId)) },
                             selected = isGroupSelected && item.subItems == null,
                             onClick = {
                                 if (item.subItems == null) {
@@ -373,14 +381,14 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                         restoreState = true
                                     }
                                 } else {
-                                    expandedItem = if (expandedItem == item.title) null else item.title
+                                    expandedItem = if (expandedItem == item.titleResId) null else item.titleResId
                                 }
                             },
                             badge = {
                                 if (item.subItems != null) {
-                                    IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {
+                                    IconButton(onClick = { expandedItem = if (expandedItem == item.titleResId) null else item.titleResId }) {
                                         Icon(
-                                            imageVector = if (expandedItem == item.title || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                            imageVector = if (expandedItem == item.titleResId || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                                             contentDescription = "Expand"
                                         )
                                     }
@@ -388,11 +396,11 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                         )
-                        if (item.subItems != null && (expandedItem == item.title || isGroupSelected)) {
+                        if (item.subItems != null && (expandedItem == item.titleResId || isGroupSelected)) {
                             Column(modifier = Modifier.padding(start = 24.dp)) {
                                 item.subItems.forEach { subItem ->
                                     NavigationDrawerItem(
-                                        label = { Text(subItem.title) },
+                                        label = { Text(stringResource(id = subItem.titleResId)) },
                                         selected = currentRoute == subItem.route,
                                         onClick = {
                                             coroutineScope.launch { drawerState.close() }

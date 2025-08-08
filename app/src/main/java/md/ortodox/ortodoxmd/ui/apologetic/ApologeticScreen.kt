@@ -1,4 +1,4 @@
-package md.ortodox.ortodoxmd.ui.apologetics
+package md.ortodox.ortodoxmd.ui.apologetic
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -14,10 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Apologetic
+import md.ortodox.ortodoxmd.ui.apologetics.ApologeticViewModel
 
 @Composable
 fun ApologeticScreen(
@@ -26,15 +29,14 @@ fun ApologeticScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Bara de Căutare
         OutlinedTextField(
             value = uiState.searchQuery,
             onValueChange = viewModel::onSearchQueryChanged,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            placeholder = { Text("Caută un subiect...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Caută") },
+            placeholder = { Text(stringResource(R.string.apologetics_search_placeholder)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.apologetics_search_button)) },
             singleLine = true
         )
 
@@ -52,7 +54,7 @@ fun ApologeticScreen(
                 grouped.forEach { (category, apologetics) ->
                     item {
                         Text(
-                            text = category,
+                            text = category, // Categoria vine de la API, nu se traduce aici
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
@@ -62,8 +64,7 @@ fun ApologeticScreen(
                         ApologeticCard(apologetic = apologetic)
                     }
                 }
-
-                item { Spacer(modifier = Modifier.height(16.dp)) } // Spațiu la final
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
     }
@@ -84,14 +85,13 @@ private fun ApologeticCard(apologetic: Apologetic) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Rândul cu întrebarea, vizibil mereu
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.HelpOutline,
-                    contentDescription = "Întrebare",
+                    contentDescription = stringResource(R.string.apologetics_question_icon_desc),
                     tint = MaterialTheme.colorScheme.secondary
                 )
                 Text(
@@ -101,12 +101,11 @@ private fun ApologeticCard(apologetic: Apologetic) {
                 )
                 Icon(
                     imageVector = Icons.Default.ExpandMore,
-                    contentDescription = "Extinde",
+                    contentDescription = stringResource(R.string.apologetics_expand_icon_desc),
                     modifier = Modifier.rotate(rotationAngle)
                 )
             }
 
-            // Răspunsul, vizibil doar când cardul este extins
             AnimatedVisibility(visible = isExpanded) {
                 Column {
                     Divider(modifier = Modifier.padding(vertical = 12.dp))

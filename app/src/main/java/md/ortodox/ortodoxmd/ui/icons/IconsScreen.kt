@@ -5,17 +5,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.AutoAwesome // O pictogramă generică pentru sfințenie
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Icon
 
 @Composable
@@ -71,14 +73,11 @@ private fun IconCardItem(icon: Icon, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // **NOU: Pictograma decorativă din stânga**
             Icon(
-                imageVector = Icons.Default.AutoAwesome, // Poți schimba cu orice altă pictogramă (ex: Icons.Default.Person)
-                contentDescription = "Icoană Sfânt",
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = stringResource(R.string.icons_saint_icon_desc),
                 tint = MaterialTheme.colorScheme.primary
             )
-
-            // Numele icoanei
             Text(
                 text = icon.nameRo,
                 style = MaterialTheme.typography.titleMedium,
@@ -86,11 +85,9 @@ private fun IconCardItem(icon: Icon, onClick: () -> Unit) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-
-            // Pictograma de navigare din dreapta
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi detalii",
+                contentDescription = stringResource(R.string.icons_view_details),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

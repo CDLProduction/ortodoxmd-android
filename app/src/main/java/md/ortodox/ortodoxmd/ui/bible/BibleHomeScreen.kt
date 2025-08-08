@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -23,13 +24,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import md.ortodox.ortodoxmd.R
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
-private enum class BibleTab(val title: String, val icon: ImageVector, val route: String) {
-    BROWSE("Răsfoire", Icons.AutoMirrored.Filled.MenuBook, "bible_browse"),
-    SEARCH("Căutare", Icons.Default.Search, "bible_search"),
-    BOOKMARKS("Semne de Carte", Icons.Default.Bookmark, "bible_bookmarks")
+private enum class BibleTab(val titleResId: Int, val icon: ImageVector, val route: String) {
+    BROWSE(R.string.bible_tab_browse, Icons.AutoMirrored.Filled.MenuBook, "bible_browse"),
+    SEARCH(R.string.bible_tab_search, Icons.Default.Search, "bible_search"),
+    BOOKMARKS(R.string.bible_tab_bookmarks, Icons.Default.Bookmark, "bible_bookmarks")
 }
 
 @Composable
@@ -37,16 +39,11 @@ fun BibleHomeScreen(mainNavController: NavHostController) {
     val viewModel: BibleHomeViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Verificăm starea la fiecare (re)intrare pe ecran pentru a prinde momentul post-descărcare.
     LaunchedEffect(Unit) {
         viewModel.checkBibleStatus()
     }
 
-    // Folosim un Box ca layout stabil care nu dispare niciodată.
-    // În interior, comutăm vizibilitatea componentelor cu animații.
     Box(modifier = Modifier.fillMaxSize()) {
-
-        // Afișăm interfața Bibliei doar dacă este descărcată.
         AnimatedVisibility(
             visible = uiState.isBibleDownloaded == true,
             enter = fadeIn(),
@@ -55,20 +52,16 @@ fun BibleHomeScreen(mainNavController: NavHostController) {
             BibleInterfaceWithTabs()
         }
 
-        // Afișăm ecranul de descărcare doar dacă NU este descărcată.
         AnimatedVisibility(
             visible = uiState.isBibleDownloaded == false,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
             BibleDownloadScreen(onDownloadComplete = {
-                // După ce descărcarea e gata, reîmprospătăm starea.
-                // AnimatedVisibility se va ocupa de tranziția la BibleInterfaceWithTabs.
                 viewModel.checkBibleStatus()
             })
         }
 
-        // Afișăm indicatorul de încărcare doar la început.
         AnimatedVisibility(
             visible = uiState.isBibleDownloaded == null,
             enter = fadeIn(),
@@ -99,8 +92,8 @@ private fun BibleInterfaceWithTabs() {
                             restoreState = true
                         }
                     },
-                    text = { Text(tab.title) },
-                    icon = { Icon(tab.icon, contentDescription = tab.title) }
+                    text = { Text(stringResource(tab.titleResId)) },
+                    icon = { Icon(tab.icon, contentDescription = stringResource(tab.titleResId)) }
                 )
             }
         }

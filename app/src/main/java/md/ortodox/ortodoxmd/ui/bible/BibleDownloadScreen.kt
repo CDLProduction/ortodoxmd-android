@@ -10,11 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import md.ortodox.ortodoxmd.R
 
 @Composable
 fun BibleDownloadScreen(
@@ -32,19 +34,19 @@ fun BibleDownloadScreen(
     ) {
         Icon(
             imageVector = Icons.Default.CloudDownload,
-            contentDescription = "Descarcă Biblia",
+            contentDescription = stringResource(R.string.bible_download_title),
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Descărcați Sfânta Scriptură",
+            text = stringResource(R.string.bible_download_title),
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Pentru a accesa funcționalitatea completă, este necesară descărcarea textului integral al Bibliei (aprox. 10MB).",
+            text = stringResource(R.string.bible_download_description),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
@@ -53,7 +55,7 @@ fun BibleDownloadScreen(
         when (val state = downloadState) {
             is DownloadState.Idle -> {
                 Button(onClick = { viewModel.startDownload() }) {
-                    Text("Pornește Descărcarea")
+                    Text(stringResource(R.string.bible_download_start))
                 }
             }
             is DownloadState.Downloading -> {
@@ -64,28 +66,30 @@ fun BibleDownloadScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(text = "Descărcare... ${(animatedProgress * 100).toInt()}%")
+                    Text(text = stringResource(R.string.bible_downloading, (animatedProgress * 100).toInt()))
                 }
             }
             is DownloadState.Error -> {
-                Text(state.message, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.bible_download_error, state.message), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = { viewModel.startDownload() }) {
-                    Text("Reîncearcă")
+                    Text(stringResource(R.string.common_retry))
                 }
             }
             is DownloadState.Finished -> {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Finalizat",
+                    contentDescription = stringResource(R.string.bible_download_completed_icon_desc),
                     tint = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.size(48.dp)
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(state.message, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.bible_download_finished_subtitle), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = onDownloadComplete) {
-                    Text("Accesează Biblia")
+                    Text(stringResource(R.string.bible_download_access_button))
                 }
             }
         }

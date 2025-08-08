@@ -15,11 +15,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.LiturgicalService
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -37,7 +39,6 @@ private fun rememberParsedText(rawText: String?): List<ContentBlock> {
     return remember(rawText) {
         if (rawText.isNullOrBlank()) return@remember emptyList()
         rawText.split("\n").filter { it.isNotBlank() }.map { line ->
-            // O heuristică simplă: dacă linia conține ':', o considerăm un subtitlu
             if (line.contains(":") && line.length < 100) ContentBlock.H2(line)
             else ContentBlock.Paragraph(line)
         }
@@ -45,11 +46,12 @@ private fun rememberParsedText(rawText: String?): List<ContentBlock> {
 }
 
 // Funcție pentru a asocia un tip de slujbă cu un nume și o pictogramă
+@Composable
 private fun mapServiceType(type: String): Pair<String, ImageVector> {
     return when (type.lowercase()) {
-        "vespers" -> "Vecernie" to Icons.Default.WbTwilight
-        "matins" -> "Utrenie" to Icons.Default.WbSunny
-        "liturgy" -> "Sfânta Liturghie" to Icons.Default.Church
+        "vespers" -> stringResource(R.string.service_type_vespers) to Icons.Default.WbTwilight
+        "matins" -> stringResource(R.string.service_type_matins) to Icons.Default.WbSunny
+        "liturgy" -> stringResource(R.string.service_type_liturgy) to Icons.Default.Church
         else -> type.replaceFirstChar { it.uppercase() } to Icons.Default.MenuBook
     }
 }
@@ -83,7 +85,7 @@ fun AnuarScreen(
                     CircularProgressIndicator()
                 }
                 uiState.services.isEmpty() -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text("Pentru această zi nu sunt disponibile rânduieli.", textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.anuar_no_services_for_day), textAlign = TextAlign.Center)
                 }
                 else -> {
                     LazyColumn(
@@ -110,9 +112,9 @@ fun AnuarScreen(
                         viewModel.selectDate(selectedLocalDate)
                     }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.anuar_ok_button)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Anulează") } }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.anuar_cancel_button)) } }
         ) {
             DatePicker(state = datePickerState)
         }
@@ -138,13 +140,13 @@ private fun DateSelectorBar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onPreviousDay) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Ziua precedentă")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.anuar_previous_day))
             }
             TextButton(onClick = onDateClick) {
                 Text(formattedDate, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             IconButton(onClick = onNextDay) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Ziua următoare")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.anuar_next_day))
             }
         }
     }
@@ -168,7 +170,7 @@ private fun ServiceCard(service: LiturgicalService) {
             Divider(modifier = Modifier.padding(vertical = 12.dp))
 
             if (parsedDetails.isEmpty()) {
-                Text("Nu sunt detalii pentru această slujbă.", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.anuar_no_details_for_service), style = MaterialTheme.typography.bodyMedium)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     parsedDetails.forEach { block ->
