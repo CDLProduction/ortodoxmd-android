@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -42,8 +43,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import androidx.annotation.StringRes
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 import md.ortodox.ortodoxmd.ui.anuar.AnuarScreen
 import md.ortodox.ortodoxmd.ui.apologetics.ApologeticScreen
 import md.ortodox.ortodoxmd.ui.audiobook.*
@@ -62,50 +67,55 @@ import md.ortodox.ortodoxmd.ui.sacrament.SacramentScreen
 import md.ortodox.ortodoxmd.ui.saints.SaintLifeDetailScreen
 import md.ortodox.ortodoxmd.ui.saints.SaintLivesScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
+import md.ortodox.ortodoxmd.ui.settings.LanguageSettingsScreen
+import md.ortodox.ortodoxmd.data.preferences.LanguagePreferences
+import md.ortodox.ortodoxmd.util.LocaleHelper
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 // --- Structuri noi pentru Meniu (Drawer) ---
 sealed class DrawerMenu
 data class MenuItem(val item: DrawerItem) : DrawerMenu()
-data class MenuDivider(val title: String) : DrawerMenu()
+data class MenuDivider(@StringRes val titleRes: Int) : DrawerMenu()
 
 data class DrawerItem(
-    val title: String,
+    @StringRes val titleRes: Int,
     val icon: ImageVector,
     val route: String,
     val subItems: List<SubDrawerItem>? = null
 )
-data class SubDrawerItem(val title: String, val route: String)
+data class SubDrawerItem(@StringRes val titleRes: Int, val route: String)
 
 val prayerCategories = listOf(
-    SubDrawerItem("Rugăciuni de Dimineață", "prayer/morning"),
-    SubDrawerItem("Rugăciuni de Seară", "prayer/evening"),
-    SubDrawerItem("Rugăciuni pentru Boală", "prayer/for_illness"),
-    SubDrawerItem("Rugăciuni Generale", "prayer/general")
+    SubDrawerItem(R.string.prayer_morning, "prayer/morning"),
+    SubDrawerItem(R.string.prayer_evening, "prayer/evening"),
+    SubDrawerItem(R.string.prayer_illness, "prayer/for_illness"),
+    SubDrawerItem(R.string.prayer_general, "prayer/general")
 )
 
 val menuItems = listOf(
-    MenuItem(DrawerItem("Acasă", Icons.Default.Home, "home")),
-    MenuDivider("Principal"),
-    MenuItem(DrawerItem("Calendar", Icons.Default.CalendarMonth, "calendar")),
-    MenuItem(DrawerItem("Anuar Bisericesc", Icons.Default.Today, "anuar")),
-    MenuItem(DrawerItem("Sfânta Scriptură", Icons.Default.Book, "bible_home")),
-    MenuDivider("Resurse Spirituale"),
-    MenuItem(DrawerItem("Rugăciuni", Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories)),
-    MenuItem(DrawerItem("Vieți Sfinți", Icons.Default.Person, "saint_lives")),
-    MenuItem(DrawerItem("Icoane", Icons.Default.Image, "icons")),
-    MenuItem(DrawerItem("Mănăstiri", Icons.Default.LocationCity, "monastery_list")),
-    MenuItem(DrawerItem("Taine și Slujbe", Icons.Default.AutoStories, "sacraments")),
-    MenuItem(DrawerItem("Apologetică", Icons.Default.ContactSupport, "apologetics")),
-    MenuDivider("Media"),
-    MenuItem(DrawerItem("Radio", Icons.Default.Radio, "radio")),
-    MenuItem(DrawerItem("Cărți Audio", Icons.Default.Headset, "audiobook_flow"))
+    MenuItem(DrawerItem(R.string.menu_home, Icons.Default.Home, "home")),
+    MenuDivider(R.string.menu_main),
+    MenuItem(DrawerItem(R.string.menu_calendar, Icons.Default.CalendarMonth, "calendar")),
+    MenuItem(DrawerItem(R.string.menu_anuar, Icons.Default.Today, "anuar")),
+    MenuItem(DrawerItem(R.string.menu_bible, Icons.Default.Book, "bible_home")),
+    MenuDivider(R.string.menu_spiritual_resources),
+    MenuItem(DrawerItem(R.string.menu_prayers, Icons.AutoMirrored.Filled.MenuBook, "prayer_categories", subItems = prayerCategories)),
+    MenuItem(DrawerItem(R.string.menu_saint_lives, Icons.Default.Person, "saint_lives")),
+    MenuItem(DrawerItem(R.string.menu_icons, Icons.Default.Image, "icons")),
+    MenuItem(DrawerItem(R.string.menu_monasteries, Icons.Default.LocationCity, "monastery_list")),
+    MenuItem(DrawerItem(R.string.menu_sacraments, Icons.Default.AutoStories, "sacraments")),
+    MenuItem(DrawerItem(R.string.menu_apologetics, Icons.Default.ContactSupport, "apologetics")),
+    MenuDivider(R.string.menu_media),
+    MenuItem(DrawerItem(R.string.menu_radio, Icons.Default.Radio, "radio")),
+    MenuItem(DrawerItem(R.string.menu_audiobooks, Icons.Default.Headset, "audiobook_flow")),
+    MenuItem(DrawerItem(R.string.menu_language, Icons.Default.Language, "language_settings"))
 )
 
 @Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var languagePreferences: LanguagePreferences
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { /* ... logica pentru permisiuni ... */ }
@@ -125,6 +135,10 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        runBlocking {
+            val lang = languagePreferences.language.first()
+            LocaleHelper.applyLanguage(this@MainActivity, lang)
+        }
         super.onCreate(savedInstanceState)
         askPermissions()
         startService(Intent(this, PlaybackService::class.java))
@@ -211,6 +225,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
             )
         }
         composable("icons") { IconsScreen(navController = navController) }
+        composable("language_settings") { LanguageSettingsScreen() }
         composable(
             route = "icon_detail/{iconId}",
             arguments = listOf(navArgument("iconId") { type = NavType.LongType })
@@ -299,7 +314,7 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
 @Composable
 fun NavigationDrawerContent(navController: NavHostController, drawerState: DrawerState) {
     val coroutineScope = rememberCoroutineScope()
-    var expandedItem by remember { mutableStateOf<String?>(null) }
+    var expandedItem by remember { mutableStateOf<Int?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -333,12 +348,12 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.nav_drawer_banner),
-                        contentDescription = "Banner Ortodox Moldova",
+                        contentDescription = stringResource(R.string.banner_description),
                         modifier = Modifier.size(90.dp),
                         contentScale = ContentScale.Fit
                     )
                     Text(
-                        text = "Ortodox Moldova",
+                        text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -351,7 +366,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                 when (menuItem) {
                     is MenuDivider -> {
                         Text(
-                            text = menuItem.title,
+                            text = stringResource(menuItem.titleRes),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp)
@@ -361,8 +376,8 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                         val item = menuItem.item
                         val isGroupSelected = currentRoute?.startsWith(item.route) == true
                         NavigationDrawerItem(
-                            icon = { Icon(item.icon, contentDescription = item.title) },
-                            label = { Text(item.title) },
+                            icon = { Icon(item.icon, contentDescription = stringResource(item.titleRes)) },
+                            label = { Text(stringResource(item.titleRes)) },
                             selected = isGroupSelected && item.subItems == null,
                             onClick = {
                                 if (item.subItems == null) {
@@ -373,26 +388,26 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                         restoreState = true
                                     }
                                 } else {
-                                    expandedItem = if (expandedItem == item.title) null else item.title
+                                    expandedItem = if (expandedItem == item.titleRes) null else item.titleRes
                                 }
                             },
                             badge = {
                                 if (item.subItems != null) {
-                                    IconButton(onClick = { expandedItem = if (expandedItem == item.title) null else item.title }) {
+                                    IconButton(onClick = { expandedItem = if (expandedItem == item.titleRes) null else item.titleRes }) {
                                         Icon(
-                                            imageVector = if (expandedItem == item.title || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                            contentDescription = "Expand"
+                                            imageVector = if (expandedItem == item.titleRes || isGroupSelected) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                            contentDescription = stringResource(R.string.expand)
                                         )
                                     }
                                 }
                             },
                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                         )
-                        if (item.subItems != null && (expandedItem == item.title || isGroupSelected)) {
+                        if (item.subItems != null && (expandedItem == item.titleRes || isGroupSelected)) {
                             Column(modifier = Modifier.padding(start = 24.dp)) {
                                 item.subItems.forEach { subItem ->
                                     NavigationDrawerItem(
-                                        label = { Text(subItem.title) },
+                                        label = { Text(stringResource(subItem.titleRes)) },
                                         selected = currentRoute == subItem.route,
                                         onClick = {
                                             coroutineScope.launch { drawerState.close() }

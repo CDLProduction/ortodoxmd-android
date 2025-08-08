@@ -1,0 +1,177 @@
+<resources>
+    <string name="app_name">Orthodox Moldova</string>
+    <string name="playback_channel_name">Audio Playback</string>
+    <string name="playback_channel_description">Notification for controlling audio playback</string>
+
+    <!-- Menu items -->
+    <string name="menu_home">Home</string>
+    <string name="menu_main">Main</string>
+    <string name="menu_calendar">Calendar</string>
+    <string name="menu_anuar">Church Yearbook</string>
+    <string name="menu_bible">Holy Scripture</string>
+    <string name="menu_spiritual_resources">Spiritual Resources</string>
+    <string name="menu_prayers">Prayers</string>
+    <string name="menu_saint_lives">Lives of Saints</string>
+    <string name="menu_icons">Icons</string>
+    <string name="menu_monasteries">Monasteries</string>
+    <string name="menu_sacraments">Sacraments and Services</string>
+    <string name="menu_apologetics">Apologetics</string>
+    <string name="menu_media">Media</string>
+    <string name="menu_radio">Radio</string>
+    <string name="menu_audiobooks">Audiobooks</string>
+    <string name="menu_language">Language</string>
+
+    <!-- Prayer subcategories -->
+    <string name="prayer_morning">Morning Prayers</string>
+    <string name="prayer_evening">Evening Prayers</string>
+    <string name="prayer_illness">Prayers for Illness</string>
+    <string name="prayer_general">General Prayers</string>
+
+    <!-- Language selection -->
+    <string name="select_language">Select Language</string>
+    <string name="language_romanian">Romanian</string>
+    <string name="language_russian">Russian</string>
+    <string name="language_english">English</string>
+
+    <!-- Misc -->
+    <string name="banner_description">Orthodox Moldova Banner</string>
+    <string name="expand">Expand</string>
+
+    <!-- Notifications -->
+    <string name="notification_daily_calendar_channel_name">Daily Calendar Notifications</string>
+    <string name="notification_daily_calendar_channel_description">Shows daily information from the Orthodox calendar.</string>
+
+    <!-- Common actions -->
+    <string name="back">Back</string>
+    <string name="today">Today</string>
+    <string name="select">Select</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Calendar -->
+    <string-array name="weekdays_short">
+        <item>M</item>
+        <item>Tu</item>
+        <item>W</item>
+        <item>Th</item>
+        <item>F</item>
+        <item>Sa</item>
+        <item>Su</item>
+    </string-array>
+    <string name="fasting_none">No fasting day</string>
+    <string name="fasting_day">Fasting day</string>
+    <string name="fasting">Fasting: %1$s</string>
+    <string name="saints_of_day">Saints of the day:</string>
+
+    <!-- Prayer -->
+    <string name="prayer_categories_title">Prayer Categories</string>
+    <string name="no_prayers_found">No prayers found in this category.</string>
+    <string name="error_occurred">An error occurred: %1$s</string>
+
+    <!-- Monastery -->
+    <string name="no_maps_app_found">No maps application found.</string>
+    <string name="navigate">Navigate</string>
+    <string name="navigate_on_map">Navigate on map</string>
+    <string name="data_not_loaded">Data could not be loaded.</string>
+
+    <!-- Apologetics -->
+    <string name="apologetics_search_placeholder">Search a topic...</string>
+    <string name="search">Search</string>
+    <string name="question">Question</string>
+
+    <!-- Global search -->
+    <string name="search_help">Search Help</string>
+    <string name="global_search_example">Ex: Matthew 2:15 or Jesus</string>
+    <string name="global_search_hint">Enter text to search the Bible.</string>
+    <string name="search_principles_title">Search Principles</string>
+    <string name="search_principles_intro">You can search in two ways:</string>
+    <string name="search_by_reference_title">1. By Reference</string>
+    <string name="search_by_reference_desc">Enter the book name (or abbreviation), followed by chapter and optionally verse.</string>
+    <string name="search_by_reference_examples">Examples: John 3:16, 1 Cor 13, Genesis 1:1-5</string>
+    <string name="search_by_word_title">2. By Word</string>
+    <string name="search_by_word_desc">Enter any word or phrase to search the entire Bible text.</string>
+    <string name="search_by_word_examples">Examples: salvation, the good shepherd</string>
+    <string name="understood">Got it</string>
+    <string name="help">Help</string>
+
+    <!-- Bible download -->
+    <string name="download_bible_icon_desc">Download Bible</string>
+    <string name="download_bible_title">Download the Holy Scripture</string>
+    <string name="download_bible_message">To access full functionality, you need to download the complete text of the Bible (approx. 10MB).</string>
+    <string name="start_download">Start Download</string>
+    <string name="downloading_progress">Downloading... %1$d%%</string>
+    <string name="retry">Retry</string>
+    <string name="download_finished_icon_desc">Finished</string>
+    <string name="access_bible">Access Bible</string>
+
+    <!-- Bible reading -->
+    <string name="bible_chapter_format">%1$s %2$d</string>
+    <string name="search_in_chapter">Search in this chapter...</string>
+    <string name="no_results_found">No results found.</string>
+    <string name="save_bookmark">Save bookmark</string>
+    <string name="no_bookmarks">You have no bookmarks saved.</string>
+    <string name="tab_browse">Browse</string>
+    <string name="tab_search">Search</string>
+    <string name="tab_bookmarks">Bookmarks</string>
+    <string name="old_testament">Old Testament</string>
+    <string name="new_testament">New Testament</string>
+    <string name="books">Books</string>
+    <string name="back_to_testaments">Back to Testaments</string>
+    <string name="chapter_icon_desc">Chapter</string>
+    <string name="chapter_number">Chapter %1$d</string>
+    <string name="view_verses">View verses</string>
+
+    <!-- Anuar -->
+    <string name="no_services">No services available for this day.</string>
+    <string name="previous_day">Previous day</string>
+    <string name="next_day">Next day</string>
+    <string name="vespers">Vespers</string>
+    <string name="matins">Matins</string>
+    <string name="divine_liturgy">Divine Liturgy</string>
+    <string name="no_service_details">No details for this service.</string>
+
+    <!-- Audiobook -->
+    <string name="categories_title">Categories: %1$s</string>
+    <string name="navigate_to_category">Navigate to %1$s</string>
+    <string name="category_icon_desc">Category icon</string>
+    <string name="testaments_title">Testaments: %1$s</string>
+    <string name="all">All</string>
+    <string name="testament_icon_desc">Testament icon</string>
+    <string name="loading">Loading...</string>
+    <string name="delete_downloads">Delete Downloads</string>
+    <string name="delete">Delete</string>
+    <string name="download">Download</string>
+    <string name="downloaded">Downloaded</string>
+    <string name="waiting">Waiting</string>
+    <string name="book_not_found">Book not found.</string>
+
+    <!-- Radio -->
+    <string name="connecting">CONNECTING...</string>
+    <string name="now_playing">NOW PLAYING</string>
+    <string name="stopped">STOPPED</string>
+    <string name="play_pause">Play/Pause</string>
+
+    <!-- Audiobook Books -->
+    <string name="navigate_to_book">Navigate to %1$s</string>
+    <string name="book_icon_desc">Book icon</string>
+    <string name="book_cover_desc">Book Cover</string>
+    <string name="previous_track">Previous</string>
+    <string name="rewind_10s">Rewind 10s</string>
+    <string name="forward_30s">Forward 30s</string>
+    <string name="next_track">Next</string>
+
+    <!-- Sacrament -->
+    <string name="sacrament_icon_desc">Sacrament</string>
+
+    <!-- Monastery -->
+    <string name="monastery_icon_desc">Monastery</string>
+    <string name="view_details">See details</string>
+
+    <!-- Saints -->
+    <string name="saint_icon_desc">Saint icon</string>
+
+    <!-- Home -->
+    <string name="resume_listening">Resume Listening</string>
+    <string name="remaining_at">Remaining at: %1$s</string>
+    <string name="explore_app">Explore the App</string>
+</resources>

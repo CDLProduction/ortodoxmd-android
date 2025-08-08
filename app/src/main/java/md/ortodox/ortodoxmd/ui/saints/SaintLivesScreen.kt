@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.data.model.SaintLife
@@ -60,7 +61,7 @@ private fun SaintLifeCardItem(saintLife: SaintLife, onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.AutoAwesome,
-                contentDescription = "Icoană Sfânt",
+                contentDescription = stringResource(R.string.saint_icon_desc),
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
@@ -72,7 +73,7 @@ private fun SaintLifeCardItem(saintLife: SaintLife, onClick: () -> Unit) {
             )
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi detalii",
+                contentDescription = stringResource(R.string.view_details),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

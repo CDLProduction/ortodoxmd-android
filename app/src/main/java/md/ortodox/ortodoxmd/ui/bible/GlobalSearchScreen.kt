@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -28,7 +29,10 @@ fun GlobalSearchScreen(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(onClick = { showHelpDialog = true }) {
-                Icon(Icons.Default.HelpOutline, contentDescription = "Ajutor Căutare")
+                Icon(
+                    Icons.Default.HelpOutline,
+                    contentDescription = stringResource(R.string.search_help)
+                )
             }
         }
     ) { paddingValues ->
@@ -41,7 +45,7 @@ fun GlobalSearchScreen(
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("Ex: Matei 2:15 sau Iisus") },
+                label = { Text(stringResource(R.string.global_search_example)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -50,14 +54,14 @@ fun GlobalSearchScreen(
                 onClick = { viewModel.search(query) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Caută")
+                Text(stringResource(R.string.search))
             }
             Spacer(Modifier.height(16.dp))
 
             when (val state = uiState) {
                 is SearchUiState.Idle -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Introduceți un text pentru a căuta în Biblie.")
+                        Text(stringResource(R.string.global_search_hint))
                     }
                 }
                 is SearchUiState.Loading -> {
@@ -89,38 +93,38 @@ fun GlobalSearchScreen(
     if (showHelpDialog) {
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
-            icon = { Icon(Icons.Default.HelpOutline, contentDescription = "Ajutor") },
-            title = { Text("Principii de Căutare") },
+            icon = { Icon(Icons.Default.HelpOutline, contentDescription = stringResource(R.string.help)) },
+            title = { Text(stringResource(R.string.search_principles_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Puteți căuta în două moduri:", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.search_principles_intro), style = MaterialTheme.typography.bodyMedium)
 
-                    Text("1. După Referință", style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.search_by_reference_title), style = MaterialTheme.typography.titleSmall)
                     Text(
-                        text = "Introduceți numele cărții (sau o abreviere), urmat de capitol și, opțional, verset.",
+                        text = stringResource(R.string.search_by_reference_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "Exemple: Ioan 3:16, 1 Cor 13, Facerea 1:1-5",
+                        text = stringResource(R.string.search_by_reference_examples),
                         style = MaterialTheme.typography.bodySmall
                     )
 
                     Spacer(Modifier.height(8.dp))
 
-                    Text("2. După Cuvânt", style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.search_by_word_title), style = MaterialTheme.typography.titleSmall)
                     Text(
-                        text = "Introduceți orice cuvânt sau expresie pentru a căuta în tot textul Bibliei.",
+                        text = stringResource(R.string.search_by_word_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "Exemple: mântuire, păstorul cel bun",
+                        text = stringResource(R.string.search_by_word_examples),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showHelpDialog = false }) {
-                    Text("Am înțeles")
+                    Text(stringResource(R.string.understood))
                 }
             }
         )

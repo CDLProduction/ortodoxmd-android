@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -74,7 +75,7 @@ private fun IconCardItem(icon: Icon, onClick: () -> Unit) {
             // **NOU: Pictograma decorativă din stânga**
             Icon(
                 imageVector = Icons.Default.AutoAwesome, // Poți schimba cu orice altă pictogramă (ex: Icons.Default.Person)
-                contentDescription = "Icoană Sfânt",
+                contentDescription = stringResource(R.string.saint_icon_desc),
                 tint = MaterialTheme.colorScheme.primary
             )
 
@@ -90,7 +91,7 @@ private fun IconCardItem(icon: Icon, onClick: () -> Unit) {
             // Pictograma de navigare din dreapta
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi detalii",
+                contentDescription = stringResource(R.string.view_details),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

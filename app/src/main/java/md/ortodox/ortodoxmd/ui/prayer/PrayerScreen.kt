@@ -13,9 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import md.ortodox.ortodoxmd.data.model.Prayer
+import md.ortodox.ortodoxmd.R
 
 @Composable
 fun PrayerScreen(category: String, modifier: Modifier = Modifier) {
@@ -37,14 +39,14 @@ fun PrayerScreen(category: String, modifier: Modifier = Modifier) {
             }
             is PrayerUiState.Empty -> {
                 Text(
-                    text = "Nu au fost găsite rugăciuni în această categorie.",
+                    text = stringResource(R.string.no_prayers_found),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
             is PrayerUiState.Error -> {
                 Text(
-                    text = "A apărut o eroare: ${state.message}",
+                    text = stringResource(R.string.error_occurred, state.message),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.align(Alignment.Center).padding(16.dp)
@@ -107,11 +109,11 @@ fun PrayerItem(prayer: Prayer, level: Int) {
                     modifier = Modifier.weight(1f)
                 )
                 if (isClickable) {
-                    Icon(
-                        imageVector = Icons.Default.ExpandMore,
-                        contentDescription = "Expand",
-                        modifier = Modifier.rotate(rotationAngle)
-                    )
+                        Icon(
+                            imageVector = Icons.Default.ExpandMore,
+                            contentDescription = stringResource(R.string.expand),
+                            modifier = Modifier.rotate(rotationAngle)
+                        )
                 }
             }
 

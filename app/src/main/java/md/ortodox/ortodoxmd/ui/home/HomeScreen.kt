@@ -19,11 +19,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -78,7 +80,7 @@ fun HomeScreen(
 @Composable
 private fun TodayCard(calendarData: md.ortodox.ortodoxmd.data.model.CalendarData?, onClick: () -> Unit) {
     val calendar = Calendar.getInstance()
-    val dateDisplayFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale("ro")).format(calendar.time)
+    val dateDisplayFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.getDefault()).format(calendar.time)
     val title = dateDisplayFormat.replaceFirstChar { it.uppercase() }
 
     Card(
@@ -95,13 +97,13 @@ private fun TodayCard(calendarData: md.ortodox.ortodoxmd.data.model.CalendarData
             Divider()
             if (calendarData != null) {
                 val fastingInfo = when (calendarData.fastingDescriptionRo.lowercase(Locale.ROOT)) {
-                    "harti" -> "Zi fără post"
+                    "harti" -> stringResource(R.string.fasting_none)
                     else -> calendarData.fastingDescriptionRo
                 }
                 InfoRow(icon = Icons.Default.Restaurant, text = fastingInfo)
                 InfoRow(icon = Icons.Default.Person, text = calendarData.saints.firstOrNull()?.nameAndDescriptionRo ?: calendarData.summaryTitleRo)
             } else {
-                InfoRow(icon = Icons.Default.CloudOff, text = "Datele nu au putut fi încărcate.")
+                InfoRow(icon = Icons.Default.CloudOff, text = stringResource(R.string.data_not_loaded))
             }
         }
     }
@@ -167,14 +169,14 @@ private fun ResumeListeningCard(info: ResumePlaybackInfo, onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.PlayCircleFilled,
-                contentDescription = "Reluați Ascultarea",
+                contentDescription = stringResource(R.string.resume_listening),
                 modifier = Modifier.size(48.dp),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Reluați Ascultarea",
+                    text = stringResource(R.string.resume_listening),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
@@ -191,7 +193,7 @@ private fun ResumeListeningCard(info: ResumePlaybackInfo, onClick: () -> Unit) {
                     String.format("%02d:%02d", minutes, seconds)
                 }
                 Text(
-                    text = "Rămas la: $formattedDuration",
+                    text = stringResource(R.string.remaining_at, formattedDuration),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
                 )
@@ -204,19 +206,19 @@ private fun ResumeListeningCard(info: ResumePlaybackInfo, onClick: () -> Unit) {
 private fun QuickNavGrid(navController: NavHostController) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "Explorați Aplicația",
+            text = stringResource(R.string.explore_app),
             style = MaterialTheme.typography.titleLarge
         )
         // Primul rând de butoane
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             NavButton(
-                title = "Biblia",
+                title = stringResource(R.string.menu_bible),
                 icon = Icons.Default.Book,
                 onClick = { navController.navigate("bible_home") },
                 modifier = Modifier.weight(1f)
             )
             NavButton(
-                title = "Rugăciuni",
+                title = stringResource(R.string.menu_prayers),
                 icon = Icons.AutoMirrored.Filled.MenuBook,
                 onClick = { navController.navigate("prayer_categories") },
                 modifier = Modifier.weight(1f)
@@ -225,13 +227,13 @@ private fun QuickNavGrid(navController: NavHostController) {
         // Al doilea rând de butoane
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             NavButton(
-                title = "Vieți Sfinți",
+                title = stringResource(R.string.menu_saint_lives),
                 icon = Icons.Default.Person,
                 onClick = { navController.navigate("saint_lives") },
                 modifier = Modifier.weight(1f)
             )
             NavButton(
-                title = "Anuar",
+                title = stringResource(R.string.menu_anuar),
                 icon = Icons.Default.Today,
                 onClick = { navController.navigate("anuar") },
                 modifier = Modifier.weight(1f)

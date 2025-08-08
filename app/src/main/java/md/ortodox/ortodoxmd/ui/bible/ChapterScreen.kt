@@ -15,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,7 +46,7 @@ fun ChaptersScreen(
                 title = { Text(bookName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 }
             )
@@ -94,17 +95,17 @@ private fun ChapterCardItem(chapter: BibleChapter, onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                contentDescription = "Capitol",
+                contentDescription = stringResource(R.string.chapter_icon_desc),
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Capitolul ${chapter.chapterNumber}",
+                text = stringResource(R.string.chapter_number, chapter.chapterNumber),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi versete",
+                contentDescription = stringResource(R.string.view_verses),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

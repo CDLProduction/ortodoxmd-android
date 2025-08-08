@@ -1,0 +1,177 @@
+<resources>
+    <string name="app_name">Православная Молдова</string>
+    <string name="playback_channel_name">Аудиовоспроизведение</string>
+    <string name="playback_channel_description">Уведомление для управления аудиовоспроизведением</string>
+
+    <!-- Menu items -->
+    <string name="menu_home">Главная</string>
+    <string name="menu_main">Основное</string>
+    <string name="menu_calendar">Календарь</string>
+    <string name="menu_anuar">Церковный ежегодник</string>
+    <string name="menu_bible">Святое Писание</string>
+    <string name="menu_spiritual_resources">Духовные ресурсы</string>
+    <string name="menu_prayers">Молитвы</string>
+    <string name="menu_saint_lives">Жития святых</string>
+    <string name="menu_icons">Иконы</string>
+    <string name="menu_monasteries">Монастыри</string>
+    <string name="menu_sacraments">Таинства и службы</string>
+    <string name="menu_apologetics">Апологетика</string>
+    <string name="menu_media">Медиа</string>
+    <string name="menu_radio">Радио</string>
+    <string name="menu_audiobooks">Аудиокниги</string>
+    <string name="menu_language">Язык</string>
+
+    <!-- Prayer subcategories -->
+    <string name="prayer_morning">Утренние молитвы</string>
+    <string name="prayer_evening">Вечерние молитвы</string>
+    <string name="prayer_illness">Молитвы при болезни</string>
+    <string name="prayer_general">Общие молитвы</string>
+
+    <!-- Language selection -->
+    <string name="select_language">Выберите язык</string>
+    <string name="language_romanian">Румынский</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_english">Английский</string>
+
+    <!-- Misc -->
+    <string name="banner_description">Баннер Православная Молдова</string>
+    <string name="expand">Развернуть</string>
+
+    <!-- Notifications -->
+    <string name="notification_daily_calendar_channel_name">Уведомления ежедневного календаря</string>
+    <string name="notification_daily_calendar_channel_description">Отображает ежедневную информацию из православного календаря.</string>
+
+    <!-- Common actions -->
+    <string name="back">Назад</string>
+    <string name="today">Сегодня</string>
+    <string name="select">Выбрать</string>
+    <string name="ok">ОК</string>
+    <string name="cancel">Отмена</string>
+
+    <!-- Calendar -->
+    <string-array name="weekdays_short">
+        <item>Пн</item>
+        <item>Вт</item>
+        <item>Ср</item>
+        <item>Чт</item>
+        <item>Пт</item>
+        <item>Сб</item>
+        <item>Вс</item>
+    </string-array>
+    <string name="fasting_none">День без поста</string>
+    <string name="fasting_day">День поста</string>
+    <string name="fasting">Пост: %1$s</string>
+    <string name="saints_of_day">Святые дня:</string>
+
+    <!-- Prayer -->
+    <string name="prayer_categories_title">Категории молитв</string>
+    <string name="no_prayers_found">В этой категории молитв не найдено.</string>
+    <string name="error_occurred">Произошла ошибка: %1$s</string>
+
+    <!-- Monastery -->
+    <string name="no_maps_app_found">Приложение карт не найдено.</string>
+    <string name="navigate">Навигация</string>
+    <string name="navigate_on_map">Навигация по карте</string>
+    <string name="data_not_loaded">Данные не удалось загрузить.</string>
+
+    <!-- Apologetics -->
+    <string name="apologetics_search_placeholder">Искать тему...</string>
+    <string name="search">Поиск</string>
+    <string name="question">Вопрос</string>
+
+    <!-- Global search -->
+    <string name="search_help">Помощь по поиску</string>
+    <string name="global_search_example">Пр.: Матф. 2:15 или Иисус</string>
+    <string name="global_search_hint">Введите текст, чтобы искать в Библии.</string>
+    <string name="search_principles_title">Принципы поиска</string>
+    <string name="search_principles_intro">Вы можете искать двумя способами:</string>
+    <string name="search_by_reference_title">1. По ссылке</string>
+    <string name="search_by_reference_desc">Введите название книги (или сокращение), затем главу и, при необходимости, стих.</string>
+    <string name="search_by_reference_examples">Примеры: Иоан. 3:16, 1 Кор 13, Быт. 1:1-5</string>
+    <string name="search_by_word_title">2. По слову</string>
+    <string name="search_by_word_desc">Введите любое слово или выражение для поиска по всему тексту Библии.</string>
+    <string name="search_by_word_examples">Примеры: спасение, добрый пастырь</string>
+    <string name="understood">Понятно</string>
+    <string name="help">Помощь</string>
+
+    <!-- Bible download -->
+    <string name="download_bible_icon_desc">Скачать Библию</string>
+    <string name="download_bible_title">Скачайте Святое Писание</string>
+    <string name="download_bible_message">Для доступа ко всем функциям необходимо скачать полный текст Библии (примерно 10 МБ).</string>
+    <string name="start_download">Начать загрузку</string>
+    <string name="downloading_progress">Загрузка... %1$d%%</string>
+    <string name="retry">Повторить</string>
+    <string name="download_finished_icon_desc">Завершено</string>
+    <string name="access_bible">Перейти к Библии</string>
+
+    <!-- Bible reading -->
+    <string name="bible_chapter_format">%1$s %2$d</string>
+    <string name="search_in_chapter">Искать в этой главе...</string>
+    <string name="no_results_found">Ничего не найдено.</string>
+    <string name="save_bookmark">Сохранить закладку</string>
+    <string name="no_bookmarks">У вас нет сохранённых закладок.</string>
+    <string name="tab_browse">Просмотр</string>
+    <string name="tab_search">Поиск</string>
+    <string name="tab_bookmarks">Закладки</string>
+    <string name="old_testament">Ветхий Завет</string>
+    <string name="new_testament">Новый Завет</string>
+    <string name="books">Книги</string>
+    <string name="back_to_testaments">Назад к Заветам</string>
+    <string name="chapter_icon_desc">Глава</string>
+    <string name="chapter_number">Глава %1$d</string>
+    <string name="view_verses">Посмотреть стихи</string>
+
+    <!-- Anuar -->
+    <string name="no_services">На этот день нет доступных богослужений.</string>
+    <string name="previous_day">Предыдущий день</string>
+    <string name="next_day">Следующий день</string>
+    <string name="vespers">Вечерня</string>
+    <string name="matins">Утреня</string>
+    <string name="divine_liturgy">Божественная литургия</string>
+    <string name="no_service_details">Нет деталей для этой службы.</string>
+
+    <!-- Audiobook -->
+    <string name="categories_title">Категории: %1$s</string>
+    <string name="navigate_to_category">Перейти к %1$s</string>
+    <string name="category_icon_desc">Значок категории</string>
+    <string name="testaments_title">Заветы: %1$s</string>
+    <string name="all">Все</string>
+    <string name="testament_icon_desc">Значок завета</string>
+    <string name="loading">Загрузка...</string>
+    <string name="delete_downloads">Удалить загрузки</string>
+    <string name="delete">Удалить</string>
+    <string name="download">Скачать</string>
+    <string name="downloaded">Загружено</string>
+    <string name="waiting">Ожидание</string>
+    <string name="book_not_found">Книга не найдена.</string>
+
+    <!-- Radio -->
+    <string name="connecting">ПОДКЛЮЧЕНИЕ...</string>
+    <string name="now_playing">СЕЙЧАС ВОСПРОИЗВОДИТСЯ</string>
+    <string name="stopped">ОСТАНОВЛЕНО</string>
+    <string name="play_pause">Воспроизвести/Пауза</string>
+
+    <!-- Audiobook Books -->
+    <string name="navigate_to_book">Перейти к %1$s</string>
+    <string name="book_icon_desc">Значок книги</string>
+    <string name="book_cover_desc">Обложка книги</string>
+    <string name="previous_track">Предыдущий</string>
+    <string name="rewind_10s">Назад 10с</string>
+    <string name="forward_30s">Вперёд 30с</string>
+    <string name="next_track">Следующий</string>
+
+    <!-- Sacrament -->
+    <string name="sacrament_icon_desc">Таинство</string>
+
+    <!-- Monastery -->
+    <string name="monastery_icon_desc">Монастырь</string>
+    <string name="view_details">Посмотреть детали</string>
+
+    <!-- Saints -->
+    <string name="saint_icon_desc">Значок святого</string>
+
+    <!-- Home -->
+    <string name="resume_listening">Возобновить прослушивание</string>
+    <string name="remaining_at">Осталось на: %1$s</string>
+    <string name="explore_app">Исследуйте приложение</string>
+</resources>

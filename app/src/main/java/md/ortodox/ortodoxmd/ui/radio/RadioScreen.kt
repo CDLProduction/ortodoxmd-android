@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
@@ -99,9 +100,9 @@ fun PlayerControls(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = when {
-                        isBuffering -> "CONECTARE..."
-                        isPlaying -> "ACUM RULEAZĂ"
-                        else -> "OPRIT"
+                        isBuffering -> stringResource(R.string.connecting)
+                        isPlaying -> stringResource(R.string.now_playing)
+                        else -> stringResource(R.string.stopped)
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
@@ -127,7 +128,7 @@ fun PlayerControls(
                     ) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Play/Pause",
+                            contentDescription = stringResource(R.string.play_pause),
                             modifier = Modifier.fillMaxSize()
                         )
                     }
