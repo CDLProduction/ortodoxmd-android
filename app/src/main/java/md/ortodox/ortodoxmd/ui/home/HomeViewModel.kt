@@ -1,5 +1,7 @@
 package md.ortodox.ortodoxmd.ui.home
 
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,13 +36,12 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val audiobookRepository: AudiobookRepository
-    // Am eliminat BibleRepository de aici
-) : ViewModel(), DefaultLifecycleObserver {
+) : ViewModel(), DefaultLifecycleObserver { // **MODIFICAT: Implementăm observer-ul**
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
-    // Datele se vor reîncărca de fiecare dată când ecranul devine activ
+    // **MODIFICAT: Datele se vor reîncărca de fiecare dată când ecranul devine activ**
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
         loadHomeScreenData()
@@ -50,7 +51,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // --- Logica pentru Versetul Zilei (acum doar statică) ---
+            // Logica pentru Versetul Zilei
             val staticVerse = StaticVerseProvider.getRandomVerse()
             _uiState.update {
                 it.copy(
@@ -59,33 +60,38 @@ class HomeViewModel @Inject constructor(
                 )
             }
 
-            // --- Logica pentru datele calendaristice ---
-            val dateApiFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            try {
-                val calendarData = calendarRepository.getCalendarData(dateApiFormat)
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        calendarData = calendarData,
-                        error = if (calendarData == null) "Nu s-au putut încărca datele pentru astăzi." else null
-                    )
+            // Logica pentru datele calendaristice
+            launch {
+                try {
+                    val dateApiFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                    val calendarData = calendarRepository.getCalendarData(dateApiFormat)
+                    _uiState.update {
+                        it.copy(
+                            calendarData = calendarData,
+                            error = if (calendarData == null) "Nu s-au putut încărca datele." else null
+                        )
+                    }
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(error = "Eroare de conexiune.") }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = "Eroare de conexiune.") }
             }
 
-            // --- Logica pentru reluarea ascultării ---
-            val lastPlayback = audiobookRepository.getLastPlaybackInfo().first()
-            val bookToResume = lastPlayback?.let { audiobookRepository.getById(it.audiobookId) }
-            _uiState.update {
-                it.copy(
-                    resumePlaybackInfo = if (bookToResume != null && lastPlayback != null) {
-                        ResumePlaybackInfo(bookToResume, lastPlayback.positionMillis)
-                    } else {
-                        null
-                    }
-                )
+            // Logica pentru reluarea ascultării
+            launch {
+                val lastPlayback = audiobookRepository.getLastPlaybackInfo().first()
+                val bookToResume = lastPlayback?.let { audiobookRepository.getById(it.audiobookId) }
+                _uiState.update {
+                    it.copy(
+                        resumePlaybackInfo = if (bookToResume != null && lastPlayback != null) {
+                            ResumePlaybackInfo(bookToResume, lastPlayback.positionMillis)
+                        } else {
+                            null
+                        }
+                    )
+                }
             }
+
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 }

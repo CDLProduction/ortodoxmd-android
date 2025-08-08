@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import java.text.SimpleDateFormat
@@ -35,6 +37,17 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // **ADAUGAT: Conectăm ViewModel-ul la ciclul de viață al ecranului**
+    // Acest bloc va face ca funcția onStart() din ViewModel să fie apelată de fiecare dată
+    // când utilizatorul revine la acest ecran.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.addObserver(viewModel)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(viewModel)
+        }
+    }
+
     if (uiState.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -47,27 +60,20 @@ fun HomeScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // --- Cardul Zilei ---
             TodayCard(
                 calendarData = uiState.calendarData,
                 onClick = { navController.navigate("calendar") }
             )
-
-            // --- Cardul Versetul Zilei ---
             VerseOfTheDayCard(
                 verse = uiState.verseOfTheDay,
                 reference = uiState.verseReference
             )
-
-            // --- Card Reluare Ascultare (apare doar dacă există) ---
             uiState.resumePlaybackInfo?.let { info ->
                 ResumeListeningCard(
                     info = info,
                     onClick = { navController.navigate("audiobook_player/${info.audiobook.id}") }
                 )
             }
-
-            // --- Grila de Navigare ---
             QuickNavGrid(navController = navController)
         }
     }
@@ -77,8 +83,7 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TodayCard(calendarData: md.ortodox.ortodoxmd.data.model.CalendarData?, onClick: () -> Unit) {
-    val calendar = Calendar.getInstance()
-    val dateDisplayFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale("ro")).format(calendar.time)
+    val dateDisplayFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale("ro")).format(Date())
     val title = dateDisplayFormat.replaceFirstChar { it.uppercase() }
 
     Card(
@@ -106,7 +111,6 @@ private fun TodayCard(calendarData: md.ortodox.ortodoxmd.data.model.CalendarData
         }
     }
 }
-
 @Composable
 private fun InfoRow(icon: ImageVector, text: String) {
     Row(
