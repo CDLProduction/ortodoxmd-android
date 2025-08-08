@@ -20,12 +20,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import md.ortodox.ortodoxmd.data.model.CalendarData
 import md.ortodox.ortodoxmd.domain.model.HolidayRank
 import md.ortodox.ortodoxmd.domain.model.RedLetterDays
+import md.ortodox.ortodoxmd.R
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -34,7 +37,7 @@ import java.util.*
 fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
-    val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale("ro")) }
+    val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale.getDefault()) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
         Row(
@@ -44,9 +47,9 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
             val monthYearTitle = monthFormatter.format(uiState.selectedDate.time).replaceFirstChar { it.uppercase() }
             Text(monthYearTitle, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = viewModel::goToToday) { Text("Azi") }
+            OutlinedButton(onClick = viewModel::goToToday) { Text(stringResource(R.string.today)) }
             Spacer(Modifier.width(8.dp))
-            Button(onClick = { showDatePicker = true }) { Text("Selectează") }
+            Button(onClick = { showDatePicker = true }) { Text(stringResource(R.string.select)) }
         }
 
         if (showDatePicker) {
@@ -57,15 +60,16 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
                     Button(onClick = {
                         datePickerState.selectedDateMillis?.let { viewModel.updateFromPicker(it) }
                         showDatePicker = false
-                    }) { Text("OK") }
+                    }) { Text(stringResource(R.string.ok)) }
                 },
-                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Anulează") } }
+                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) } }
             ) { DatePicker(state = datePickerState) }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-            listOf("L", "Ma", "Mi", "J", "V", "S", "D").forEach { day ->
+            val weekdays = stringArrayResource(R.array.weekdays_short)
+            weekdays.forEach { day ->
                 Text(day, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
             }
         }
@@ -174,8 +178,8 @@ private fun DayDetails(data: CalendarData?) {
     val holidayRank = RedLetterDays.getHolidayInfo(data, calendar)
 
     val correctedFastingDescription = when (data.fastingDescriptionRo.lowercase(Locale.ROOT)) {
-        "harti" -> "Zi fără post"
-        "post" -> "Zi de post"
+        "harti" -> stringResource(R.string.fasting_none)
+        "post" -> stringResource(R.string.fasting_day)
         else -> data.fastingDescriptionRo
     }
 
@@ -197,10 +201,10 @@ private fun DayDetails(data: CalendarData?) {
 
             Divider()
 
-            Text("Post: $correctedFastingDescription", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.fasting, correctedFastingDescription), style = MaterialTheme.typography.bodyLarge)
 
             if (data.saints.isNotEmpty()) {
-                Text("Sfinții zilei:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.saints_of_day), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Column {
                     data.saints.forEach { saint ->
                         Text("• ${saint.nameAndDescriptionRo}", style = MaterialTheme.typography.bodyMedium)

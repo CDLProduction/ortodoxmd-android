@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,8 +34,8 @@ fun ApologeticScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            placeholder = { Text("Caută un subiect...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Caută") },
+            placeholder = { Text(stringResource(R.string.apologetics_search_placeholder)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
             singleLine = true
         )
 
@@ -91,7 +92,7 @@ private fun ApologeticCard(apologetic: Apologetic) {
             ) {
                 Icon(
                     imageVector = Icons.Default.HelpOutline,
-                    contentDescription = "Întrebare",
+                    contentDescription = stringResource(R.string.question),
                     tint = MaterialTheme.colorScheme.secondary
                 )
                 Text(
@@ -101,7 +102,7 @@ private fun ApologeticCard(apologetic: Apologetic) {
                 )
                 Icon(
                     imageVector = Icons.Default.ExpandMore,
-                    contentDescription = "Extinde",
+                    contentDescription = stringResource(R.string.expand),
                     modifier = Modifier.rotate(rotationAngle)
                 )
             }

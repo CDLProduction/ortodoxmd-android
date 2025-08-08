@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.work.WorkInfo
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 
@@ -52,9 +53,9 @@ fun AudiobookChaptersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(book?.name ?: "Încărcare...", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = { Text(book?.name ?: stringResource(R.string.loading), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi") }
+                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
                 }
             )
         },
@@ -67,20 +68,20 @@ fun AudiobookChaptersScreen(
                 when {
                     isDownloading -> ExtendedFloatingActionButton(
                         onClick = { viewModel.cancelAllDownloads() },
-                        icon = { Icon(Icons.Default.Cancel, "Anulează") },
-                        text = { Text("Anulează") },
+                        icon = { Icon(Icons.Default.Cancel, stringResource(R.string.cancel)) },
+                        text = { Text(stringResource(R.string.cancel)) },
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
                     hasDeletableChapters -> ExtendedFloatingActionButton(
                         onClick = { book?.chapters?.let { viewModel.deleteAllDownloadedChapters(it) } },
-                        icon = { Icon(Icons.Default.Delete, "Șterge") },
-                        text = { Text("Șterge Descărcările") },
+                        icon = { Icon(Icons.Default.Delete, stringResource(R.string.delete)) },
+                        text = { Text(stringResource(R.string.delete_downloads)) },
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer
                     )
                     hasDownloadableChapters -> ExtendedFloatingActionButton(
                         onClick = { book?.chapters?.let { viewModel.downloadAllChapters(it) } },
-                        icon = { Icon(Icons.Default.Download, "Descarcă") },
-                        text = { Text("Descarcă") }
+                        icon = { Icon(Icons.Default.Download, stringResource(R.string.download)) },
+                        text = { Text(stringResource(R.string.download)) }
                     )
                 }
             }
@@ -109,7 +110,7 @@ fun AudiobookChaptersScreen(
                 }
             }
             else -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Cartea nu a fost găsită.") }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.book_not_found)) }
             }
         }
     }
@@ -139,7 +140,7 @@ private fun ChapterItem(
         ) {
             Icon(
                 imageVector = Icons.Default.Headset,
-                contentDescription = "Icoană Capitol",
+                contentDescription = stringResource(R.string.chapter_icon_desc),
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -161,14 +162,14 @@ private fun ChapterItem(
                     isDownloaded -> Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Descărcat",
+                            contentDescription = stringResource(R.string.downloaded),
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         IconButton(onClick = onDelete) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "Șterge",
+                                contentDescription = stringResource(R.string.delete),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
                         }
@@ -185,16 +186,16 @@ private fun ChapterItem(
                     // --> AICI ESTE LOGICA PENTRU STAREA "ÎN AȘTEPTARE" <--
                     downloadState == WorkInfo.State.ENQUEUED -> Icon(
                         imageVector = Icons.Default.HourglassTop,
-                        contentDescription = "În așteptare",
+                        contentDescription = stringResource(R.string.waiting),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     downloadState == WorkInfo.State.FAILED || downloadState == WorkInfo.State.CANCELLED ->
                         IconButton(onClick = onDownload) {
-                            Icon(Icons.Default.Refresh, "Reîncearcă", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Refresh, stringResource(R.string.retry), tint = MaterialTheme.colorScheme.error)
                         }
                     else ->
                         IconButton(onClick = onDownload) {
-                            Icon(Icons.Default.Download, "Descarcă", tint = MaterialTheme.colorScheme.secondary)
+                            Icon(Icons.Default.Download, stringResource(R.string.download), tint = MaterialTheme.colorScheme.secondary)
                         }
                 }
             }

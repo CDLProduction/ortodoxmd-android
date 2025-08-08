@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
@@ -60,7 +61,7 @@ fun AudiobookPlayerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.audiobook?.title ?: "Se încarcă...") },
+                title = { Text(uiState.audiobook?.title ?: stringResource(R.string.loading)) },
                 navigationIcon = {
                     IconButton(onClick = {
                         Log.d("AudiobookPlayerScreen", "Back button clicked")
@@ -68,7 +69,7 @@ fun AudiobookPlayerScreen(
                     }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi",
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -143,7 +144,7 @@ private fun PlayerHeader(title: String, author: String) {
         Spacer(Modifier.height(32.dp))
         Icon(
             imageVector = Icons.AutoMirrored.Filled.MenuBook,
-            contentDescription = "Coperta Cărții",
+            contentDescription = stringResource(R.string.book_cover_desc),
             modifier = Modifier
                 .fillMaxWidth(0.6f)
                 .aspectRatio(1f),
@@ -204,10 +205,10 @@ private fun PlayerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onPrevious, enabled = controlsEnabled) {
-                Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.SkipPrevious, stringResource(R.string.previous_track), modifier = Modifier.size(32.dp))
             }
             IconButton(onClick = onRewind, enabled = controlsEnabled) {
-                Icon(Icons.Default.Replay10, "Înapoi 10s", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Replay10, stringResource(R.string.rewind_10s), modifier = Modifier.size(32.dp))
             }
             FilledIconButton(
                 onClick = onPlayPauseToggle,
@@ -219,16 +220,16 @@ private fun PlayerControls(
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = "Play/Pauză",
+                    contentDescription = stringResource(R.string.play_pause),
                     modifier = Modifier.size(40.dp),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
             IconButton(onClick = onForward, enabled = controlsEnabled) {
-                Icon(Icons.Default.Forward30, "Înainte 30s", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Forward30, stringResource(R.string.forward_30s), modifier = Modifier.size(32.dp))
             }
             IconButton(onClick = onNext, enabled = controlsEnabled) {
-                Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.SkipNext, stringResource(R.string.next_track), modifier = Modifier.size(32.dp))
             }
         }
         Spacer(Modifier.height(32.dp))

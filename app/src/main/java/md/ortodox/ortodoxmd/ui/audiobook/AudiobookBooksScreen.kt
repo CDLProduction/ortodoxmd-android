@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.net.URLEncoder
@@ -55,7 +56,7 @@ fun AudiobookBooksScreen(
         topBar = {
             Log.d("AudiobookBooksScreen", "TopAppBar rendering with testamentName: $testamentName")
             TopAppBar(
-                title = { Text(testamentName.ifEmpty { "Cărți" }) },
+                title = { Text(testamentName.ifEmpty { stringResource(R.string.books) }) },
                 navigationIcon = {
                     Log.d("AudiobookBooksScreen", "Navigation icon rendering")
                     IconButton(
@@ -67,7 +68,7 @@ fun AudiobookBooksScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi",
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -110,7 +111,7 @@ fun AudiobookBooksScreen(
                             .padding(16.dp)
                             .clickable(
                                 enabled = true,
-                                onClickLabel = "Navighează la ${book.name}",
+                                onClickLabel = stringResource(R.string.navigate_to_book, book.name),
                                 onClick = {
                                     val encodedBookName = URLEncoder.encode(book.name, StandardCharsets.UTF_8.toString())
                                     navController.navigate("audiobook_chapters/$encodedBookName")
@@ -120,7 +121,7 @@ fun AudiobookBooksScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
-                            contentDescription = "Icoană Carte",
+                            contentDescription = stringResource(R.string.book_icon_desc),
                             modifier = Modifier.size(40.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -135,7 +136,7 @@ fun AudiobookBooksScreen(
                         if (isHovered) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "Navighează",
+                                contentDescription = stringResource(R.string.navigate),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }

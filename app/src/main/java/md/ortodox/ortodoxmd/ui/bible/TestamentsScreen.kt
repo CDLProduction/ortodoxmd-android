@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 
@@ -16,8 +17,8 @@ import androidx.navigation.NavHostController
 @Composable
 fun TestamentsScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val testaments = listOf(
-        "Vechiul Testament" to "1",
-        "Noul Testament" to "2"
+        stringResource(R.string.old_testament) to "1",
+        stringResource(R.string.new_testament) to "2"
     )
 
     LazyColumn(

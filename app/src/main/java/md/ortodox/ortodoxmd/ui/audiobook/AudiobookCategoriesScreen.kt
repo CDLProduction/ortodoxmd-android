@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.net.URLEncoder
@@ -47,7 +48,7 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Categorii: $categoryName") },
+                title = { Text(stringResource(R.string.categories_title, categoryName)) },
                 navigationIcon = {
                     IconButton(onClick = {
                         Log.d("AudiobookCategoriesScreen", "Back button clicked")
@@ -55,7 +56,7 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
                     }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi",
+                            contentDescription = stringResource(R.string.back),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -98,7 +99,7 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
                             .padding(16.dp)
                             .clickable(
                                 enabled = true,
-                                onClickLabel = "Navighează la ${category.name}",
+                                onClickLabel = stringResource(R.string.navigate_to_category, category.name),
                                 onClick = {
                                     val encodedCategoryName = URLEncoder.encode(category.name, StandardCharsets.UTF_8.toString())
                                     navController.navigate("audiobook_testaments/${category.name}?categoryName=$encodedCategoryName")
@@ -108,7 +109,7 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
-                            contentDescription = "Icoană Categorie",
+                            contentDescription = stringResource(R.string.category_icon_desc),
                             modifier = Modifier.size(40.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -123,7 +124,7 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
                         if (isHovered) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "Navighează",
+                                contentDescription = stringResource(R.string.navigate),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }

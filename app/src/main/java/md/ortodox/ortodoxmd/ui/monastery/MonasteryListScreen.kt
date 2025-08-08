@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.data.model.Monastery
@@ -63,7 +64,7 @@ private fun MonasteryCardItem(monastery: Monastery, onClick: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.Church,
-                contentDescription = "Mănăstire",
+                contentDescription = stringResource(R.string.monastery_icon_desc),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(32.dp)
             )
@@ -76,7 +77,7 @@ private fun MonasteryCardItem(monastery: Monastery, onClick: () -> Unit) {
             )
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Vezi detalii",
+                contentDescription = stringResource(R.string.view_details),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

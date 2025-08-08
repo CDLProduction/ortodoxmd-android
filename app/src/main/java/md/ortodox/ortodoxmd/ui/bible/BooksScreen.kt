@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -34,9 +35,9 @@ fun BooksScreen(
 
     val uiState by viewModel.uiState.collectAsState()
     val title = when (testamentId) {
-        1L -> "Vechiul Testament"
-        2L -> "Noul Testament"
-        else -> "Cărți"
+        1L -> stringResource(R.string.old_testament)
+        2L -> stringResource(R.string.new_testament)
+        else -> stringResource(R.string.books)
     }
 
     Scaffold(
@@ -46,7 +47,7 @@ fun BooksScreen(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi la Testamente")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back_to_testaments))
                     }
                 }
             )

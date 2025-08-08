@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import md.ortodox.ortodoxmd.data.model.LiturgicalService
 import java.time.LocalDate
@@ -45,11 +46,12 @@ private fun rememberParsedText(rawText: String?): List<ContentBlock> {
 }
 
 // Funcție pentru a asocia un tip de slujbă cu un nume și o pictogramă
+@Composable
 private fun mapServiceType(type: String): Pair<String, ImageVector> {
     return when (type.lowercase()) {
-        "vespers" -> "Vecernie" to Icons.Default.WbTwilight
-        "matins" -> "Utrenie" to Icons.Default.WbSunny
-        "liturgy" -> "Sfânta Liturghie" to Icons.Default.Church
+        "vespers" -> stringResource(R.string.vespers) to Icons.Default.WbTwilight
+        "matins" -> stringResource(R.string.matins) to Icons.Default.WbSunny
+        "liturgy" -> stringResource(R.string.divine_liturgy) to Icons.Default.Church
         else -> type.replaceFirstChar { it.uppercase() } to Icons.Default.MenuBook
     }
 }
@@ -83,7 +85,7 @@ fun AnuarScreen(
                     CircularProgressIndicator()
                 }
                 uiState.services.isEmpty() -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    Text("Pentru această zi nu sunt disponibile rânduieli.", textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.no_services), textAlign = TextAlign.Center)
                 }
                 else -> {
                     LazyColumn(
@@ -110,9 +112,9 @@ fun AnuarScreen(
                         viewModel.selectDate(selectedLocalDate)
                     }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Anulează") } }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) } }
         ) {
             DatePicker(state = datePickerState)
         }
@@ -138,13 +140,13 @@ private fun DateSelectorBar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onPreviousDay) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Ziua precedentă")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, stringResource(R.string.previous_day))
             }
             TextButton(onClick = onDateClick) {
                 Text(formattedDate, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
             IconButton(onClick = onNextDay) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Ziua următoare")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.next_day))
             }
         }
     }
@@ -168,7 +170,7 @@ private fun ServiceCard(service: LiturgicalService) {
             Divider(modifier = Modifier.padding(vertical = 12.dp))
 
             if (parsedDetails.isEmpty()) {
-                Text("Nu sunt detalii pentru această slujbă.", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.no_service_details), style = MaterialTheme.typography.bodyMedium)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     parsedDetails.forEach { block ->

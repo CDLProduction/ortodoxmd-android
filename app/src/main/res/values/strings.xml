@@ -2,4 +2,176 @@
     <string name="app_name">Ortodox Moldova</string>
     <string name="playback_channel_name">Redare Audio</string>
     <string name="playback_channel_description">Notificare pentru controlul redării audio</string>
+
+    <!-- Menu items -->
+    <string name="menu_home">Acasă</string>
+    <string name="menu_main">Principal</string>
+    <string name="menu_calendar">Calendar</string>
+    <string name="menu_anuar">Anuar Bisericesc</string>
+    <string name="menu_bible">Sfânta Scriptură</string>
+    <string name="menu_spiritual_resources">Resurse Spirituale</string>
+    <string name="menu_prayers">Rugăciuni</string>
+    <string name="menu_saint_lives">Vieți Sfinți</string>
+    <string name="menu_icons">Icoane</string>
+    <string name="menu_monasteries">Mănăstiri</string>
+    <string name="menu_sacraments">Taine și Slujbe</string>
+    <string name="menu_apologetics">Apologetică</string>
+    <string name="menu_media">Media</string>
+    <string name="menu_radio">Radio</string>
+    <string name="menu_audiobooks">Cărți Audio</string>
+    <string name="menu_language">Limba</string>
+
+    <!-- Prayer subcategories -->
+    <string name="prayer_morning">Rugăciuni de Dimineață</string>
+    <string name="prayer_evening">Rugăciuni de Seară</string>
+    <string name="prayer_illness">Rugăciuni pentru Boală</string>
+    <string name="prayer_general">Rugăciuni Generale</string>
+
+    <!-- Language selection -->
+    <string name="select_language">Selectați limba</string>
+    <string name="language_romanian">Română</string>
+    <string name="language_russian">Rusă</string>
+    <string name="language_english">Engleză</string>
+
+    <!-- Misc -->
+    <string name="banner_description">Banner Ortodox Moldova</string>
+    <string name="expand">Extinde</string>
+
+    <!-- Notifications -->
+    <string name="notification_daily_calendar_channel_name">Notificări Calendar Zilnic</string>
+    <string name="notification_daily_calendar_channel_description">Afișează informațiile zilnice din calendarul ortodox.</string>
+
+    <!-- Common actions -->
+    <string name="back">Înapoi</string>
+    <string name="today">Azi</string>
+    <string name="select">Selectează</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Anulează</string>
+
+    <!-- Calendar -->
+    <string-array name="weekdays_short">
+        <item>L</item>
+        <item>Ma</item>
+        <item>Mi</item>
+        <item>J</item>
+        <item>V</item>
+        <item>S</item>
+        <item>D</item>
+    </string-array>
+    <string name="fasting_none">Zi fără post</string>
+    <string name="fasting_day">Zi de post</string>
+    <string name="fasting">Post: %1$s</string>
+    <string name="saints_of_day">Sfinții zilei:</string>
+
+    <!-- Prayer -->
+    <string name="prayer_categories_title">Categorii de Rugăciuni</string>
+    <string name="no_prayers_found">Nu au fost găsite rugăciuni în această categorie.</string>
+    <string name="error_occurred">A apărut o eroare: %1$s</string>
+
+    <!-- Monastery -->
+    <string name="no_maps_app_found">Nu s-a găsit nicio aplicație de hărți.</string>
+    <string name="navigate">Navighează</string>
+    <string name="navigate_on_map">Navighează pe hartă</string>
+    <string name="data_not_loaded">Datele nu au putut fi încărcate.</string>
+
+    <!-- Apologetics -->
+    <string name="apologetics_search_placeholder">Caută un subiect...</string>
+    <string name="search">Caută</string>
+    <string name="question">Întrebare</string>
+
+    <!-- Global search -->
+    <string name="search_help">Ajutor Căutare</string>
+    <string name="global_search_example">Ex: Matei 2:15 sau Iisus</string>
+    <string name="global_search_hint">Introduceți un text pentru a căuta în Biblie.</string>
+    <string name="search_principles_title">Principii de Căutare</string>
+    <string name="search_principles_intro">Puteți căuta în două moduri:</string>
+    <string name="search_by_reference_title">1. După Referință</string>
+    <string name="search_by_reference_desc">Introduceți numele cărții (sau o abreviere), urmat de capitol și, opțional, verset.</string>
+    <string name="search_by_reference_examples">Exemple: Ioan 3:16, 1 Cor 13, Facerea 1:1-5</string>
+    <string name="search_by_word_title">2. După Cuvânt</string>
+    <string name="search_by_word_desc">Introduceți orice cuvânt sau expresie pentru a căuta în tot textul Bibliei.</string>
+    <string name="search_by_word_examples">Exemple: mântuire, păstorul cel bun</string>
+    <string name="understood">Am înțeles</string>
+    <string name="help">Ajutor</string>
+
+    <!-- Bible download -->
+    <string name="download_bible_icon_desc">Descarcă Biblia</string>
+    <string name="download_bible_title">Descărcați Sfânta Scriptură</string>
+    <string name="download_bible_message">Pentru a accesa funcționalitatea completă, este necesară descărcarea textului integral al Bibliei (aprox. 10MB).</string>
+    <string name="start_download">Pornește Descărcarea</string>
+    <string name="downloading_progress">Descărcare... %1$d%%</string>
+    <string name="retry">Reîncearcă</string>
+    <string name="download_finished_icon_desc">Finalizat</string>
+    <string name="access_bible">Accesează Biblia</string>
+
+    <!-- Bible reading -->
+    <string name="bible_chapter_format">%1$s %2$d</string>
+    <string name="search_in_chapter">Caută în acest capitol...</string>
+    <string name="no_results_found">Niciun rezultat găsit.</string>
+    <string name="save_bookmark">Salvează semn de carte</string>
+    <string name="no_bookmarks">Nu aveți niciun semn de carte salvat.</string>
+    <string name="tab_browse">Răsfoire</string>
+    <string name="tab_search">Căutare</string>
+    <string name="tab_bookmarks">Semne de Carte</string>
+    <string name="old_testament">Vechiul Testament</string>
+    <string name="new_testament">Noul Testament</string>
+    <string name="books">Cărți</string>
+    <string name="back_to_testaments">Înapoi la Testamente</string>
+    <string name="chapter_icon_desc">Capitol</string>
+    <string name="chapter_number">Capitolul %1$d</string>
+    <string name="view_verses">Vezi versete</string>
+
+    <!-- Anuar -->
+    <string name="no_services">Pentru această zi nu sunt disponibile rânduieli.</string>
+    <string name="previous_day">Ziua precedentă</string>
+    <string name="next_day">Ziua următoare</string>
+    <string name="vespers">Vecernie</string>
+    <string name="matins">Utrenie</string>
+    <string name="divine_liturgy">Sfânta Liturghie</string>
+    <string name="no_service_details">Nu sunt detalii pentru această slujbă.</string>
+
+    <!-- Audiobook -->
+    <string name="categories_title">Categorii: %1$s</string>
+    <string name="navigate_to_category">Navighează la %1$s</string>
+    <string name="category_icon_desc">Icoană Categorie</string>
+    <string name="testaments_title">Testamente: %1$s</string>
+    <string name="all">Toate</string>
+    <string name="testament_icon_desc">Icoană Testament</string>
+    <string name="loading">Încărcare...</string>
+    <string name="delete_downloads">Șterge Descărcările</string>
+    <string name="delete">Șterge</string>
+    <string name="download">Descarcă</string>
+    <string name="downloaded">Descărcat</string>
+    <string name="waiting">În așteptare</string>
+    <string name="book_not_found">Cartea nu a fost găsită.</string>
+
+    <!-- Radio -->
+    <string name="connecting">Conectare...</string>
+    <string name="now_playing">Acum rulează</string>
+    <string name="stopped">Oprit</string>
+    <string name="play_pause">Redă/Pauză</string>
+
+    <!-- Audiobook Books -->
+    <string name="navigate_to_book">Navighează la %1$s</string>
+    <string name="book_icon_desc">Icoană Carte</string>
+    <string name="book_cover_desc">Coperta Cărții</string>
+    <string name="previous_track">Precedent</string>
+    <string name="rewind_10s">Înapoi 10s</string>
+    <string name="forward_30s">Înainte 30s</string>
+    <string name="next_track">Următor</string>
+
+    <!-- Sacrament -->
+    <string name="sacrament_icon_desc">Sacrament</string>
+
+    <!-- Monastery -->
+    <string name="monastery_icon_desc">Mănăstire</string>
+    <string name="view_details">Vezi detalii</string>
+
+    <!-- Saints -->
+    <string name="saint_icon_desc">Icoană Sfânt</string>
+
+    <!-- Home -->
+    <string name="resume_listening">Reluați Ascultarea</string>
+    <string name="remaining_at">Rămas la: %1$s</string>
+    <string name="explore_app">Explorați Aplicația</string>
 </resources>

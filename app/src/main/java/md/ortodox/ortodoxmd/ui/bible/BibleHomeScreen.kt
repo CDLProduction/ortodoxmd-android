@@ -15,6 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -26,10 +28,10 @@ import androidx.navigation.navArgument
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
-private enum class BibleTab(val title: String, val icon: ImageVector, val route: String) {
-    BROWSE("Răsfoire", Icons.AutoMirrored.Filled.MenuBook, "bible_browse"),
-    SEARCH("Căutare", Icons.Default.Search, "bible_search"),
-    BOOKMARKS("Semne de Carte", Icons.Default.Bookmark, "bible_bookmarks")
+private enum class BibleTab(@StringRes val titleRes: Int, val icon: ImageVector, val route: String) {
+    BROWSE(R.string.tab_browse, Icons.AutoMirrored.Filled.MenuBook, "bible_browse"),
+    SEARCH(R.string.tab_search, Icons.Default.Search, "bible_search"),
+    BOOKMARKS(R.string.tab_bookmarks, Icons.Default.Bookmark, "bible_bookmarks")
 }
 
 @Composable
@@ -99,8 +101,8 @@ private fun BibleInterfaceWithTabs() {
                             restoreState = true
                         }
                     },
-                    text = { Text(tab.title) },
-                    icon = { Icon(tab.icon, contentDescription = tab.title) }
+                    text = { Text(stringResource(tab.titleRes)) },
+                    icon = { Icon(tab.icon, contentDescription = stringResource(tab.titleRes)) }
                 )
             }
         }

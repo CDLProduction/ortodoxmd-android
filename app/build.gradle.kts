@@ -126,4 +126,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     implementation(libs.coil.compose)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }

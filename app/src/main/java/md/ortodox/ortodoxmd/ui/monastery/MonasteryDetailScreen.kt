@@ -20,9 +20,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import md.ortodox.ortodoxmd.R
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -42,7 +44,7 @@ fun MonasteryDetailScreen(
                 title = { Text(monastery?.nameRo ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 }
             )
@@ -94,7 +96,7 @@ fun MonasteryDetailScreen(
                             if (mapIntent.resolveActivity(context.packageManager) != null) {
                                 context.startActivity(mapIntent)
                             } else {
-                                Toast.makeText(context, "Nu s-a găsit nicio aplicație de hărți.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, stringResource(R.string.no_maps_app_found), Toast.LENGTH_LONG).show()
                             }
                         },
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -109,11 +111,11 @@ fun MonasteryDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Navigation,
-                            contentDescription = "Navighează",
+                            contentDescription = stringResource(R.string.navigate),
                             tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = "Navighează pe hartă",
+                            text = stringResource(R.string.navigate_on_map),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.weight(1f)
