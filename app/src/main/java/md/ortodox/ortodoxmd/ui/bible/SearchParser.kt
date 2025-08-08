@@ -21,6 +21,17 @@ object SearchParser {
         val canonicalBookName = bookMatch.first
         val numbersPart = bookMatch.second
 
+        // Dacă utilizatorul a introdus doar numele cărții fără referințe numerice,
+        // presupunem capitolul 1, versetul 1.
+        if (numbersPart.isBlank()) {
+            return ParsedReference(
+                bookName = canonicalBookName,
+                chapter = 1,
+                startVerse = 1,
+                endVerse = null
+            )
+        }
+
         // Pasul 2: Aplicăm expresia regulată pe restul textului (partea cu numere)
         val matcher = REF_PATTERN.matcher(numbersPart)
         if (!matcher.find()) return null
