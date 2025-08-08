@@ -1,7 +1,6 @@
 package md.ortodox.ortodoxmd.ui.language
 
 import android.app.Activity
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +15,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import md.ortodox.ortodoxmd.MainActivity
 import md.ortodox.ortodoxmd.R
 
 data class Language(val code: String, val nameResId: Int)
@@ -32,7 +30,6 @@ fun LanguageScreen(
     viewModel: LanguageViewModel = hiltViewModel()
 ) {
     val currentLanguageCode by viewModel.currentLanguage.collectAsStateWithLifecycle()
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -44,7 +41,6 @@ fun LanguageScreen(
                 language = language,
                 isSelected = language.code == currentLanguageCode,
                 onSelect = {
-                    // Verificăm dacă limba selectată este diferită de cea curentă
                     if (currentLanguageCode != language.code) {
                         viewModel.onLanguageSelected(language.code)
                     }
@@ -60,24 +56,15 @@ private fun LanguageItem(
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {
-    // CORECTAT: Adăugăm contextul și logica de restart aici
     val context = LocalContext.current
-
+    val activity = context as? Activity
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = {
-                onSelect() // Se apelează funcția din ViewModel pentru a seta limba
-
-                // Dacă limba selectată nu este deja cea activă, repornim aplicația
                 if (!isSelected) {
-                    val intent = Intent(context, MainActivity::class.java)
-                    // Flag-urile spun sistemului să creeze o nouă sarcină (task) și să o șteargă pe cea veche
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    context.startActivity(intent)
-
-                    // O metodă alternativă și uneori mai "curată" este să închidem doar activitatea curentă
-                    // (context as? Activity)?.finish()
+                    onSelect()
+                    activity?.recreate()
                 }
             })
             .padding(vertical = 16.dp),
@@ -85,7 +72,7 @@ private fun LanguageItem(
     ) {
         RadioButton(
             selected = isSelected,
-            onClick = null // Click-ul este gestionat de Row
+            onClick = null
         )
         Spacer(Modifier.width(16.dp))
         Text(

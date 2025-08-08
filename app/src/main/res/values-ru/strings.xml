@@ -1,8 +1,10 @@
 <resources>
-    <string name="app_name">Ortodox Moldova</string>
-    <string name="playback_channel_name">Redare Audio</string>
-    <string name="playback_channel_description">Notificare pentru controlul redării audio</string>
-
+    <!-- Existing strings unchanged -->
+    <string name="app_name">Православная Молдова</string>
+    <string name="app_title">Православная Молдова</string>
+    <string name="banner_description">Баннер Православная Молдова</string>
+    <string name="playback_channel_name">Воспроизведение аудио</string>
+    <string name="playback_channel_description">Уведомление для управления воспроизведением аудио</string>
     <string name="menu_home">Главная</string>
     <string name="menu_main_section">Основное</string>
     <string name="menu_calendar">Календарь</string>
@@ -20,15 +22,12 @@
     <string name="menu_audiobooks">Аудиокниги</string>
     <string name="menu_settings_section">Настройки</string>
     <string name="menu_language">Язык</string>
-
     <string name="prayer_cat_morning">Утренние молитвы</string>
     <string name="prayer_cat_evening">Вечерние молитвы</string>
     <string name="prayer_cat_illness">Молитвы о болящих</string>
     <string name="prayer_cat_general">Общие молитвы</string>
-
-    <string name="title_home">Ortodox Moldova</string>
+    <string name="title_home">Православная Молдова</string>
     <string name="title_language">Выбор языка</string>
-
     <string name="common_loading">Загрузка...</string>
     <string name="common_back">Назад</string>
     <string name="common_navigate">Перейти</string>
@@ -38,24 +37,19 @@
     <string name="common_retry">Повторить</string>
     <string name="common_books">Книги</string>
     <string name="common_all">Все</string>
-
-
     <string name="anuar_no_services_for_day">На этот день нет доступных служб.</string>
     <string name="anuar_ok_button">ОК</string>
     <string name="anuar_cancel_button">Отмена</string>
     <string name="anuar_previous_day">Предыдущий день</string>
     <string name="anuar_next_day">Следующий день</string>
     <string name="anuar_no_details_for_service">Нет подробностей для этой службы.</string>
-
     <string name="service_type_vespers">Вечерня</string>
     <string name="service_type_matins">Утреня</string>
     <string name="service_type_liturgy">Божественная литургия</string>
-
     <string name="apologetics_search_placeholder">Искать тему...</string>
     <string name="apologetics_search_button">Поиск</string>
     <string name="apologetics_question_icon_desc">Вопрос</string>
     <string name="apologetics_expand_icon_desc">Развернуть</string>
-
     <string name="audiobook_book_icon_desc">Иконка книги</string>
     <string name="audiobook_navigate_to_book">Перейти к %1$s</string>
     <string name="audiobook_categories_title">Категории: %1$s</string>
@@ -77,8 +71,6 @@
     <string name="audiobook_player_play_pause">Воспроизведение/Пауза</string>
     <string name="audiobook_player_forward">Вперед 30с</string>
     <string name="audiobook_player_next">Следующий</string>
-
-
     <string name="bible_download_title">Скачать Священное Писание</string>
     <string name="bible_download_description">Для доступа ко всем функциям необходимо скачать полный текст Библии (около 10 МБ).</string>
     <string name="bible_download_start">Начать загрузку</string>
@@ -117,14 +109,12 @@
     <string name="bible_search_in_chapter">Искать в этой главе...</string>
     <string name="bible_no_results_found">Ничего не найдено.</string>
     <string name="bible_save_bookmark">Сохранить закладку</string>
-
     <string name="calendar_today">Сегодня</string>
     <string name="calendar_select">Выбрать</string>
     <string name="calendar_ok_button">OK</string>
     <string name="calendar_cancel_button">Отмена</string>
     <string name="calendar_day_details_fasting">Пост: %1$s</string>
     <string name="calendar_day_details_saints">Святые дня:</string>
-
     <string name="day_monday_short">Пн</string>
     <string name="day_tuesday_short">Вт</string>
     <string name="day_wednesday_short">Ср</string>
@@ -132,8 +122,6 @@
     <string name="day_friday_short">Пт</string>
     <string name="day_saturday_short">Сб</string>
     <string name="day_sunday_short">Вс</string>
-
-
     <string name="home_greeting">Добрый день,</string>
     <string name="home_no_important_saint">Сегодня нет важных святых</string>
     <string name="home_checking_fasting">Проверка...</string>
@@ -147,51 +135,37 @@
     <string name="home_anuar">Годовой</string>
     <string name="home_fasting_day">Постный день</string>
     <string name="home_no_fasting_day">Непостный день</string>
-
-
-
     <string name="icons_saint_icon_desc">Икона Святого</string>
     <string name="icons_view_details">Подробнее</string>
     <string name="icons_loading">Загрузка...</string>
     <string name="icons_icon_image_desc">Икона %1$s</string>
-
-
     <string name="language_ro">Румынский</string>
     <string name="language_en">Английский</string>
     <string name="language_ru">Русский</string>
-
-
     <string name="monastery_list_icon_desc">Монастырь</string>
     <string name="monastery_view_details">Подробнее</string>
     <string name="monastery_detail_title">Детали монастыря</string>
     <string name="monastery_navigate_button">Навигация по карте</string>
     <string name="monastery_navigate_icon_desc">Навигация</string>
     <string name="monastery_no_maps_app_found">Не найдено ни одного картографического приложения.</string>
-
     <string name="prayer_categories_title">Категории молитв</string>
     <string name="prayer_no_prayers_found">В этой категории молитв не найдено.</string>
     <string name="prayer_error_message">Произошла ошибка: %1$s</string>
     <string name="prayer_expand_icon_desc">Развернуть</string>
-
     <string name="radio_station_icon_desc">Радиостанция</string>
     <string name="radio_status_connecting">ПОДКЛЮЧЕНИЕ...</string>
     <string name="radio_status_playing">СЕЙЧАС ИГРАЕТ</string>
     <string name="radio_status_stopped">ОСТАНОВЛЕНО</string>
     <string name="radio_play_pause_desc">Воспроизведение/Пауза</string>
-
     <string name="sacrament_icon_desc">Таинство</string>
     <string name="sacrament_expand">Развернуть</string>
-
-
     <string name="saints_saint_icon_desc">Икона Святого</string>
     <string name="saints_view_details">Подробнее</string>
     <string name="saints_reader_change_theme">Сменить тему</string>
     <string name="saints_reader_decrease_font">Уменьшить шрифт</string>
     <string name="saints_reader_increase_font">Увеличить шрифт</string>
     <string name="saints_no_lives_available">На данный момент жития святых недоступны.</string>
-
-
-
-
-
+    <!-- New strings for menu and expand icons -->
+    <string name="menu_open">Открыть меню</string>
+    <string name="expand_icon_desc">Развернуть</string>
 </resources>

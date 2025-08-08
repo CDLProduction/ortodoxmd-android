@@ -1,8 +1,9 @@
 <resources>
-    <string name="app_name">Ortodox Moldova</string>
-    <string name="playback_channel_name">Redare Audio</string>
-    <string name="playback_channel_description">Notificare pentru controlul redării audio</string>
-
+    <string name="app_name">Orthodox Moldova</string>
+    <string name="app_title">Orthodox Moldova</string>
+    <string name="banner_description">Banner Orthodox Moldova</string>
+    <string name="playback_channel_name">Audio Playback</string>
+    <string name="playback_channel_description">Notification for controlling audio playback</string>
     <string name="menu_home">Home</string>
     <string name="menu_main_section">Main</string>
     <string name="menu_calendar">Calendar</string>
@@ -20,15 +21,12 @@
     <string name="menu_audiobooks">Audiobooks</string>
     <string name="menu_settings_section">Settings</string>
     <string name="menu_language">Language</string>
-
     <string name="prayer_cat_morning">Morning Prayers</string>
     <string name="prayer_cat_evening">Evening Prayers</string>
     <string name="prayer_cat_illness">Prayers for Sickness</string>
     <string name="prayer_cat_general">General Prayers</string>
-
-    <string name="title_home">Ortodox Moldova</string>
+    <string name="title_home">Orthodox Moldova</string>
     <string name="title_language">Select Language</string>
-
     <string name="common_loading">Loading...</string>
     <string name="common_back">Back</string>
     <string name="common_navigate">Navigate</string>
@@ -38,25 +36,19 @@
     <string name="common_retry">Retry</string>
     <string name="common_books">Books</string>
     <string name="common_all">All</string>
-
-
     <string name="anuar_no_services_for_day">No services are available for this day.</string>
     <string name="anuar_ok_button">OK</string>
     <string name="anuar_cancel_button">Cancel</string>
-    <string name="anuar_previous_day">Previous day</string>
-    <string name="anuar_next_day">Next day</string>
+    <string name="anuar_previous_day">Previous Day</string>
+    <string name="anuar_next_day">Next Day</string>
     <string name="anuar_no_details_for_service">No details for this service.</string>
-
     <string name="service_type_vespers">Vespers</string>
     <string name="service_type_matins">Matins</string>
     <string name="service_type_liturgy">Divine Liturgy</string>
-
-
     <string name="apologetics_search_placeholder">Search a topic...</string>
     <string name="apologetics_search_button">Search</string>
     <string name="apologetics_question_icon_desc">Question</string>
     <string name="apologetics_expand_icon_desc">Expand</string>
-
     <string name="audiobook_book_icon_desc">Book Icon</string>
     <string name="audiobook_navigate_to_book">Navigate to %1$s</string>
     <string name="audiobook_categories_title">Categories: %1$s</string>
@@ -78,14 +70,6 @@
     <string name="audiobook_player_play_pause">Play/Pause</string>
     <string name="audiobook_player_forward">Forward 30s</string>
     <string name="audiobook_player_next">Next</string>
-
-
-
-
-
-
-
-
     <string name="bible_download_title">Download the Holy Scripture</string>
     <string name="bible_download_description">To access the full functionality, it is necessary to download the full text of the Bible (approx. 10MB).</string>
     <string name="bible_download_start">Start Download</string>
@@ -95,7 +79,7 @@
     <string name="bible_download_finished_subtitle">Search and bookmark features are now fully functional.</string>
     <string name="bible_download_access_button">Access the Bible</string>
     <string name="bible_download_completed_icon_desc">Completed</string>
-    <string name="bible_go_to_download_section">Go to the Download section</string>
+    <string name="bible_go_to_download_section">Go to the Download Section</string>
     <string name="bible_no_bookmarks">You have no saved bookmarks.</string>
     <string name="bible_old_testament">Old Testament</string>
     <string name="bible_new_testament">New Testament</string>
@@ -103,7 +87,7 @@
     <string name="bible_back_to_testaments">Back to Testaments</string>
     <string name="bible_chapter_title">Chapter %1$d</string>
     <string name="bible_chapter_icon_desc">Chapter</string>
-    <string name="bible_verses_icon_desc">See verses</string>
+    <string name="bible_verses_icon_desc">View Verses</string>
     <string name="bible_search_placeholder">E.g., John 3:16 or Jesus</string>
     <string name="bible_search_button">Search</string>
     <string name="bible_search_idle_text">Enter text to search the Bible.</string>
@@ -123,16 +107,13 @@
     <string name="bible_tab_bookmarks">Bookmarks</string>
     <string name="bible_search_in_chapter">Search in this chapter...</string>
     <string name="bible_no_results_found">No results found.</string>
-    <string name="bible_save_bookmark">Save bookmark</string>
-
-
+    <string name="bible_save_bookmark">Save Bookmark</string>
     <string name="calendar_today">Today</string>
     <string name="calendar_select">Select</string>
     <string name="calendar_ok_button">OK</string>
     <string name="calendar_cancel_button">Cancel</string>
     <string name="calendar_day_details_fasting">Fast: %1$s</string>
-    <string name="calendar_day_details_saints">Saints of the day:</string>
-
+    <string name="calendar_day_details_saints">Saints of the Day:</string>
     <string name="day_monday_short">M</string>
     <string name="day_tuesday_short">T</string>
     <string name="day_wednesday_short">W</string>
@@ -140,8 +121,6 @@
     <string name="day_friday_short">F</string>
     <string name="day_saturday_short">S</string>
     <string name="day_sunday_short">S</string>
-
-
     <string name="home_greeting">Good day,</string>
     <string name="home_no_important_saint">No important saint today</string>
     <string name="home_checking_fasting">Checking...</string>
@@ -152,52 +131,39 @@
     <string name="home_bible">Bible</string>
     <string name="home_prayers">Prayers</string>
     <string name="home_saints_lives">Saints\' Lives</string>
-    <string name="home_anuar">Anuar</string>
-    <string name="home_fasting_day">Fasting day</string>
-    <string name="home_no_fasting_day">No-fasting day</string>
-
-
-
+    <string name="home_anuar">Yearbook</string>
+    <string name="home_fasting_day">Fasting Day</string>
+    <string name="home_no_fasting_day">Non-Fasting Day</string>
     <string name="icons_saint_icon_desc">Saint Icon</string>
-    <string name="icons_view_details">View details</string>
+    <string name="icons_view_details">View Details</string>
     <string name="icons_loading">Loading...</string>
     <string name="icons_icon_image_desc">Icon of %1$s</string>
-
     <string name="language_ro">Romanian</string>
     <string name="language_en">English</string>
     <string name="language_ru">Russian</string>
-
-
     <string name="monastery_list_icon_desc">Monastery</string>
-    <string name="monastery_view_details">View details</string>
+    <string name="monastery_view_details">View Details</string>
     <string name="monastery_detail_title">Monastery Details</string>
-    <string name="monastery_navigate_button">Navigate on map</string>
+    <string name="monastery_navigate_button">Navigate on Map</string>
     <string name="monastery_navigate_icon_desc">Navigate</string>
     <string name="monastery_no_maps_app_found">No maps application found.</string>
-
     <string name="prayer_categories_title">Prayer Categories</string>
     <string name="prayer_no_prayers_found">No prayers found in this category.</string>
     <string name="prayer_error_message">An error occurred: %1$s</string>
     <string name="prayer_expand_icon_desc">Expand</string>
-
-    <string name="radio_station_icon_desc">Radio station</string>
+    <string name="radio_station_icon_desc">Radio Station</string>
     <string name="radio_status_connecting">CONNECTING...</string>
     <string name="radio_status_playing">NOW PLAYING</string>
     <string name="radio_status_stopped">STOPPED</string>
     <string name="radio_play_pause_desc">Play/Pause</string>
-
     <string name="sacrament_icon_desc">Sacrament</string>
     <string name="sacrament_expand">Expand</string>
-
     <string name="saints_saint_icon_desc">Saint Icon</string>
-    <string name="saints_view_details">View details</string>
+    <string name="saints_view_details">View Details</string>
     <string name="saints_reader_change_theme">Change Theme</string>
     <string name="saints_reader_decrease_font">Decrease Font</string>
     <string name="saints_reader_increase_font">Increase Font</string>
     <string name="saints_no_lives_available">No saints\' lives are available at the moment.</string>
-
-
-
-
-
+    <string name="menu_open">Open menu</string>
+    <string name="expand_icon_desc">Expand</string>
 </resources>
