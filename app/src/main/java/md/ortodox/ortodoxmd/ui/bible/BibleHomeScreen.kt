@@ -1,4 +1,5 @@
 package md.ortodox.ortodoxmd.ui.bible
+import md.ortodox.ortodoxmd.R
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
