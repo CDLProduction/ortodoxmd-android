@@ -96,7 +96,7 @@ fun MonasteryDetailScreen(
                             if (mapIntent.resolveActivity(context.packageManager) != null) {
                                 context.startActivity(mapIntent)
                             } else {
-                                Toast.makeText(context, stringResource(R.string.no_maps_app_found), Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.no_maps_app_found), Toast.LENGTH_LONG).show()
                             }
                         },
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

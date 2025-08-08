@@ -1,4 +1,5 @@
 package md.ortodox.ortodoxmd.ui.bible
+import md.ortodox.ortodoxmd.R
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*

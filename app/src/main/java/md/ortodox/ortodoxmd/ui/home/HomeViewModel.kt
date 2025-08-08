@@ -2,6 +2,8 @@ package md.ortodox.ortodoxmd.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +44,6 @@ class HomeViewModel @Inject constructor(
 
     // Datele se vor reîncărca de fiecare dată când ecranul devine activ
     override fun onStart(owner: LifecycleOwner) {
-        super.onStart(owner)
         loadHomeScreenData()
     }
 

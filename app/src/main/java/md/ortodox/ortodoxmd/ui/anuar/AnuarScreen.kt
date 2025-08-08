@@ -1,4 +1,5 @@
 package md.ortodox.ortodoxmd.ui.anuar
+import md.ortodox.ortodoxmd.R
 
 import android.os.Build
 import androidx.annotation.RequiresApi

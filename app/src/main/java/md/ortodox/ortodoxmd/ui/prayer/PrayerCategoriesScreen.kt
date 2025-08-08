@@ -61,7 +61,7 @@ fun PrayerCategoriesScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Text(
-                        text = category.title,
+                        text = stringResource(category.titleRes),
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier
                             .padding(16.dp)

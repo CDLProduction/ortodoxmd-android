@@ -1,4 +1,5 @@
 package md.ortodox.ortodoxmd.ui.radio
+import md.ortodox.ortodoxmd.R
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

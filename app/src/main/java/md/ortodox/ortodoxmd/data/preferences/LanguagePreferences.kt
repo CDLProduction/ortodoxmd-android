@@ -22,7 +22,7 @@ class LanguagePreferences @Inject constructor(@ApplicationContext private val co
     }
 
     suspend fun setLanguage(lang: String) {
-        context.dataStore.edit { prefs: Preferences ->
+        context.dataStore.edit { prefs ->
             prefs[LANGUAGE] = lang
         }
     }
