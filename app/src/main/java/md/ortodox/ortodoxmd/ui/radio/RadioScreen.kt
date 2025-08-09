@@ -1,6 +1,5 @@
 package md.ortodox.ortodoxmd.ui.radio
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppListItem
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
 
 @Composable
 fun RadioScreen(
@@ -26,57 +28,44 @@ fun RadioScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(uiState.stations) { station ->
-                RadioStationItem(
-                    station = station,
-                    isSelected = station == uiState.currentStation,
-                    onStationClick = { viewModel.onStationSelected(station) }
+    // REFACTORIZAT: Folosim AppScaffold.
+    AppScaffold(title = stringResource(id = R.string.menu_radio)) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = AppPaddings.content,
+                verticalArrangement = Arrangement.spacedBy(AppPaddings.s)
+            ) {
+                items(uiState.stations) { station ->
+                    // REFACTORIZAT: Folosim AppListItem pentru un aspect consistent.
+                    AppListItem(
+                        title = station.name,
+                        leading = {
+                            Icon(
+                                Icons.Default.Radio,
+                                contentDescription = stringResource(R.string.radio_station_icon_desc),
+                                tint = if (station == uiState.currentStation) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                            )
+                        },
+                        onClick = { viewModel.onStationSelected(station) }
+                    )
+                }
+            }
+
+            // Bara de control a player-ului este o componentă specifică și rămâne neschimbată.
+            if (uiState.currentStation != null) {
+                PlayerControls(
+                    station = uiState.currentStation!!,
+                    isPlaying = uiState.isPlaying,
+                    isBuffering = uiState.isBuffering,
+                    onPlayPauseClick = { viewModel.togglePlayback() }
                 )
             }
         }
-
-        if (uiState.currentStation != null) {
-            PlayerControls(
-                station = uiState.currentStation!!,
-                isPlaying = uiState.isPlaying,
-                isBuffering = uiState.isBuffering,
-                onPlayPauseClick = { viewModel.togglePlayback() }
-            )
-        }
     }
 }
 
-@Composable
-fun RadioStationItem(
-    station: RadioStation,
-    isSelected: Boolean,
-    onStationClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onStationClick),
-        colors = if (isSelected) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        else CardDefaults.cardColors(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(Icons.Default.Radio, contentDescription = stringResource(R.string.radio_station_icon_desc))
-            Text(station.name, style = MaterialTheme.typography.bodyLarge)
-        }
-    }
-}
-
+// Această componentă este specifică acestui ecran și rămâne neschimbată.
 @Composable
 fun PlayerControls(
     station: RadioStation,
@@ -91,10 +80,10 @@ fun PlayerControls(
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(AppPaddings.l)
                 .height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(AppPaddings.l)
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(

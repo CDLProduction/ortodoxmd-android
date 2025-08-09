@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -25,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppLoading
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -67,13 +67,13 @@ fun BibleHomeScreen(mainNavController: NavHostController) {
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            // REFACTORIZAT: Folosim componenta AppLoading.
+            AppLoading()
         }
     }
 }
 
+// Restul fișierului rămâne neschimbat, deoarece gestionează navigația internă.
 @Composable
 private fun BibleInterfaceWithTabs() {
     val bibleNavController = rememberNavController()
@@ -81,7 +81,7 @@ private fun BibleInterfaceWithTabs() {
 
     Column {
         TabRow(selectedTabIndex = selectedTab.ordinal) {
-            BibleTab.values().forEach { tab ->
+            BibleTab.entries.forEach { tab ->
                 Tab(
                     selected = selectedTab == tab,
                     onClick = {

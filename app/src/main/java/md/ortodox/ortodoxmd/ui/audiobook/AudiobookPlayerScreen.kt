@@ -5,7 +5,6 @@ package md.ortodox.ortodoxmd.ui.audiobook
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -21,10 +20,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
 import java.util.concurrent.TimeUnit
 
 @androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
 @Composable
 fun AudiobookPlayerScreen(
     navController: NavController,
@@ -32,23 +32,14 @@ fun AudiobookPlayerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(uiState.audiobook?.title ?: stringResource(R.string.common_loading)) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.common_back)
-                        )
-                    }
-                }
-            )
-        }
+    // REFACTORIZAT: Folosim AppScaffold.
+    AppScaffold(
+        title = uiState.audiobook?.title ?: stringResource(R.string.common_loading),
+        onBack = { navController.popBackStack() }
     ) { paddingValues ->
         Crossfade(targetState = uiState.isReady, label = "PlayerContentFade") { isReady ->
             if (isReady && uiState.audiobook != null) {
+                // Conținutul player-ului este foarte specific și rămâne neschimbat.
                 PlayerContent(
                     modifier = Modifier
                         .fillMaxSize()
@@ -63,13 +54,15 @@ fun AudiobookPlayerScreen(
                     onPrevious = viewModel::onPrevious
                 )
             } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                // REFACTORIZAT: Folosim AppLoading.
+                AppLoading(modifier = Modifier.padding(paddingValues))
             }
         }
     }
 }
+
+// Componentele specifice player-ului (PlayerContent, PlayerHeader, PlayerControls)
+// rămân neschimbate pentru a păstra funcționalitatea lor unică.
 
 @Composable
 private fun PlayerContent(

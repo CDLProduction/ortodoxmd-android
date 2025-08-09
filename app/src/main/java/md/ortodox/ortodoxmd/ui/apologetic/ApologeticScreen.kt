@@ -15,12 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Apologetic
 import md.ortodox.ortodoxmd.ui.apologetics.ApologeticViewModel
+import md.ortodox.ortodoxmd.ui.design.AppCard
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
 
 @Composable
 fun ApologeticScreen(
@@ -34,43 +36,43 @@ fun ApologeticScreen(
             onValueChange = viewModel::onSearchQueryChanged,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                // REFACTORIZAT: Folosim AppPaddings
+                .padding(AppPaddings.l),
             placeholder = { Text(stringResource(R.string.apologetics_search_placeholder)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.apologetics_search_button)) },
             singleLine = true
         )
 
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+            // REFACTORIZAT: Folosim componenta AppLoading
+            AppLoading()
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                // REFACTORIZAT: Folosim AppPaddings
+                contentPadding = PaddingValues(horizontal = AppPaddings.l),
+                verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
             ) {
                 val grouped = uiState.apologetics.groupBy { it.category }
 
                 grouped.forEach { (category, apologetics) ->
                     item {
                         Text(
-                            text = category, // Categoria vine de la API, nu se traduce aici
+                            text = category,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                            modifier = Modifier.padding(top = AppPaddings.l, bottom = AppPaddings.s)
                         )
                     }
                     items(apologetics, key = { it.id }) { apologetic ->
                         ApologeticCard(apologetic = apologetic)
                     }
                 }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(AppPaddings.l)) }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ApologeticCard(apologetic: Apologetic) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -79,15 +81,15 @@ private fun ApologeticCard(apologetic: Apologetic) {
         label = "expansion_arrow"
     )
 
-    Card(
+    // REFACTORIZAT: Folosim componenta AppCard cu funcționalitatea onClick
+    AppCard(
         onClick = { isExpanded = !isExpanded },
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(AppPaddings.l)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(AppPaddings.l)
             ) {
                 Icon(
                     imageVector = Icons.Default.HelpOutline,
@@ -108,7 +110,7 @@ private fun ApologeticCard(apologetic: Apologetic) {
 
             AnimatedVisibility(visible = isExpanded) {
                 Column {
-                    Divider(modifier = Modifier.padding(vertical = 12.dp))
+                    Divider(modifier = Modifier.padding(vertical = AppPaddings.m))
                     Text(
                         text = apologetic.formattedAnswerRo,
                         style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp)

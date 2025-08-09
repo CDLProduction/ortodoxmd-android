@@ -22,6 +22,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -325,29 +327,31 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+                    .height(220.dp),
+                contentAlignment = Alignment.BottomCenter // ACTUALIZAT: Aliniem conținutul în partea de jos-centru
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.nav_drawer_banner),
-                        contentDescription = stringResource(R.string.banner_description),
-                        modifier = Modifier.size(90.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                    Text(
-                        text = stringResource(R.string.app_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                Image(
+                    painter = painterResource(id = R.drawable.nav_drawer_banner),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .blur(8.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                )
+                Text(
+                    text = stringResource(R.string.app_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    modifier = Modifier.padding(bottom = 16.dp) // ACTUALIZAT: Doar padding în partea de jos
+                )
             }
             HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
             menuItems.forEach { menuItem ->
                 when (menuItem) {
                     is MenuDivider -> {

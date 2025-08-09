@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Prayer
+import md.ortodox.ortodoxmd.ui.design.*
 
 @Composable
 fun PrayerScreen(category: String, modifier: Modifier = Modifier) {
@@ -29,28 +30,20 @@ fun PrayerScreen(category: String, modifier: Modifier = Modifier) {
 
     val uiState by viewModel.uiState.collectAsState()
 
-    Box(modifier = modifier.fillMaxSize()) {
-        when (val state = uiState) {
-            is PrayerUiState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-            is PrayerUiState.Success -> {
-                PrayerList(prayers = state.prayers)
-            }
-            is PrayerUiState.Empty -> {
-                Text(
-                    text = stringResource(R.string.prayer_no_prayers_found),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-            is PrayerUiState.Error -> {
-                Text(
-                    text = stringResource(R.string.prayer_error_message, state.message),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp)
-                )
+    // REFACTORIZAT: Adăugăm AppScaffold pentru consistență.
+    // Titlul este derivat din cheia categoriei.
+    val title = category.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+
+    AppScaffold(
+        title = title,
+        onBack = { /* Handled by main NavHost */ }
+    ) { paddingValues ->
+        Box(modifier = modifier.fillMaxSize().padding(paddingValues)) {
+            when (val state = uiState) {
+                is PrayerUiState.Loading -> AppLoading()
+                is PrayerUiState.Success -> PrayerList(prayers = state.prayers)
+                is PrayerUiState.Empty -> AppEmpty(message = stringResource(R.string.prayer_no_prayers_found))
+                is PrayerUiState.Error -> AppError(message = stringResource(R.string.prayer_error_message, state.message))
             }
         }
     }
@@ -60,7 +53,7 @@ fun PrayerScreen(category: String, modifier: Modifier = Modifier) {
 fun PrayerList(prayers: List<Prayer>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        contentPadding = PaddingValues(horizontal = AppPaddings.l, vertical = AppPaddings.s)
     ) {
         items(
             items = prayers,
@@ -83,22 +76,21 @@ fun PrayerItem(prayer: Prayer, level: Int) {
     val titleStyle = if (level == 0) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall
 
     Column {
-        Card(
+        // REFACTORIZAT: Folosim AppCard.
+        AppCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
                     start = (12 * level).dp,
-                    top = 8.dp,
-                    bottom = if (expanded && hasSubPrayers) 0.dp else 8.dp
+                    top = AppPaddings.s,
+                    bottom = if (expanded && hasSubPrayers) 0.dp else AppPaddings.s
                 ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            onClick = if (isClickable) { { expanded = !expanded } } else null
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(enabled = isClickable) { expanded = !expanded }
-                    .padding(16.dp),
+                    .padding(AppPaddings.l),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -120,8 +112,8 @@ fun PrayerItem(prayer: Prayer, level: Int) {
                     text = prayer.textRo,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
+                        .padding(horizontal = AppPaddings.l)
+                        .padding(bottom = AppPaddings.l)
                 )
             }
         }

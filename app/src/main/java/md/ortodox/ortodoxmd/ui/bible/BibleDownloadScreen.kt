@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
 
 @Composable
 fun BibleDownloadScreen(
@@ -25,10 +26,12 @@ fun BibleDownloadScreen(
 ) {
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
 
+    // Acest ecran are un layout specific, centrat, deci nu folosim AppScaffold.
+    // Am ajustat doar spațierea pentru a folosi AppPaddings.
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(AppPaddings.xl * 2), // Padding mai mare pentru un aspect centrat
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -38,19 +41,19 @@ fun BibleDownloadScreen(
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(AppPaddings.l))
         Text(
             text = stringResource(R.string.bible_download_title),
             style = MaterialTheme.typography.headlineSmall,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(AppPaddings.s))
         Text(
             text = stringResource(R.string.bible_download_description),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(AppPaddings.xl))
 
         when (val state = downloadState) {
             is DownloadState.Idle -> {
@@ -65,13 +68,13 @@ fun BibleDownloadScreen(
                         progress = { animatedProgress },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(AppPaddings.s))
                     Text(text = stringResource(R.string.bible_downloading, (animatedProgress * 100).toInt()))
                 }
             }
             is DownloadState.Error -> {
                 Text(stringResource(R.string.bible_download_error, state.message), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(AppPaddings.l))
                 Button(onClick = { viewModel.startDownload() }) {
                     Text(stringResource(R.string.common_retry))
                 }
@@ -83,11 +86,11 @@ fun BibleDownloadScreen(
                     tint = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.size(48.dp)
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(AppPaddings.s))
                 Text(state.message, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(AppPaddings.xs))
                 Text(stringResource(R.string.bible_download_finished_subtitle), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(AppPaddings.l))
                 Button(onClick = onDownloadComplete) {
                     Text(stringResource(R.string.bible_download_access_button))
                 }

@@ -10,15 +10,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.Icon
+import md.ortodox.ortodoxmd.ui.design.AppListItem
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
 
 @Composable
 fun IconsScreen(
@@ -28,68 +29,48 @@ fun IconsScreen(
     val icons by viewModel.icons.collectAsState(emptyList())
     val groupedIcons = icons.groupBy { it.category }.entries.sortedBy { it.key }
 
-    if (icons.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            groupedIcons.forEach { (category, categoryIcons) ->
-                item {
-                    Text(
-                        text = category.replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                items(categoryIcons.sortedBy { it.nameRo }, key = { it.id }) { icon ->
-                    IconCardItem(
-                        icon = icon,
-                        onClick = {
-                            navController.navigate("icon_detail/${icon.id}")
-                        }
-                    )
+    // REFACTORIZAT: Folosim AppScaffold pentru un TopBar și o structură consistentă.
+    AppScaffold(title = stringResource(id = R.string.menu_icons)) { paddingValues ->
+        if (icons.isEmpty()) {
+            // REFACTORIZAT: Folosim AppLoading.
+            AppLoading(modifier = Modifier.padding(paddingValues))
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(paddingValues),
+                contentPadding = AppPaddings.content,
+                verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
+            ) {
+                groupedIcons.forEach { (category, categoryIcons) ->
+                    item {
+                        Text(
+                            text = category.replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.padding(bottom = AppPaddings.s),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    items(categoryIcons.sortedBy { it.nameRo }, key = { it.id }) { icon ->
+                        // REFACTORIZAT: Folosim AppListItem pentru un cod mai curat și consistent.
+                        AppListItem(
+                            title = icon.nameRo,
+                            leading = {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = stringResource(R.string.icons_saint_icon_desc),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            trailing = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = stringResource(R.string.icons_view_details)
+                                )
+                            },
+                            onClick = { navController.navigate("icon_detail/${icon.id}") }
+                        )
+                    }
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun IconCardItem(icon: Icon, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = stringResource(R.string.icons_saint_icon_desc),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = icon.nameRo,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(R.string.icons_view_details),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

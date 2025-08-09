@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,8 +18,11 @@ import androidx.compose.ui.unit.sp
 import androidx.work.WorkInfo
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
+import md.ortodox.ortodoxmd.ui.design.AppEmpty
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudiobookChaptersScreen(
     viewModel: AudiobookViewModel,
@@ -39,15 +41,10 @@ fun AudiobookChaptersScreen(
     val hasDownloadableChapters = remember(book, mainUiState) { book?.chapters?.any { !it.isDownloaded } ?: false }
     val hasDeletableChapters = remember(book, mainUiState) { book?.chapters?.any { it.isDownloaded } ?: false }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(book?.name ?: stringResource(R.string.common_loading), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back)) }
-                }
-            )
-        },
+    // REFACTORIZAT: Folosim AppScaffold cu suport pentru FAB.
+    AppScaffold(
+        title = book?.name ?: stringResource(R.string.common_loading),
+        onBack = onNavigateBack,
         floatingActionButton = {
             AnimatedVisibility(
                 visible = isDownloading || hasDeletableChapters || hasDownloadableChapters,
@@ -77,14 +74,16 @@ fun AudiobookChaptersScreen(
         }
     ) { paddingValues ->
         when {
-            chapterUiState.isLoading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            // REFACTORIZAT: Folosim AppLoading.
+            chapterUiState.isLoading -> AppLoading()
             book != null -> {
                 LazyColumn(
                     modifier = Modifier.padding(paddingValues).fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(start = AppPaddings.l, end = AppPaddings.l, top = AppPaddings.l, bottom = 88.dp),
+                    verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
                 ) {
                     items(book.chapters, key = { it.id }) { chapter ->
+                        // ChapterItem rămâne neschimbat pentru a-i păstra designul specific (culoare, etc.)
                         ChapterItem(
                             chapter = chapter,
                             downloadState = mainUiState.downloadStates[chapter.id],
@@ -96,11 +95,16 @@ fun AudiobookChaptersScreen(
                     }
                 }
             }
-            else -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.audiobook_book_not_found)) }
+            // REFACTORIZAT: Folosim AppEmpty.
+            else -> AppEmpty(
+                message = stringResource(R.string.audiobook_book_not_found),
+                modifier = Modifier.padding(paddingValues)
+            )
         }
     }
 }
 
+// ChapterItem este o componentă specifică și complexă, o lăsăm neschimbată deocamdată.
 @Composable
 private fun ChapterItem(
     chapter: AudiobookEntity,

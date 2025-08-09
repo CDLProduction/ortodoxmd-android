@@ -22,6 +22,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.network.NetworkModule
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +39,7 @@ fun IconDetailScreen(
     val icon by viewModel.icon.collectAsState()
     val imageUrl = icon?.let { "${NetworkModule.BASE_URL_AUDIOBOOKS}api/icons/${it.id}/stream" }
 
+    // Acest ecran are un design foarte specific, deci păstrăm Scaffold-ul custom.
     Scaffold(
         topBar = {
             TopAppBar(
@@ -117,20 +120,23 @@ fun IconDetailScreen(
                             text = icon?.nameRo ?: "",
                             style = MaterialTheme.typography.headlineSmall,
                             color = Color.White,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                            modifier = Modifier.padding(horizontal = AppPaddings.xl, vertical = AppPaddings.l)
                         )
                     }
                 }
             }
 
             if (icon == null) {
+                // REFACTORIZAT: Folosim AppLoading, dar păstrăm textul custom dedesubt.
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                    Text(
-                        text = stringResource(id = R.string.icons_loading),
-                        modifier = Modifier.padding(top = 64.dp),
-                        color = Color.White
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        AppLoading()
+                        Text(
+                            text = stringResource(id = R.string.icons_loading),
+                            modifier = Modifier.padding(top = AppPaddings.l),
+                            color = Color.White
+                        )
+                    }
                 }
             }
         }

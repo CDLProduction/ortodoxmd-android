@@ -1,12 +1,14 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,31 +16,27 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppCard
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudiobookTestamentsScreen(navController: NavController, testaments: List<String>, categoryName: String) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.audiobook_testaments_title, categoryName.ifEmpty { stringResource(R.string.common_all) })) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
-                }
-            )
-        }
+    // REFACTORIZAT: Folosim AppScaffold.
+    AppScaffold(
+        title = stringResource(R.string.audiobook_testaments_title, categoryName.ifEmpty { stringResource(R.string.common_all) }),
+        onBack = { navController.popBackStack() }
     ) { paddingValues ->
         LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(paddingValues)
+            contentPadding = AppPaddings.content,
+            verticalArrangement = Arrangement.spacedBy(AppPaddings.m),
+            modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
             items(testaments, key = { it }) { testament ->
-                Card(
+                // REFACTORIZAT: Folosim AppCard.
+                AppCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
                         val encodedTestamentName = URLEncoder.encode(testament, StandardCharsets.UTF_8.toString())
@@ -46,7 +44,7 @@ fun AudiobookTestamentsScreen(navController: NavController, testaments: List<Str
                     }
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(AppPaddings.l),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -57,7 +55,7 @@ fun AudiobookTestamentsScreen(navController: NavController, testaments: List<Str
                         )
                         Text(
                             text = testament,
-                            modifier = Modifier.weight(1f).padding(start = 16.dp),
+                            modifier = Modifier.weight(1f).padding(start = AppPaddings.l),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Icon(

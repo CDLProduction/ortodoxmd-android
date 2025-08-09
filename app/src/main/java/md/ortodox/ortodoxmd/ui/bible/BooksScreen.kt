@@ -1,32 +1,32 @@
 package md.ortodox.ortodoxmd.ui.bible
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.*
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BooksScreen(
     navController: NavHostController,
     testamentId: Long?,
-    modifier: Modifier = Modifier,
     viewModel: BooksViewModel = hiltViewModel()
 ) {
     LaunchedEffect(testamentId) {
@@ -40,49 +40,33 @@ fun BooksScreen(
         else -> stringResource(R.string.bible_books_title)
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.bible_back_to_testaments))
-                    }
-                }
-            )
-        }
+    // CORECTAT: Am eliminat parametrul 'modifier' din apelul AppScaffold.
+    AppScaffold(
+        title = title,
+        onBack = { navController.popBackStack() }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
             when (val state = uiState) {
-                is BooksUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is BooksUiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                        Text(state.message, color = MaterialTheme.colorScheme.error)
-                    }
-                }
+                is BooksUiState.Loading -> AppLoading()
+                is BooksUiState.Error -> AppError(message = state.message)
                 is BooksUiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        contentPadding = AppPaddings.content,
+                        verticalArrangement = Arrangement.spacedBy(AppPaddings.s)
                     ) {
                         items(state.books, key = { it.id }) { book ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth().clickable {
+                            AppCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
                                     val encodedBookName = URLEncoder.encode(book.nameRo, StandardCharsets.UTF_8.toString())
                                     navController.navigate("bible/chapters/${book.id}/$encodedBookName")
-                                },
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                }
                             ) {
                                 Text(
                                     text = book.nameRo,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(16.dp)
+                                    modifier = Modifier.padding(AppPaddings.l)
                                 )
                             }
                         }
