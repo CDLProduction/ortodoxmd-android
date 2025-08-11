@@ -23,6 +23,13 @@ import md.ortodox.ortodoxmd.ui.apologetics.ApologeticViewModel
 import md.ortodox.ortodoxmd.ui.design.AppCard
 import md.ortodox.ortodoxmd.ui.design.AppLoading
 import md.ortodox.ortodoxmd.ui.design.AppPaddings
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
+
+// OPTIMIZARE: Pas 1 - Crearea unei clase sigilate pentru a defini tipurile de conținut.
+private sealed class ApologeticListItem {
+    data class Header(val title: String) : ApologeticListItem()
+    data class Item(val apologetic: Apologetic) : ApologeticListItem()
+}
 
 @Composable
 fun ApologeticScreen(
@@ -30,44 +37,66 @@ fun ApologeticScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = uiState.searchQuery,
-            onValueChange = viewModel::onSearchQueryChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                // REFACTORIZAT: Folosim AppPaddings
-                .padding(AppPaddings.l),
-            placeholder = { Text(stringResource(R.string.apologetics_search_placeholder)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.apologetics_search_button)) },
-            singleLine = true
-        )
+    // OPTIMIZARE: Pas 2 - Transformarea datelor grupate într-o singură listă plată.
+    val listItems = remember(uiState.apologetics) {
+        uiState.apologetics.groupBy { it.category }.entries.flatMap { (category, items) ->
+            listOf(ApologeticListItem.Header(category)) + items.map { ApologeticListItem.Item(it) }
+        }
+    }
 
-        if (uiState.isLoading) {
-            // REFACTORIZAT: Folosim componenta AppLoading
-            AppLoading()
-        } else {
-            LazyColumn(
-                // REFACTORIZAT: Folosim AppPaddings
-                contentPadding = PaddingValues(horizontal = AppPaddings.l),
-                verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
-            ) {
-                val grouped = uiState.apologetics.groupBy { it.category }
+    // REFACTORIZAT: Am adăugat AppScaffold pentru consistență.
+    AppScaffold(title = stringResource(id = R.string.menu_apologetics)) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = viewModel::onSearchQueryChanged,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppPaddings.l),
+                placeholder = { Text(stringResource(R.string.apologetics_search_placeholder)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.apologetics_search_button)) },
+                singleLine = true
+            )
 
-                grouped.forEach { (category, apologetics) ->
-                    item {
-                        Text(
-                            text = category,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = AppPaddings.l, bottom = AppPaddings.s)
-                        )
+            if (uiState.isLoading) {
+                AppLoading()
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(horizontal = AppPaddings.l),
+                    verticalArrangement = Arrangement.spacedBy(AppPaddings.l)
+                ) {
+                    // OPTIMIZARE: Pas 3 - Folosirea listei unice cu 'key' și 'contentType'.
+                    items(
+                        items = listItems,
+                        key = { item ->
+                            when (item) {
+                                is ApologeticListItem.Header -> item.title
+                                is ApologeticListItem.Item -> item.apologetic.id
+                            }
+                        },
+                        contentType = { item ->
+                            when (item) {
+                                is ApologeticListItem.Header -> "header"
+                                is ApologeticListItem.Item -> "apologetic_item"
+                            }
+                        }
+                    ) { item ->
+                        when (item) {
+                            is ApologeticListItem.Header -> {
+                                Text(
+                                    text = item.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = AppPaddings.l, bottom = AppPaddings.s)
+                                )
+                            }
+                            is ApologeticListItem.Item -> {
+                                ApologeticCard(apologetic = item.apologetic)
+                            }
+                        }
                     }
-                    items(apologetics, key = { it.id }) { apologetic ->
-                        ApologeticCard(apologetic = apologetic)
-                    }
+                    item { Spacer(modifier = Modifier.height(AppPaddings.l)) }
                 }
-                item { Spacer(modifier = Modifier.height(AppPaddings.l)) }
             }
         }
     }
@@ -81,7 +110,6 @@ private fun ApologeticCard(apologetic: Apologetic) {
         label = "expansion_arrow"
     )
 
-    // REFACTORIZAT: Folosim componenta AppCard cu funcționalitatea onClick
     AppCard(
         onClick = { isExpanded = !isExpanded },
         modifier = Modifier.fillMaxWidth()
