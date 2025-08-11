@@ -91,6 +91,10 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var languageManager: LanguageManager
 
+    // ADAUGAT: Injectăm instanța noastră personalizată de ImageLoader
+    @Inject
+    lateinit var imageLoader: ImageLoader
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { /* ... */ }
@@ -107,7 +111,6 @@ class MainActivity : AppCompatActivity() {
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Reapply locale to ensure persistence after process death
         val lang = languageManager.getCurrentLanguageSync()
         val localeList = LocaleListCompat.forLanguageTags(lang)
         AppCompatDelegate.setApplicationLocales(localeList)
@@ -121,8 +124,12 @@ class MainActivity : AppCompatActivity() {
                 val currentLanguage by languageManager.currentLanguage.collectAsStateWithLifecycle(
                     initialValue = "ro"
                 )
-                key(currentLanguage) {
-                    AppScaffold(navController = rememberNavController())
+                // ADAUGAT: Folosim CompositionLocalProvider pentru a seta ImageLoader-ul nostru
+                // ca fiind cel implicit pentru întreaga aplicație.
+                CompositionLocalProvider(LocalImageLoader provides imageLoader) {
+                    key(currentLanguage) {
+                        AppScaffold(navController = rememberNavController())
+                    }
                 }
             }
         }
