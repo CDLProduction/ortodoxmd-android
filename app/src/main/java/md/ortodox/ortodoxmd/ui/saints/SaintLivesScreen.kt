@@ -8,15 +8,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.ui.design.AppEmpty
@@ -29,12 +28,13 @@ fun SaintLivesScreen(
     navController: NavController,
     viewModel: SaintLifeViewModel = hiltViewModel()
 ) {
-    val saintLives by viewModel.saintLives.collectAsState()
+    // OPTIMIZARE: Folosim collectAsStateWithLifecycle. Acesta este un API mai nou și mai eficient
+    // pentru a colecta stări din ViewModel într-un mod sigur pentru ciclul de viață.
+    // Asigură că starea este colectată doar când UI-ul este vizibil.
+    val saintLives by viewModel.saintLives.collectAsStateWithLifecycle()
 
-    // REFACTORIZAT: Folosim AppScaffold pentru o structură consistentă.
     AppScaffold(title = stringResource(id = R.string.menu_saints_lives)) { paddingValues ->
         if (saintLives.isEmpty()) {
-            // REFACTORIZAT: Folosim AppEmpty pentru starea goală.
             AppEmpty(
                 message = stringResource(R.string.saints_no_lives_available),
                 modifier = Modifier.padding(paddingValues)
@@ -48,7 +48,6 @@ fun SaintLivesScreen(
                 verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
             ) {
                 items(saintLives, key = { it.id }) { life ->
-                    // REFACTORIZAT: Folosim AppListItem pentru un aspect standardizat.
                     AppListItem(
                         title = life.nameRo,
                         leading = {
