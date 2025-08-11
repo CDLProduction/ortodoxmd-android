@@ -20,7 +20,9 @@ data class ChapterScreenState(
 
 data class AudiobookCategory(
     val name: String,
-    val books: List<AudiobookBook>
+    val books: List<AudiobookBook>,
+    // ADAUGAT: Un indicator pentru a determina tipul de navigație
+    val isSimpleCategory: Boolean = false
 )
 
 data class AudiobookBook(

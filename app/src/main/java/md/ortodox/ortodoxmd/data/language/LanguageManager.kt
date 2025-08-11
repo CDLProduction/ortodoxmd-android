@@ -21,6 +21,7 @@ class LanguageManager @Inject constructor(@ApplicationContext private val contex
     companion object {
         const val LANGUAGE_KEY = "app_language"
         const val DEFAULT_LANGUAGE = "ro" // Limba implicită
+        const val ONBOARDING_KEY = "has_seen_onboarding"
     }
 
     // Un Flow simplu care emite limba salvată.
@@ -42,5 +43,15 @@ class LanguageManager @Inject constructor(@ApplicationContext private val contex
     // Aceasta este esențială pentru a fi apelată în OrtodoxMDApplication.onCreate.
     fun getCurrentLanguageSync(): String {
         return prefs.getString(LANGUAGE_KEY, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
+    }
+
+    // ADAUGAT: Funcție pentru a verifica dacă ghidul a fost văzut
+    fun hasSeenOnboarding(): Boolean {
+        return prefs.getBoolean(ONBOARDING_KEY, false)
+    }
+
+    // ADAUGAT: Funcție pentru a marca ghidul ca fiind văzut
+    fun setOnboardingSeen() {
+        prefs.edit { putBoolean(ONBOARDING_KEY, true) }
     }
 }

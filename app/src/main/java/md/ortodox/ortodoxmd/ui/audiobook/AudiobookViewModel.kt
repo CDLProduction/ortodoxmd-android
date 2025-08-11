@@ -33,17 +33,55 @@ class AudiobookViewModel @Inject constructor(
     ) { audiobooks, workInfos ->
         val downloadStates = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.state }.filterKeys { it != -1L }
         val downloadProgress = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.progress.getInt(AudioDownloadWorker.KEY_PROGRESS, 0) }.filterKeys { it != -1L }
-        val groupedByBook = audiobooks.groupBy { it.remoteUrlPath.split("/").getOrNull(3) ?: "carte_necunoscuta" }
-        val books: List<AudiobookBook> = groupedByBook.map { (bookKey, chapters) ->
-            val testamentKey = chapters.firstOrNull()?.remoteUrlPath?.split("/")?.getOrNull(2) ?: "testament_necunoscut"
-            AudiobookBook(name = bookKey.toDisplayableName(), testament = testamentKey.toDisplayableName(), chapters = chapters.sortedBy { it.id })
+
+        // --- LOGICA NOUĂ ȘI DINAMICĂ ---
+        val groupedByCategory = audiobooks.groupBy {
+            it.remoteUrlPath.trimStart('/').split("/").getOrNull(1) ?: "necunoscut"
         }
+
+        val categories = groupedByCategory.map { (categoryKey, chaptersInCategory) ->
+            val firstPath = chaptersInCategory.first().remoteUrlPath.trimStart('/')
+            val pathSegments = firstPath.split('/')
+            val isSimple = pathSegments.size <= 3 // Ex: /audio/filocalia/capitol.mp3 -> 3 segmente
+
+            val books = if (isSimple) {
+                // Pentru categorii simple (ex: Filocalia), creăm o singură "carte" virtuală
+                // care conține toate capitolele direct.
+                listOf(AudiobookBook(
+                    name = categoryKey.toDisplayableName(),
+                    testament = "", // Nu există testament
+                    chapters = chaptersInCategory.sortedBy { it.id }
+                ))
+            } else {
+                // Pentru categorii complexe (ex: Biblia), păstrăm logica de grupare
+                val groupedByBook = chaptersInCategory.groupBy {
+                    it.remoteUrlPath.trimStart('/').split("/").getOrNull(3) ?: "carte_necunoscuta"
+                }
+                groupedByBook.map { (bookKey, chaptersInBook) ->
+                    val testamentKey = chaptersInBook.firstOrNull()?.remoteUrlPath?.trimStart('/')?.split("/")?.getOrNull(2) ?: ""
+                    AudiobookBook(
+                        name = bookKey.toDisplayableName(),
+                        testament = testamentKey.toDisplayableName(),
+                        chapters = chaptersInBook.sortedBy { it.id }
+                    )
+                }
+            }
+
+            AudiobookCategory(
+                name = categoryKey.toDisplayableName(),
+                books = books.sortedBy { it.name },
+                isSimpleCategory = isSimple
+            )
+        }
+
         AudiobooksUiState(
-            categories = listOf(AudiobookCategory("Biblia", books.sortedBy { it.name })),
-            isLoading = audiobooks.isEmpty() && workInfos.isEmpty(),
+            categories = categories.sortedBy { it.name },
+            isLoading = audiobooks.isEmpty(),
             downloadStates = downloadStates,
             downloadProgress = downloadProgress
         )
+        // --- SFÂRȘITUL LOGICII NOI ---
+
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = AudiobooksUiState(isLoading = true))
 
     private val _selectedBookName = MutableStateFlow<String?>(null)
@@ -61,6 +99,7 @@ class AudiobookViewModel @Inject constructor(
         viewModelScope.launch { repository.syncAudiobooks() }
     }
 
+    // ... restul funcțiilor rămân neschimbate ...
     private fun extractAudiobookIdFromTags(tags: Set<String>): Long {
         return tags.find { it.startsWith("audiobook_download_") }?.substringAfter("audiobook_download_")?.toLongOrNull() ?: -1L
     }

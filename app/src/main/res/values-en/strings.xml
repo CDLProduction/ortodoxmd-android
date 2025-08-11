@@ -166,4 +166,24 @@
     <string name="saints_no_lives_available">No saints\' lives are available at the moment.</string>
     <string name="menu_open">Open menu</string>
     <string name="expand_icon_desc">Expand</string>
+
+
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_finish">Finish</string>
+
+    <string name="onboarding_title_1">Welcome to Ortodox Moldova!</string>
+    <string name="onboarding_desc_1">Access all spiritual resources, from the calendar and prayers to audiobooks, directly from the main menu.</string>
+
+    <string name="onboarding_title_2">The Daily Calendar, Simplified</string>
+    <string name="onboarding_desc_2">Select any day to see the commemorated saints, fasting information, and church services.</string>
+
+    <string name="onboarding_title_3">Listen Anywhere, Anytime</string>
+    <string name="onboarding_desc_3">Download your favorite audiobooks so you can listen to them without an internet connection.</string>
+
+    <string name="onboarding_title_4">A Personalized Experience</string>
+    <string name="onboarding_desc_4">Change the application\'s display language whenever you want from the settings section of the menu.</string>
+
+
+
 </resources>

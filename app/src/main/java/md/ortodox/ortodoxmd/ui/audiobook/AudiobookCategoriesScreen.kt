@@ -24,7 +24,6 @@ import java.nio.charset.StandardCharsets
 
 @Composable
 fun AudiobookCategoriesScreen(navController: NavController, categories: List<AudiobookCategory>, categoryName: String) {
-    // REFACTORIZAT: Folosim AppScaffold pentru un TopBar consistent.
     AppScaffold(
         title = stringResource(R.string.audiobook_categories_title, categoryName),
         onBack = { navController.popBackStack() }
@@ -35,12 +34,20 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
             modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
             items(categories, key = { it.name }) { category ->
-                // REFACTORIZAT: Folosim AppCard, păstrând layout-ul intern pentru un aspect similar.
                 AppCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        val encodedCategoryName = URLEncoder.encode(category.name, StandardCharsets.UTF_8.toString())
-                        navController.navigate("audiobook_testaments/${category.name}?categoryName=$encodedCategoryName")
+                        // --- LOGICA DE NAVIGAȚIE DINAMICĂ ---
+                        if (category.isSimpleCategory) {
+                            // Dacă este o categorie simplă, navigăm direct la capitole.
+                            // Numele "cărții" este același cu numele categoriei.
+                            val encodedBookName = URLEncoder.encode(category.name, StandardCharsets.UTF_8.toString())
+                            navController.navigate("audiobook_chapters/$encodedBookName")
+                        } else {
+                            // Altfel, navigăm la testamente, ca înainte.
+                            val encodedCategoryName = URLEncoder.encode(category.name, StandardCharsets.UTF_8.toString())
+                            navController.navigate("audiobook_testaments/${category.name}?categoryName=$encodedCategoryName")
+                        }
                     }
                 ) {
                     Row(

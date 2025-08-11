@@ -168,4 +168,20 @@
     <!-- New strings for menu and expand icons -->
     <string name="menu_open">Открыть меню</string>
     <string name="expand_icon_desc">Развернуть</string>
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_finish">Завершить</string>
+
+    <string name="onboarding_title_1">Добро пожаловать в Ortodox Moldova!</string>
+    <string name="onboarding_desc_1">Получите доступ ко всем духовным ресурсам, от календаря и молитв до аудиокниг, прямо из главного меню.</string>
+
+    <string name="onboarding_title_2">Ежедневный календарь, упрощенный</string>
+    <string name="onboarding_desc_2">Выберите любой день, чтобы увидеть поминаемых святых, информацию о посте и церковные службы.</string>
+
+    <string name="onboarding_title_3">Слушайте где угодно и когда угодно</string>
+    <string name="onboarding_desc_3">Загружайте свои любимые аудиокниги, чтобы слушать их без подключения к интернету.</string>
+
+    <string name="onboarding_title_4">Персонализированный опыт</string>
+    <string name="onboarding_desc_4">Изменяйте язык отображения приложения в любое время в разделе настроек меню.</string>
+
 </resources>

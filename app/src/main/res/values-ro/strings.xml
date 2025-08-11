@@ -168,4 +168,20 @@
     <!-- New strings for menu and expand icons -->
     <string name="menu_open">Deschide Meniu</string>
     <string name="expand_icon_desc">Extinde</string>
+    <string name="onboarding_skip">Omite</string>
+    <string name="onboarding_next">Continuă</string>
+    <string name="onboarding_finish">Finalizează</string>
+
+    <string name="onboarding_title_1">Bun venit la Ortodox Moldova!</string>
+    <string name="onboarding_desc_1">Accesează toate resursele spirituale, de la calendar și rugăciuni la cărți audio, direct din meniul principal.</string>
+
+    <string name="onboarding_title_2">Calendarul Zilnic, Simplificat</string>
+    <string name="onboarding_desc_2">Selectează orice zi pentru a vedea sfinții pomeniți, informații despre post și rânduielile bisericești.</string>
+
+    <string name="onboarding_title_3">Ascultă Oriunde, Oricând</string>
+    <string name="onboarding_desc_3">Descarcă cărțile tale audio preferate pentru a le putea asculta fără a avea nevoie de o conexiune la internet.</string>
+
+    <string name="onboarding_title_4">O Experiență Personalizată</string>
+    <string name="onboarding_desc_4">Schimbă limba de afișare a aplicației oricând dorești din secțiunea de setări a meniului.</string>
+
 </resources>

@@ -10,12 +10,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ContactSupport
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -31,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -43,6 +47,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import coil.ImageLoader
+import coil.compose.LocalImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.language.LanguageManager
@@ -57,6 +63,7 @@ import md.ortodox.ortodoxmd.ui.icons.IconsScreen
 import md.ortodox.ortodoxmd.ui.language.LanguageScreen
 import md.ortodox.ortodoxmd.ui.monastery.MonasteryDetailScreen
 import md.ortodox.ortodoxmd.ui.monastery.MonasteryListScreen
+import md.ortodox.ortodoxmd.ui.onboarding.OnboardingScreen
 import md.ortodox.ortodoxmd.ui.playback.PlaybackService
 import md.ortodox.ortodoxmd.ui.prayer.PrayerCategoriesScreen
 import md.ortodox.ortodoxmd.ui.prayer.PrayerScreen
@@ -65,8 +72,6 @@ import md.ortodox.ortodoxmd.ui.sacrament.SacramentScreen
 import md.ortodox.ortodoxmd.ui.saints.SaintLifeDetailScreen
 import md.ortodox.ortodoxmd.ui.saints.SaintLivesScreen
 import md.ortodox.ortodoxmd.ui.theme.OrtodoxmdandroidTheme
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
@@ -91,7 +96,6 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var languageManager: LanguageManager
 
-    // ADAUGAT: Injectăm instanța noastră personalizată de ImageLoader
     @Inject
     lateinit var imageLoader: ImageLoader
 
@@ -121,14 +125,25 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             OrtodoxmdandroidTheme {
-                val currentLanguage by languageManager.currentLanguage.collectAsStateWithLifecycle(
-                    initialValue = "ro"
-                )
-                // ADAUGAT: Folosim CompositionLocalProvider pentru a seta ImageLoader-ul nostru
-                // ca fiind cel implicit pentru întreaga aplicație.
+                var showOnboarding by remember { mutableStateOf(!languageManager.hasSeenOnboarding()) }
+
                 CompositionLocalProvider(LocalImageLoader provides imageLoader) {
-                    key(currentLanguage) {
-                        AppScaffold(navController = rememberNavController())
+                    Crossfade(targetState = showOnboarding, label = "OnboardingCrossfade") { shouldShow ->
+                        if (shouldShow) {
+                            OnboardingScreen(
+                                onOnboardingFinished = {
+                                    languageManager.setOnboardingSeen()
+                                    showOnboarding = false
+                                }
+                            )
+                        } else {
+                            val currentLanguage by languageManager.currentLanguage.collectAsStateWithLifecycle(
+                                initialValue = "ro"
+                            )
+                            key(currentLanguage) {
+                                AppScaffold(navController = rememberNavController())
+                            }
+                        }
                     }
                 }
             }
@@ -322,7 +337,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
         MenuItem(DrawerItem(R.string.menu_icons, Icons.Default.Image, "icons")),
         MenuItem(DrawerItem(R.string.menu_monasteries, Icons.Default.LocationCity, "monastery_list")),
         MenuItem(DrawerItem(R.string.menu_sacraments, Icons.Default.AutoStories, "sacraments")),
-        MenuItem(DrawerItem(R.string.menu_apologetics, Icons.Default.ContactSupport, "apologetics")),
+        MenuItem(DrawerItem(R.string.menu_apologetics, Icons.AutoMirrored.Filled.ContactSupport, "apologetics")),
         MenuDivider(R.string.menu_media_section),
         MenuItem(DrawerItem(R.string.menu_radio, Icons.Default.Radio, "radio")),
         MenuItem(DrawerItem(R.string.menu_audiobooks, Icons.Default.Headset, "audiobook_flow")),
@@ -335,7 +350,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp),
-                contentAlignment = Alignment.BottomCenter // ACTUALIZAT: Aliniem conținutul în partea de jos-centru
+                contentAlignment = Alignment.BottomCenter
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.nav_drawer_banner),
@@ -354,7 +369,7 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                     text = stringResource(R.string.app_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = Color.White,
-                    modifier = Modifier.padding(bottom = 16.dp) // ACTUALIZAT: Doar padding în partea de jos
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
             HorizontalDivider()
