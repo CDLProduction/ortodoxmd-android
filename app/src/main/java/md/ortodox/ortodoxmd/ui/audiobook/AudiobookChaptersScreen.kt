@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.work.WorkInfo
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
@@ -29,9 +30,9 @@ fun AudiobookChaptersScreen(
     onNavigateToPlayer: (Long) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val chapterUiState by viewModel.selectedBookState.collectAsState()
-    val mainUiState by viewModel.uiState.collectAsState()
-    val isDownloading by viewModel.isDownloading.collectAsState()
+    val chapterUiState by viewModel.selectedBookState.collectAsStateWithLifecycle()
+    val mainUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isDownloading by viewModel.isDownloading.collectAsStateWithLifecycle()
 
     DisposableEffect(Unit) {
         onDispose { viewModel.clearBookSelection() }
@@ -41,7 +42,6 @@ fun AudiobookChaptersScreen(
     val hasDownloadableChapters = remember(book, mainUiState) { book?.chapters?.any { !it.isDownloaded } ?: false }
     val hasDeletableChapters = remember(book, mainUiState) { book?.chapters?.any { it.isDownloaded } ?: false }
 
-    // REFACTORIZAT: Folosim AppScaffold cu suport pentru FAB.
     AppScaffold(
         title = book?.name ?: stringResource(R.string.common_loading),
         onBack = onNavigateBack,
@@ -74,7 +74,6 @@ fun AudiobookChaptersScreen(
         }
     ) { paddingValues ->
         when {
-            // REFACTORIZAT: Folosim AppLoading.
             chapterUiState.isLoading -> AppLoading()
             book != null -> {
                 LazyColumn(
@@ -83,7 +82,6 @@ fun AudiobookChaptersScreen(
                     verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
                 ) {
                     items(book.chapters, key = { it.id }) { chapter ->
-                        // ChapterItem rămâne neschimbat pentru a-i păstra designul specific (culoare, etc.)
                         ChapterItem(
                             chapter = chapter,
                             downloadState = mainUiState.downloadStates[chapter.id],
@@ -95,7 +93,6 @@ fun AudiobookChaptersScreen(
                     }
                 }
             }
-            // REFACTORIZAT: Folosim AppEmpty.
             else -> AppEmpty(
                 message = stringResource(R.string.audiobook_book_not_found),
                 modifier = Modifier.padding(paddingValues)
@@ -104,7 +101,6 @@ fun AudiobookChaptersScreen(
     }
 }
 
-// ChapterItem este o componentă specifică și complexă, o lăsăm neschimbată deocamdată.
 @Composable
 private fun ChapterItem(
     chapter: AudiobookEntity,
@@ -155,7 +151,8 @@ private fun ChapterItem(
                     downloadState == WorkInfo.State.RUNNING -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         val animatedProgress by animateFloatAsState(targetValue = progress / 100f, label = "progressAnimation")
                         CircularProgressIndicator(progress = { animatedProgress }, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        Text(text = stringResource(R.string.audiobook_download_progress, progress), fontSize = 10.sp)
+                        // MODIFICAT: Am eliminat textul "Descărcare..." și am lăsat doar procentajul.
+                        Text(text = "$progress%", fontSize = 10.sp)
                     }
                     downloadState == WorkInfo.State.ENQUEUED -> Icon(Icons.Default.HourglassTop, contentDescription = stringResource(R.string.audiobook_download_waiting), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     downloadState == WorkInfo.State.FAILED || downloadState == WorkInfo.State.CANCELLED ->
