@@ -9,7 +9,6 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
@@ -30,16 +30,15 @@ fun AudiobookPlayerScreen(
     navController: NavController,
     viewModel: AudiobookPlayerViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    // OPTIMIZARE: Am înlocuit .collectAsState() cu .collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // REFACTORIZAT: Folosim AppScaffold.
     AppScaffold(
         title = uiState.audiobook?.title ?: stringResource(R.string.common_loading),
         onBack = { navController.popBackStack() }
     ) { paddingValues ->
         Crossfade(targetState = uiState.isReady, label = "PlayerContentFade") { isReady ->
             if (isReady && uiState.audiobook != null) {
-                // Conținutul player-ului este foarte specific și rămâne neschimbat.
                 PlayerContent(
                     modifier = Modifier
                         .fillMaxSize()
@@ -54,16 +53,13 @@ fun AudiobookPlayerScreen(
                     onPrevious = viewModel::onPrevious
                 )
             } else {
-                // REFACTORIZAT: Folosim AppLoading.
                 AppLoading(modifier = Modifier.padding(paddingValues))
             }
         }
     }
 }
 
-// Componentele specifice player-ului (PlayerContent, PlayerHeader, PlayerControls)
-// rămân neschimbate pentru a păstra funcționalitatea lor unică.
-
+// Componentele specifice player-ului rămân neschimbate
 @Composable
 private fun PlayerContent(
     modifier: Modifier = Modifier,
