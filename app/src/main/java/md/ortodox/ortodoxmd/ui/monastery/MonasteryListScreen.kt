@@ -12,11 +12,11 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.ui.design.AppListItem
@@ -29,12 +29,11 @@ fun MonasteryListScreen(
     navController: NavController,
     viewModel: MonasteryViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    // OPTIMIZARE: Folosim collectAsStateWithLifecycle pentru colectarea sigură și eficientă a stării.
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // REFACTORIZAT: Folosim AppScaffold pentru un TopBar și o structură consistentă.
     AppScaffold(title = stringResource(id = R.string.menu_monasteries)) { paddingValues ->
         if (uiState.isLoading) {
-            // REFACTORIZAT: Folosim AppLoading.
             AppLoading(modifier = Modifier.padding(paddingValues))
         } else {
             LazyColumn(
@@ -42,10 +41,9 @@ fun MonasteryListScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
                 contentPadding = AppPaddings.content,
-                verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
+                verticalArrangement = Arrangement.spacedBy(AppPaddings.xs)
             ) {
                 items(uiState.monasteries, key = { it.id }) { monastery ->
-                    // REFACTORIZAT: Folosim AppListItem pentru un cod mai curat și un aspect standard.
                     AppListItem(
                         title = monastery.nameRo,
                         leading = {
@@ -65,6 +63,7 @@ fun MonasteryListScreen(
                             navController.navigate("monastery_detail/${monastery.id}")
                         }
                     )
+                    Divider()
                 }
             }
         }
