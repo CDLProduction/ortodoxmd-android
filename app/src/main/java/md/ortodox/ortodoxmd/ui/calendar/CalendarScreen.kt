@@ -1,6 +1,8 @@
 package md.ortodox.ortodoxmd.ui.calendar
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,7 +35,7 @@ import md.ortodox.ortodoxmd.ui.design.AppPaddings
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -41,7 +43,6 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
     val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale("ro")) }
 
     Column(modifier = modifier.fillMaxSize().padding(AppPaddings.l)) {
-        // Controalele de sus rămân neschimbate
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -70,7 +71,6 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
 
         Spacer(modifier = Modifier.height(AppPaddings.l))
 
-        // ADAUGAT: Am învelit calendarul într-un AppCard.
         AppCard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -82,15 +82,11 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
                 }
         ) {
             Column(modifier = Modifier.padding(AppPaddings.m)) {
-                // Numele zilelor săptămânii
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
                     listOf(
-                        stringResource(R.string.day_monday_short),
-                        stringResource(R.string.day_tuesday_short),
-                        stringResource(R.string.day_wednesday_short),
-                        stringResource(R.string.day_thursday_short),
-                        stringResource(R.string.day_friday_short),
-                        stringResource(R.string.day_saturday_short),
+                        stringResource(R.string.day_monday_short), stringResource(R.string.day_tuesday_short),
+                        stringResource(R.string.day_wednesday_short), stringResource(R.string.day_thursday_short),
+                        stringResource(R.string.day_friday_short), stringResource(R.string.day_saturday_short),
                         stringResource(R.string.day_sunday_short)
                     ).forEach { day ->
                         Text(day, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
@@ -98,15 +94,18 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
                 }
                 Spacer(modifier = Modifier.height(AppPaddings.s))
 
-                // Animația pentru swipe între luni
+                // ACTUALIZAT: Animație de swipe mai lină
                 AnimatedContent(
                     targetState = "${uiState.selectedDate.get(Calendar.YEAR)}-${uiState.selectedDate.get(Calendar.MONTH)}",
                     transitionSpec = {
-                        if (targetState > initialState) {
-                            slideInHorizontally { width -> -width } togetherWith slideOutHorizontally { width -> width }
-                        } else {
-                            slideInHorizontally { width -> width } togetherWith slideOutHorizontally { width -> -width }
-                        }
+                        val direction = if (targetState > initialState) AnimatedContentTransitionScope.SlideDirection.Left else AnimatedContentTransitionScope.SlideDirection.Right
+                        slideIntoContainer(
+                            towards = direction,
+                            animationSpec = tween(durationMillis = 400, easing = EaseInOut)
+                        ) togetherWith slideOutOfContainer(
+                            towards = direction,
+                            animationSpec = tween(durationMillis = 400, easing = EaseInOut)
+                        )
                     }, label = "month_swipe"
                 ) {
                     CalendarGrid(
@@ -122,8 +121,21 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
         }
         Spacer(modifier = Modifier.height(AppPaddings.l))
 
-        AnimatedVisibility(visible = !uiState.isLoading, enter = fadeIn(), exit = fadeOut()) {
-            DayDetails(data = uiState.dataForSelectedDay)
+        // ACTUALIZAT: Animație pentru afișarea detaliilor zilei
+        AnimatedContent(
+            targetState = uiState.dataForSelectedDay,
+            label = "day_details_animation",
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(200, delayMillis = 150)) +
+                 slideInVertically(animationSpec = tween(350), initialOffsetY = { it / 2 }))
+                .togetherWith(
+                    fadeOut(animationSpec = tween(150))
+                )
+            }
+        ) { targetData ->
+            if (targetData != null) {
+                DayDetails(data = targetData)
+            }
         }
     }
 }
@@ -144,7 +156,7 @@ private fun CalendarGrid(
     val today = Calendar.getInstance()
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
-    LazyVerticalGrid(columns = GridCells.Fixed(7), userScrollEnabled = false, modifier = Modifier.height(300.dp)) { // Înălțime fixă pentru a evita redimensionarea cardului
+    LazyVerticalGrid(columns = GridCells.Fixed(7), userScrollEnabled = false, modifier = Modifier.height(300.dp)) {
         items(firstDayOfWeek) { Box(Modifier.aspectRatio(1f)) }
         items(daysInMonth) { dayIndex ->
             val day = dayIndex + 1
