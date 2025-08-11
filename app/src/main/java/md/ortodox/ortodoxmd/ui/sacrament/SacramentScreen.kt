@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,16 +23,27 @@ import md.ortodox.ortodoxmd.ui.design.AppLoading
 import md.ortodox.ortodoxmd.ui.design.AppPaddings
 import md.ortodox.ortodoxmd.ui.design.AppScaffold
 
+// OPTIMIZARE: Pas 1 - Crearea unei clase sigilate pentru a defini tipurile de conținut.
+private sealed class SacramentListItem {
+    data class Header(val title: String) : SacramentListItem()
+    data class Item(val sacrament: Sacrament) : SacramentListItem()
+}
+
 @Composable
 fun SacramentScreen(
     viewModel: SacramentViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // REFACTORIZAT: Folosim AppScaffold.
+    // OPTIMIZARE: Pas 2 - Transformarea datelor grupate într-o singură listă plată.
+    val listItems = remember(uiState.sacraments) {
+        uiState.sacraments.groupBy { it.category }.entries.flatMap { (category, items) ->
+            listOf(SacramentListItem.Header(category)) + items.map { SacramentListItem.Item(it) }
+        }
+    }
+
     AppScaffold(title = stringResource(id = R.string.menu_sacraments)) { paddingValues ->
         if (uiState.isLoading) {
-            // REFACTORIZAT: Folosim AppLoading.
             AppLoading(modifier = Modifier.padding(paddingValues))
         } else {
             LazyColumn(
@@ -41,20 +51,35 @@ fun SacramentScreen(
                 contentPadding = AppPaddings.content,
                 verticalArrangement = Arrangement.spacedBy(AppPaddings.l)
             ) {
-                val groupedSacraments = uiState.sacraments.groupBy { it.category }
-
-                groupedSacraments.forEach { (category, sacraments) ->
-                    item {
-                        Text(
-                            text = category.replaceFirstChar { it.titlecase() },
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(bottom = AppPaddings.s),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                // OPTIMIZARE: Pas 3 - Folosirea listei unice cu 'key' și 'contentType'.
+                items(
+                    items = listItems,
+                    key = { item ->
+                        when (item) {
+                            is SacramentListItem.Header -> item.title
+                            is SacramentListItem.Item -> item.sacrament.id
+                        }
+                    },
+                    contentType = { item ->
+                        when (item) {
+                            is SacramentListItem.Header -> "header"
+                            is SacramentListItem.Item -> "sacrament_item"
+                        }
                     }
-                    items(sacraments, key = { it.id }) { sacrament ->
-                        SacramentCard(sacrament = sacrament)
-                    }
+                ) { item ->
+                     when (item) {
+                         is SacramentListItem.Header -> {
+                             Text(
+                                 text = item.title.replaceFirstChar { it.titlecase() },
+                                 style = MaterialTheme.typography.headlineSmall,
+                                 modifier = Modifier.padding(bottom = AppPaddings.s),
+                                 color = MaterialTheme.colorScheme.primary
+                             )
+                         }
+                         is SacramentListItem.Item -> {
+                             SacramentCard(sacrament = item.sacrament)
+                         }
+                     }
                 }
             }
         }
@@ -66,7 +91,6 @@ private fun SacramentCard(sacrament: Sacrament) {
     var isExpanded by remember { mutableStateOf(false) }
     val rotationAngle by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "expansion_arrow")
 
-    // REFACTORIZAT: Folosim AppCard.
     AppCard(
         onClick = { isExpanded = !isExpanded },
         modifier = Modifier.fillMaxWidth()
@@ -97,11 +121,7 @@ private fun SacramentCard(sacrament: Sacrament) {
 
             AnimatedVisibility(visible = isExpanded) {
                 Column {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = AppPaddings.m),
-                        thickness = DividerDefaults.Thickness,
-                        color = DividerDefaults.color
-                    )
+                    Divider(modifier = Modifier.padding(vertical = AppPaddings.m))
                     Text(
                         text = sacrament.formattedDescriptionRo,
                         style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp)
