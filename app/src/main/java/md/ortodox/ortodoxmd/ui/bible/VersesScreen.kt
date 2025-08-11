@@ -24,7 +24,21 @@ fun VersesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // REFACTORIZAT: Folosim AppScaffold pentru un TopBar consistent.
+    // OPTIMIZARE: Pas 1 - Creăm o stare derivată pentru lista filtrată.
+    // 'remember' asigură că instanța 'derivedStateOf' este păstrată.
+    // Blocul de cod se va re-executa DOAR dacă 'uiState.verses' sau 'uiState.searchQuery' se schimbă.
+    val filteredVerses by remember(uiState.verses, uiState.searchQuery) {
+        derivedStateOf {
+            if (uiState.searchQuery.isBlank()) {
+                uiState.verses
+            } else {
+                uiState.verses.filter {
+                    it.verse.formattedTextRo.contains(uiState.searchQuery, ignoreCase = true)
+                }
+            }
+        }
+    }
+
     AppScaffold(
         title = "${uiState.bookName} ${uiState.chapterNumber}",
         onBack = onBackClick
@@ -44,12 +58,12 @@ fun VersesScreen(
                 uiState.isLoading -> AppLoading()
                 uiState.error != null -> AppError(message = uiState.error!!)
                 else -> {
-                    if (uiState.filteredVerses.isEmpty()) {
+                    // OPTIMIZARE: Pas 2 - Folosim noua listă filtrată, 'filteredVerses'.
+                    if (filteredVerses.isEmpty()) {
                         AppEmpty(message = stringResource(R.string.bible_no_results_found))
                     } else {
                         LazyColumn(contentPadding = AppPaddings.content) {
-                            items(uiState.filteredVerses, key = { it.verse.id }) { uiVerse ->
-                                // VerseItemWithBookmark este o componentă specifică și rămâne neschimbată.
+                            items(filteredVerses, key = { it.verse.id }) { uiVerse ->
                                 VerseItemWithBookmark(
                                     uiVerse = uiVerse,
                                     onToggleBookmark = { viewModel.toggleBookmark(uiVerse.verse.id) }
@@ -63,7 +77,7 @@ fun VersesScreen(
     }
 }
 
-// Această componentă este foarte specifică și rămâne neschimbată.
+// Componenta VerseItemWithBookmark rămâne neschimbată.
 @Composable
 fun VerseItemWithBookmark(
     uiVerse: UiVerse,
