@@ -50,11 +50,9 @@ class AudioDownloadWorker @AssistedInject constructor(
             return Result.failure()
         }
 
-        // **CORECTIE**: Folosim ID-ul cărții audio ca ID unic pentru notificare.
         val notificationId = audiobookId.toInt()
 
         return try {
-            // Inițiem serviciul în prim-plan cu progres inițial
             val initialForegroundInfo = createForegroundInfo(notificationId, 0, "Descărcare în așteptare...")
             setForeground(initialForegroundInfo)
             Log.d("AudioDownloadWorker", "Starting download for audiobook ID: $audiobookId")
@@ -73,29 +71,36 @@ class AudioDownloadWorker @AssistedInject constructor(
             val totalBytes = response.body?.contentLength() ?: -1L
             var downloadedBytes = 0L
 
+            // --- START: OPTIMIZARE ---
+            var lastReportedProgress = -1
+            // --- END: OPTIMIZARE ---
+
             withContext(Dispatchers.IO) {
                 response.body?.byteStream()?.use { input ->
                     FileOutputStream(destinationFile).use { output ->
-                        val buffer = ByteArray(8192)
+                        val buffer = ByteArray(8192) // 8KB buffer
                         var bytesRead: Int
                         while (input.read(buffer).also { bytesRead = it } != -1) {
                             output.write(buffer, 0, bytesRead)
                             downloadedBytes += bytesRead
                             val progress = if (totalBytes > 0) (downloadedBytes * PROGRESS_MAX / totalBytes).toInt() else 0
 
-                            // Publicăm progresul pentru UI
-                            val progressData = Data.Builder().putInt(KEY_PROGRESS, progress).build()
-                            setProgress(progressData)
+                            // --- START: OPTIMIZARE ---
+                            // Trimitem actualizarea doar dacă procentul s-a schimbat.
+                            if (progress > lastReportedProgress) {
+                                lastReportedProgress = progress
+                                val progressData = Data.Builder().putInt(KEY_PROGRESS, progress).build()
+                                setProgress(progressData)
 
-                            // Actualizăm notificarea cu progresul curent
-                            val foregroundInfo = createForegroundInfo(notificationId, progress, "Descărcare... $progress%")
-                            setForeground(foregroundInfo)
+                                val foregroundInfo = createForegroundInfo(notificationId, progress, "Descărcare... $progress%")
+                                setForeground(foregroundInfo)
+                            }
+                            // --- END: OPTIMIZARE ---
                         }
                     }
                 }
             }
 
-            // Marcăm în baza de date ca descărcat
             val filePath = destinationFile.absolutePath
             audiobookDao.setAsDownloaded(audiobookId, filePath)
             Log.d("AudioDownloadWorker", "SUCCESS for ID $audiobookId, saved at: $filePath")
@@ -104,17 +109,10 @@ class AudioDownloadWorker @AssistedInject constructor(
 
         } catch (e: Exception) {
             Log.e("AudioDownloadWorker", "Exception for ID $audiobookId", e)
-            // Încercăm din nou de câteva ori înainte de a eșua
             if (runAttemptCount < 3) Result.retry() else Result.failure()
         }
     }
 
-    /**
-     * Creează ForegroundInfo pentru a rula worker-ul ca un serviciu în prim-plan.
-     * @param notificationId ID-ul unic pentru notificare.
-     * @param progress Progresul curent (0-100).
-     * @param progressText Textul afișat în notificare.
-     */
     private fun createForegroundInfo(notificationId: Int, progress: Int, progressText: String): ForegroundInfo {
         val channelId = NOTIFICATION_CHANNEL_ID
         val channelName = "Descărcări Audio"
@@ -126,9 +124,9 @@ class AudioDownloadWorker @AssistedInject constructor(
         }
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setContentTitle("Descărcare: ${inputData.getString(KEY_FILE_NAME)}") // Titlu mai specific
+            .setContentTitle("Descărcare: ${inputData.getString(KEY_FILE_NAME)}")
             .setContentText(progressText)
-            .setSmallIcon(R.drawable.ic_notification_radio) // Asigură-te că această resursă există
+            .setSmallIcon(R.drawable.ic_notification_radio)
             .setProgress(PROGRESS_MAX, progress, false)
             .setOngoing(true)
             .setSilent(true)

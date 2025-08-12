@@ -19,6 +19,7 @@ import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback
 import md.ortodox.ortodoxmd.data.network.AudiobookApiService
 import md.ortodox.ortodoxmd.data.network.NetworkModule
+import md.ortodox.ortodoxmd.ui.audiobook.toDisplayableName
 import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -52,7 +53,9 @@ class AudiobookRepository @Inject constructor(
                 val existingEntity = localMap[dto.id]
                 AudiobookEntity(
                     id = dto.id,
-                    title = dto.titleRo,
+                    // --- AICI ESTE CORECTAREA ---
+                    // Aplicăm formatarea direct pe titlu înainte de a-l salva
+                    title = dto.titleRo.toDisplayableName(),
                     author = dto.authorRo,
                     remoteUrlPath = dto.filePath,
                     localFilePath = existingEntity?.localFilePath,
@@ -98,12 +101,15 @@ class AudiobookRepository @Inject constructor(
 
         val downloadWorkRequest = createDownloadWorkRequest(audiobook)
 
-        Log.d("AudiobookRepository", "Enqueuing unique download work for audiobook ID: ${audiobook.id}")
-        workManager.enqueueUniqueWork(
-            "download_${audiobook.id}", // Nume unic pentru a nu dubla descărcarea individuală
+        Log.d("AudiobookRepository", "Beginning unique work for audiobook ID: ${audiobook.id}")
+
+        // Folosim beginUniqueWork în loc de enqueueUniqueWork pentru a asigura
+        // înlocuirea corectă a sarcinilor finalizate (ex: CANCELLED, FAILED).
+        workManager.beginUniqueWork(
+            "download_${audiobook.id}",
             ExistingWorkPolicy.REPLACE,
             downloadWorkRequest
-        )
+        ).enqueue()
     }
 
     suspend fun savePlaybackPosition(id: Long, position: Long) {

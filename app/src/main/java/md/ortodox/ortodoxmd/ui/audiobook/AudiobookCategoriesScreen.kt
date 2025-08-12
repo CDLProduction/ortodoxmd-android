@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
@@ -37,16 +38,19 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
                 AppCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        // --- LOGICA DE NAVIGAȚIE DINAMICĂ ---
                         if (category.isSimpleCategory) {
-                            // Dacă este o categorie simplă, navigăm direct la capitole.
-                            // Numele "cărții" este același cu numele categoriei.
                             val encodedBookName = URLEncoder.encode(category.name, StandardCharsets.UTF_8.toString())
                             navController.navigate("audiobook_chapters/$encodedBookName")
                         } else {
-                            // Altfel, navigăm la testamente, ca înainte.
-                            val encodedCategoryName = URLEncoder.encode(category.name, StandardCharsets.UTF_8.toString())
-                            navController.navigate("audiobook_testaments/${category.name}?categoryName=$encodedCategoryName")
+                            val hasMultipleTestaments = category.books.map { it.testament }.distinct().size > 1
+                            if (hasMultipleTestaments) {
+                                val encodedCategoryName = URLEncoder.encode(category.name, StandardCharsets.UTF_8.toString())
+                                navController.navigate("audiobook_testaments/${category.name}?categoryName=$encodedCategoryName")
+                            } else {
+                                val testamentName = category.books.firstOrNull()?.testament ?: category.name
+                                val encodedTestamentName = URLEncoder.encode(testamentName, StandardCharsets.UTF_8.toString())
+                                navController.navigate("audiobook_books/$encodedTestamentName")
+                            }
                         }
                     }
                 ) {
@@ -63,7 +67,10 @@ fun AudiobookCategoriesScreen(navController: NavController, categories: List<Aud
                         Text(
                             text = category.name,
                             modifier = Modifier.weight(1f).padding(start = AppPaddings.l),
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            // --- AICI ESTE CORECTAREA ---
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

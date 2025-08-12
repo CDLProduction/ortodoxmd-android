@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import md.ortodox.ortodoxmd.R
@@ -30,7 +31,6 @@ fun AudiobookBooksScreen(
 ) {
     val booksInTestament = books.filter { it.testament == testamentName }
 
-    // REFACTORIZAT: Folosim AppScaffold.
     AppScaffold(
         title = testamentName.ifEmpty { stringResource(R.string.common_books) },
         onBack = { navController.popBackStack() }
@@ -41,7 +41,6 @@ fun AudiobookBooksScreen(
             modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
             items(booksInTestament, key = { it.name }) { book ->
-                // REFACTORIZAT: Folosim AppCard.
                 AppCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
@@ -62,7 +61,10 @@ fun AudiobookBooksScreen(
                         Text(
                             text = book.name,
                             modifier = Modifier.weight(1f).padding(horizontal = AppPaddings.l),
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            // --- AICI ESTE CORECTAREA ---
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,

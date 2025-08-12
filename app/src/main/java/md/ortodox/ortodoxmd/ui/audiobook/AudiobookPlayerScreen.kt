@@ -30,7 +30,6 @@ fun AudiobookPlayerScreen(
     navController: NavController,
     viewModel: AudiobookPlayerViewModel = hiltViewModel()
 ) {
-    // OPTIMIZARE: Am înlocuit .collectAsState() cu .collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     AppScaffold(
@@ -59,7 +58,6 @@ fun AudiobookPlayerScreen(
     }
 }
 
-// Componentele specifice player-ului rămân neschimbate
 @Composable
 private fun PlayerContent(
     modifier: Modifier = Modifier,

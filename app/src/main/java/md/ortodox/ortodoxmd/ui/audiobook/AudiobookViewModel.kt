@@ -8,11 +8,13 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.repository.AudiobookRepository
 import md.ortodox.ortodoxmd.data.worker.AudioDownloadWorker
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,76 +25,76 @@ class AudiobookViewModel @Inject constructor(
 
     private val workManager = WorkManager.getInstance(context)
 
+    private val audiobooksStructure: StateFlow<List<AudiobookCategory>> = repository.getAudiobooks()
+        .map { audiobooks ->
+            val groupedByCategory = audiobooks.groupBy {
+                it.remoteUrlPath.trimStart('/').split("/").getOrNull(1) ?: "necunoscut"
+            }
+            groupedByCategory.map { (categoryKey, chaptersInCategory) ->
+                val books = chaptersInCategory.groupBy {
+                    val segments = it.remoteUrlPath.trimStart('/').split('/')
+                    segments.getOrNull(segments.size - 2) ?: categoryKey
+                }.map { (bookKey, chaptersInBook) ->
+                    val firstChapterSegments = chaptersInBook.first().remoteUrlPath.trimStart('/').split('/')
+                    val testamentKey = firstChapterSegments.getOrNull(firstChapterSegments.size - 3) ?: categoryKey
+                    AudiobookBook(
+                        name = bookKey.toDisplayableName(),
+                        testament = testamentKey.toDisplayableName(),
+                        chapters = chaptersInBook.sortedByChapterNumber()
+                    )
+                }
+                val isSimpleCategory = books.size == 1 && books.first().name.equals(categoryKey.toDisplayableName(), ignoreCase = true)
+                AudiobookCategory(
+                    name = categoryKey.toDisplayableName(),
+                    books = books.sortedBy { it.name },
+                    isSimpleCategory = isSimpleCategory
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val downloadInfo: StateFlow<Pair<Map<Long, WorkInfo.State>, Map<Long, Int>>> = repository.getDownloadWorkInfoFlow()
+        .sample(200)
+        .map { workInfos ->
+            val states = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.state }.filterKeys { it != -1L }
+            val progress = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.progress.getInt(AudioDownloadWorker.KEY_PROGRESS, 0) }.filterKeys { it != -1L }
+            states to progress
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(emptyMap(), emptyMap()))
+
+    // --- START: OPTIMIZARE SUPLIMENTARĂ ---
+    val uiState: StateFlow<AudiobooksUiState> = combine(
+        audiobooksStructure,
+        downloadInfo
+    ) { structure, (states, progress) ->
+        AudiobooksUiState(
+            categories = structure,
+            isLoading = structure.isEmpty(),
+            downloadStates = states,
+            downloadProgress = progress
+        )
+    }
+        // Mutăm și această combinare finală pe un thread de fundal
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AudiobooksUiState(isLoading = true))
+    // --- END: OPTIMIZARE SUPLIMENTARĂ ---
+
     val isDownloading: StateFlow<Boolean> = repository.getDownloadWorkInfoFlow()
         .map { workInfos -> workInfos.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    val uiState: StateFlow<AudiobooksUiState> = combine(
-        repository.getAudiobooks(),
-        repository.getDownloadWorkInfoFlow()
-    ) { audiobooks, workInfos ->
-        val downloadStates = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.state }.filterKeys { it != -1L }
-        val downloadProgress = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.progress.getInt(AudioDownloadWorker.KEY_PROGRESS, 0) }.filterKeys { it != -1L }
-
-        // --- LOGICA NOUĂ ȘI DINAMICĂ ---
-        val groupedByCategory = audiobooks.groupBy {
-            it.remoteUrlPath.trimStart('/').split("/").getOrNull(1) ?: "necunoscut"
-        }
-
-        val categories = groupedByCategory.map { (categoryKey, chaptersInCategory) ->
-            val firstPath = chaptersInCategory.first().remoteUrlPath.trimStart('/')
-            val pathSegments = firstPath.split('/')
-            val isSimple = pathSegments.size <= 3 // Ex: /audio/filocalia/capitol.mp3 -> 3 segmente
-
-            val books = if (isSimple) {
-                // Pentru categorii simple (ex: Filocalia), creăm o singură "carte" virtuală
-                // care conține toate capitolele direct.
-                listOf(AudiobookBook(
-                    name = categoryKey.toDisplayableName(),
-                    testament = "", // Nu există testament
-                    chapters = chaptersInCategory.sortedBy { it.id }
-                ))
-            } else {
-                // Pentru categorii complexe (ex: Biblia), păstrăm logica de grupare
-                val groupedByBook = chaptersInCategory.groupBy {
-                    it.remoteUrlPath.trimStart('/').split("/").getOrNull(3) ?: "carte_necunoscuta"
-                }
-                groupedByBook.map { (bookKey, chaptersInBook) ->
-                    val testamentKey = chaptersInBook.firstOrNull()?.remoteUrlPath?.trimStart('/')?.split("/")?.getOrNull(2) ?: ""
-                    AudiobookBook(
-                        name = bookKey.toDisplayableName(),
-                        testament = testamentKey.toDisplayableName(),
-                        chapters = chaptersInBook.sortedBy { it.id }
-                    )
-                }
-            }
-
-            AudiobookCategory(
-                name = categoryKey.toDisplayableName(),
-                books = books.sortedBy { it.name },
-                isSimpleCategory = isSimple
-            )
-        }
-
-        AudiobooksUiState(
-            categories = categories.sortedBy { it.name },
-            isLoading = audiobooks.isEmpty(),
-            downloadStates = downloadStates,
-            downloadProgress = downloadProgress
-        )
-        // --- SFÂRȘITUL LOGICII NOI ---
-
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = AudiobooksUiState(isLoading = true))
-
     private val _selectedBookName = MutableStateFlow<String?>(null)
+
     val selectedBookState: StateFlow<ChapterScreenState> = _selectedBookName
         .filterNotNull()
         .combine(uiState) { selectedName, state ->
-            val book = state.categories.flatMap { it.books }.find { it.name.fromDisplayableName() == selectedName }
+            val book = state.categories.flatMap { it.books }.find { it.name == selectedName.toDisplayableName() }
             ChapterScreenState(book = book, isLoading = book == null)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = ChapterScreenState(isLoading = true))
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = ChapterScreenState(isLoading = true))
 
-    fun selectBook(bookName: String) { _selectedBookName.value = bookName.fromDisplayableName() }
+    fun selectBook(bookName: String) { _selectedBookName.value = bookName }
     fun clearBookSelection() { _selectedBookName.value = null }
 
     init {

@@ -11,7 +11,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -52,6 +55,7 @@ import coil.compose.LocalImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.language.LanguageManager
+import md.ortodox.ortodoxmd.ui.MainViewModel
 import md.ortodox.ortodoxmd.ui.anuar.AnuarScreen
 import md.ortodox.ortodoxmd.ui.apologetic.ApologeticScreen
 import md.ortodox.ortodoxmd.ui.audiobook.*
@@ -155,10 +159,14 @@ class MainActivity : AppCompatActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScaffold(navController: NavHostController) {
+    val mainViewModel: MainViewModel = hiltViewModel()
+    val miniPlayerState by mainViewModel.miniPlayerState.collectAsStateWithLifecycle()
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
     val topBarTitleResId = when (currentRoute?.split("/")?.first()) {
         "home" -> R.string.title_home
         "calendar" -> R.string.menu_calendar
@@ -171,10 +179,12 @@ fun AppScaffold(navController: NavHostController) {
         "saint_lives" -> R.string.menu_saints_lives
         "icons" -> R.string.menu_icons
         "radio" -> R.string.menu_radio
-        "audiobook_flow", "audiobook_player" -> R.string.menu_audiobooks
+        "audiobook_flow" -> R.string.menu_audiobooks
+        "audiobook_player" -> R.string.audiobook_chapter_icon_desc
         "language_selection" -> R.string.title_language
         else -> R.string.title_home
     }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = { NavigationDrawerContent(navController, drawerState) }
@@ -185,18 +195,37 @@ fun AppScaffold(navController: NavHostController) {
                     title = { Text(text = stringResource(id = topBarTitleResId)) },
                     navigationIcon = {
                         IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = stringResource(R.string.menu_open)
-                            )
+                            Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu_open))
                         }
                     }
                 )
             },
-            content = { innerPadding ->
-                AppNavHost(navController = navController, modifier = Modifier.padding(innerPadding))
+            bottomBar = {
+                // --- AICI ESTE CORECTAREA 1 ---
+                // Adăugăm o condiție pentru a ascunde mini-player-ul pe ecranul player-ului principal
+                val isPlayerScreenVisible = currentRoute?.startsWith("audiobook_player") ?: false
+                AnimatedVisibility(
+                    visible = miniPlayerState.isVisible && !isPlayerScreenVisible,
+                    enter = slideInVertically(initialOffsetY = { it }),
+                    exit = slideOutVertically(targetOffsetY = { it })
+                ) {
+                    MiniPlayerBar(
+                        state = miniPlayerState,
+                        onPlayPause = { mainViewModel.togglePlayPause() },
+                        onNavigateToPlayer = {
+                            navController.navigate("audiobook_player/${miniPlayerState.currentTrackId}") {
+                                launchSingleTop = true
+                            }
+                        }
+                    )
+                }
             }
-        )
+        ) { innerPadding ->
+            AppNavHost(
+                navController = navController,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
     }
 }
 

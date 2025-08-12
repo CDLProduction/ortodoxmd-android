@@ -21,7 +21,6 @@ data class ChapterScreenState(
 data class AudiobookCategory(
     val name: String,
     val books: List<AudiobookBook>,
-    // ADAUGAT: Un indicator pentru a determina tipul de navigație
     val isSimpleCategory: Boolean = false
 )
 
@@ -31,13 +30,20 @@ data class AudiobookBook(
     val chapters: List<AudiobookEntity>
 )
 
-// --- Funcții ajutătoare (Extensii) ---
-
+// --- START: LOGICA CORECTATĂ ---
 fun String.toDisplayableName(): String {
-    return this.replace('_', ' ').replace('-', ' ').replaceFirstChar {
-        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-    }
+    // Regex pentru a găsi și elimina prefixele numerice (ex: "01_", "10 - ", "04_")
+    val prefixRegex = "^\\d+\\s*[-_]+\\s*".toRegex()
+
+    return this
+        .replaceFirst(prefixRegex, "") // Elimină prefixul
+        .replace('_', ' ')           // Înlocuiește underscore cu spațiu
+        .replace("–", "-")          // Uniformizează cratimele (opțional, dar recomandat)
+        .trim()                        // Elimină spațiile de la început sau sfârșit
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() } // Capitalizează prima literă
 }
+// --- END: LOGICA CORECTATĂ ---
+
 
 fun String.fromDisplayableName(): String {
     return this.replace(' ', '_')
