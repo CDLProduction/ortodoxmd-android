@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.repository.AudiobookRepository
 import md.ortodox.ortodoxmd.data.worker.AudioDownloadWorker
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,6 +24,7 @@ class AudiobookViewModel @Inject constructor(
 
     private val workManager = WorkManager.getInstance(context)
 
+    // Pasul 1: Procesăm structura ierarhică pe un thread de fundal
     private val audiobooksStructure: StateFlow<List<AudiobookCategory>> = repository.getAudiobooks()
         .map { audiobooks ->
             val groupedByCategory = audiobooks.groupBy {
@@ -51,8 +51,10 @@ class AudiobookViewModel @Inject constructor(
                 )
             }
         }
+        .flowOn(Dispatchers.Default) // <--- OPTIMIZARE: Mutăm calculul de mai sus pe thread-ul Default
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Pasul 2: Procesăm stările de descărcare pe un thread de fundal
     private val downloadInfo: StateFlow<Pair<Map<Long, WorkInfo.State>, Map<Long, Int>>> = repository.getDownloadWorkInfoFlow()
         .sample(200)
         .map { workInfos ->
@@ -60,9 +62,10 @@ class AudiobookViewModel @Inject constructor(
             val progress = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.progress.getInt(AudioDownloadWorker.KEY_PROGRESS, 0) }.filterKeys { it != -1L }
             states to progress
         }
+        .flowOn(Dispatchers.Default) // <--- OPTIMIZARE: Mutăm crearea map-urilor pe thread-ul Default
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(emptyMap(), emptyMap()))
 
-    // --- START: OPTIMIZARE SUPLIMENTARĂ ---
+    // Pasul 3: Combinăm totul, tot în fundal, pentru a livra starea finală către UI
     val uiState: StateFlow<AudiobooksUiState> = combine(
         audiobooksStructure,
         downloadInfo
@@ -74,10 +77,9 @@ class AudiobookViewModel @Inject constructor(
             downloadProgress = progress
         )
     }
-        // Mutăm și această combinare finală pe un thread de fundal
-        .flowOn(Dispatchers.Default)
+        .flowOn(Dispatchers.Default) // <--- OPTIMIZARE: Combinarea finală se face tot în fundal
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AudiobooksUiState(isLoading = true))
-    // --- END: OPTIMIZARE SUPLIMENTARĂ ---
+
 
     val isDownloading: StateFlow<Boolean> = repository.getDownloadWorkInfoFlow()
         .map { workInfos -> workInfos.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED } }
@@ -85,6 +87,7 @@ class AudiobookViewModel @Inject constructor(
 
     private val _selectedBookName = MutableStateFlow<String?>(null)
 
+    // Această parte era deja optimizată corect cu .flowOn(Dispatchers.Default)
     val selectedBookState: StateFlow<ChapterScreenState> = _selectedBookName
         .filterNotNull()
         .combine(uiState) { selectedName, state ->
