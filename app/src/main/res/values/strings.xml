@@ -184,4 +184,9 @@
     <string name="onboarding_title_4">O Experiență Personalizată</string>
     <string name="onboarding_desc_4">Schimbă limba de afișare a aplicației oricând dorești din secțiunea de setări a meniului.</string>
 
+
+    <string name="audiobook_downloaded_title">Descărcări</string>
+    <string name="audiobook_no_downloads">Nu aveți cărți audio descărcate.</string>
+    <string name="audiobook_downloads_fab">Vezi descărcările</string>
+
 </resources>

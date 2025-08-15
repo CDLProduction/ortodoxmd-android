@@ -8,6 +8,12 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -24,48 +30,25 @@ class AudiobookViewModel @Inject constructor(
 
     private val workManager = WorkManager.getInstance(context)
 
-    // Pasul 1: Procesăm structura ierarhică pe un thread de fundal
-    private val audiobooksStructure: StateFlow<List<AudiobookCategory>> = repository.getAudiobooks()
-        .map { audiobooks ->
-            val groupedByCategory = audiobooks.groupBy {
-                it.remoteUrlPath.trimStart('/').split("/").getOrNull(1) ?: "necunoscut"
-            }
-            groupedByCategory.map { (categoryKey, chaptersInCategory) ->
-                val books = chaptersInCategory.groupBy {
-                    val segments = it.remoteUrlPath.trimStart('/').split('/')
-                    segments.getOrNull(segments.size - 2) ?: categoryKey
-                }.map { (bookKey, chaptersInBook) ->
-                    val firstChapterSegments = chaptersInBook.first().remoteUrlPath.trimStart('/').split('/')
-                    val testamentKey = firstChapterSegments.getOrNull(firstChapterSegments.size - 3) ?: categoryKey
-                    AudiobookBook(
-                        name = bookKey.toDisplayableName(),
-                        testament = testamentKey.toDisplayableName(),
-                        chapters = chaptersInBook.sortedByChapterNumber()
-                    )
-                }
-                val isSimpleCategory = books.size == 1 && books.first().name.equals(categoryKey.toDisplayableName(), ignoreCase = true)
-                AudiobookCategory(
-                    name = categoryKey.toDisplayableName(),
-                    books = books.sortedBy { it.name },
-                    isSimpleCategory = isSimpleCategory
-                )
-            }
-        }
-        .flowOn(Dispatchers.Default) // <--- OPTIMIZARE: Mutăm calculul de mai sus pe thread-ul Default
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // --- FLUXURI DE BAZĂ (PRIVATE) ---
 
-    // Pasul 2: Procesăm stările de descărcare pe un thread de fundal
-    private val downloadInfo: StateFlow<Pair<Map<Long, WorkInfo.State>, Map<Long, Int>>> = repository.getDownloadWorkInfoFlow()
-        .sample(200)
+    private val audiobooksStructure: StateFlow<ImmutableList<AudiobookCategory>> = repository.getAudiobooks()
+        .map { audiobooks -> transformToGroupedCategories(audiobooks) }
+        .flowOn(Dispatchers.Default) // Optimizare 1
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10000), persistentListOf()) // Optimizare 2
+
+    private val downloadInfo: StateFlow<Pair<ImmutableMap<Long, WorkInfo.State>, ImmutableMap<Long, Int>>> = repository.getDownloadWorkInfoFlow()
+        .sample(300) // Am mărit intervalul pentru a reduce și mai mult lag-ul
         .map { workInfos ->
             val states = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.state }.filterKeys { it != -1L }
             val progress = workInfos.associate { extractAudiobookIdFromTags(it.tags) to it.progress.getInt(AudioDownloadWorker.KEY_PROGRESS, 0) }.filterKeys { it != -1L }
-            states to progress
+            states.toImmutableMap() to progress.toImmutableMap() // Optimizare 2
         }
-        .flowOn(Dispatchers.Default) // <--- OPTIMIZARE: Mutăm crearea map-urilor pe thread-ul Default
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(emptyMap(), emptyMap()))
+        .flowOn(Dispatchers.Default) // Optimizare 1
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(persistentMapOf(), persistentMapOf())) // Optimizare 2
 
-    // Pasul 3: Combinăm totul, tot în fundal, pentru a livra starea finală către UI
+    // --- STĂRI PUBLICE PENTRU UI ---
+
     val uiState: StateFlow<AudiobooksUiState> = combine(
         audiobooksStructure,
         downloadInfo
@@ -77,17 +60,30 @@ class AudiobookViewModel @Inject constructor(
             downloadProgress = progress
         )
     }
-        .flowOn(Dispatchers.Default) // <--- OPTIMIZARE: Combinarea finală se face tot în fundal
+        .flowOn(Dispatchers.Default) // Optimizare 1
+        .distinctUntilChanged() // Optimizare 3
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AudiobooksUiState(isLoading = true))
 
+    val downloadedUiState: StateFlow<DownloadedAudiobooksUiState> = repository.getDownloadedAudiobooks()
+        .map { downloadedAudiobooks -> transformToGroupedCategories(downloadedAudiobooks) }
+        .map { groupedCategories ->
+            DownloadedAudiobooksUiState(
+                categories = groupedCategories,
+                isLoading = false
+            )
+        }
+        .flowOn(Dispatchers.Default) // Optimizare 1
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = DownloadedAudiobooksUiState(isLoading = true)
+        )
 
     val isDownloading: StateFlow<Boolean> = repository.getDownloadWorkInfoFlow()
         .map { workInfos -> workInfos.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _selectedBookName = MutableStateFlow<String?>(null)
-
-    // Această parte era deja optimizată corect cu .flowOn(Dispatchers.Default)
     val selectedBookState: StateFlow<ChapterScreenState> = _selectedBookName
         .filterNotNull()
         .combine(uiState) { selectedName, state ->
@@ -97,58 +93,81 @@ class AudiobookViewModel @Inject constructor(
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), initialValue = ChapterScreenState(isLoading = true))
 
-    fun selectBook(bookName: String) { _selectedBookName.value = bookName }
-    fun clearBookSelection() { _selectedBookName.value = null }
+    // --- ACȚIUNI ---
 
     init {
         viewModelScope.launch { repository.syncAudiobooks() }
     }
 
-    // ... restul funcțiilor rămân neschimbate ...
-    private fun extractAudiobookIdFromTags(tags: Set<String>): Long {
-        return tags.find { it.startsWith("audiobook_download_") }?.substringAfter("audiobook_download_")?.toLongOrNull() ?: -1L
-    }
+    fun selectBook(bookName: String) { _selectedBookName.value = bookName }
+    fun clearBookSelection() { _selectedBookName.value = null }
 
-    fun downloadChapter(chapter: AudiobookEntity) {
-        viewModelScope.launch { repository.startDownload(chapter) }
-    }
-
-    fun deleteChapter(chapter: AudiobookEntity) {
-        viewModelScope.launch { repository.deleteChapter(chapter) }
+    fun downloadChapter(chapter: AudiobookEntity) = viewModelScope.launch { repository.startDownload(chapter) }
+    fun deleteChapter(chapter: AudiobookEntity) = viewModelScope.launch { repository.deleteChapter(chapter) }
+    fun cancelAllDownloads() = viewModelScope.launch { workManager.cancelAllWorkByTag(AudiobookRepository.DOWNLOAD_TAG) }
+    fun deleteAllDownloadedChapters(chapters: List<AudiobookEntity>) = viewModelScope.launch {
+        repository.deleteChapters(chapters.filter { it.isDownloaded })
     }
 
     fun downloadAllChapters(chapters: List<AudiobookEntity>) {
-        viewModelScope.launch {
-            val currentStates = uiState.value.downloadStates
+        // Mutăm și logica de planificare pe un thread de I/O
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentDownloadStates = uiState.value.downloadStates
+            // Filtrăm doar capitolele care nu sunt deja descărcate sau în coadă/progres
             val chaptersToDownload = chapters.filter {
-                val state = currentStates[it.id]
+                val state = currentDownloadStates[it.id]
                 !it.isDownloaded && state != WorkInfo.State.SUCCEEDED && state != WorkInfo.State.ENQUEUED && state != WorkInfo.State.RUNNING
             }
             if (chaptersToDownload.isEmpty()) return@launch
 
-            val maxConcurrentDownloads = 3
-            val downloadQueues = List(maxConcurrentDownloads) { mutableListOf<AudiobookEntity>() }
-            chaptersToDownload.forEachIndexed { index, chapter -> downloadQueues[index % maxConcurrentDownloads].add(chapter) }
-            downloadQueues.forEach { queue ->
-                if (queue.isNotEmpty()) {
-                    var continuation = workManager.beginUniqueWork("chain_start_${queue.first().id}", ExistingWorkPolicy.REPLACE, repository.createDownloadWorkRequest(queue.first()))
-                    for (i in 1 until queue.size) { continuation = continuation.then(repository.createDownloadWorkRequest(queue[i])) }
-                    continuation.enqueue()
-                }
+            // Creăm o listă de cereri de muncă (WorkRequest) pentru fiecare capitol
+            val workRequests = chaptersToDownload.map { chapter ->
+                repository.createDownloadWorkRequest(chapter)
             }
+
+            // Construirea și pornirea lanțului secvențial
+            var continuation = workManager.beginUniqueWork(
+                "download_all_chapters_chain",
+                ExistingWorkPolicy.REPLACE,
+                workRequests.first()
+            )
+
+            for (i in 1 until workRequests.size) {
+                continuation = continuation.then(workRequests[i])
+            }
+
+            continuation.enqueue()
         }
     }
 
-    fun deleteAllDownloadedChapters(chapters: List<AudiobookEntity>) {
-        viewModelScope.launch {
-            val downloadedChapters = chapters.filter { it.isDownloaded }
-            if (downloadedChapters.isNotEmpty()) {
-                repository.deleteChapters(downloadedChapters)
-            }
-        }
+
+    // --- FUNCȚII PRIVATE AJUTĂTOARE ---
+
+    private fun extractAudiobookIdFromTags(tags: Set<String>): Long {
+        return tags.find { it.startsWith("audiobook_download_") }?.substringAfter("audiobook_download_")?.toLongOrNull() ?: -1L
     }
 
-    fun cancelAllDownloads() {
-        viewModelScope.launch { workManager.cancelAllWorkByTag(AudiobookRepository.DOWNLOAD_TAG) }
+    private fun transformToGroupedCategories(audiobooks: List<AudiobookEntity>): ImmutableList<AudiobookCategory> {
+        if (audiobooks.isEmpty()) return persistentListOf()
+        val groupedByCategory = audiobooks.groupBy { it.remoteUrlPath.trimStart('/').split("/").getOrNull(1) ?: "necunoscut" }
+        return groupedByCategory.map { (categoryKey, chaptersInCategory) ->
+            val books = chaptersInCategory.groupBy {
+                val segments = it.remoteUrlPath.trimStart('/').split('/')
+                segments.getOrNull(segments.size - 2) ?: categoryKey
+            }.map { (bookKey, chaptersInBook) ->
+                val firstChapterSegments = chaptersInBook.first().remoteUrlPath.trimStart('/').split('/')
+                val testamentKey = firstChapterSegments.getOrNull(firstChapterSegments.size - 3) ?: categoryKey
+                AudiobookBook(
+                    name = bookKey.toDisplayableName(),
+                    testament = testamentKey.toDisplayableName(),
+                    chapters = chaptersInBook.sortedByChapterNumber().toImmutableList()
+                )
+            }
+            AudiobookCategory(
+                name = categoryKey.toDisplayableName(),
+                books = books.sortedBy { it.name }.toImmutableList(),
+                isSimpleCategory = books.size == 1 && books.first().name.equals(categoryKey.toDisplayableName(), ignoreCase = true)
+            )
+        }.toImmutableList()
     }
 }

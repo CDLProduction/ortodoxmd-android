@@ -15,8 +15,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.work.WorkInfo
 import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
@@ -28,12 +28,11 @@ import md.ortodox.ortodoxmd.ui.design.AppScaffold
 
 @Composable
 fun AudiobookChaptersScreen(
+    navController: NavController,
     viewModel: AudiobookViewModel,
-    onNavigateToPlayer: (Long) -> Unit,
-    onNavigateBack: () -> Unit
+    mainViewModel: MainViewModel,
+    onNavigateToPlayer: (Long) -> Unit
 ) {
-    // Obținem ViewModel-ul global pentru a ști ce piesă rulează
-    val mainViewModel: MainViewModel = hiltViewModel()
     val miniPlayerState by mainViewModel.miniPlayerState.collectAsStateWithLifecycle()
     val currentPlayingId = miniPlayerState.currentTrackId
 
@@ -47,8 +46,6 @@ fun AudiobookChaptersScreen(
 
     val book = chapterUiState.book
 
-    // Folosim derivedStateOf pentru a recalcula vizibilitatea butoanelor
-    // DOAR atunci când rezultatul (true/false) se schimbă efectiv.
     val hasDownloadableChapters by remember(book) {
         derivedStateOf { book?.chapters?.any { !it.isDownloaded } ?: false }
     }
@@ -56,11 +53,11 @@ fun AudiobookChaptersScreen(
         derivedStateOf { book?.chapters?.any { it.isDownloaded } ?: false }
     }
 
-
     AppScaffold(
         title = book?.name ?: stringResource(R.string.common_loading),
-        onBack = onNavigateBack,
+        onBack = { navController.popBackStack() },
         floatingActionButton = {
+            // --- BUTONUL PENTRU "DESCĂRCĂRI" A FOST ELIMINAT DE AICI ---
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -77,14 +74,14 @@ fun AudiobookChaptersScreen(
                 if (!isDownloading) {
                     AnimatedVisibility(visible = hasDownloadableChapters) {
                         ExtendedFloatingActionButton(
-                            onClick = { book?.chapters?.let { viewModel.downloadAllChapters(it) } },
+                            onClick = { book?.chapters?.let { viewModel.downloadAllChapters(it.toList()) } },
                             icon = { Icon(Icons.Default.Download, stringResource(R.string.common_download)) },
                             text = { Text(stringResource(R.string.audiobook_download_all)) }
                         )
                     }
                     AnimatedVisibility(visible = hasDeletableChapters) {
                         ExtendedFloatingActionButton(
-                            onClick = { book?.chapters?.let { viewModel.deleteAllDownloadedChapters(it) } },
+                            onClick = { book?.chapters?.let { viewModel.deleteAllDownloadedChapters(it.toList()) } },
                             icon = { Icon(Icons.Default.Delete, stringResource(R.string.common_delete)) },
                             text = { Text(stringResource(R.string.audiobook_delete_all_downloads)) },
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer
@@ -95,13 +92,11 @@ fun AudiobookChaptersScreen(
         }
     ) { paddingValues ->
         when {
-            chapterUiState.isLoading -> AppLoading()
+            chapterUiState.isLoading -> AppLoading(Modifier.padding(paddingValues))
             book != null -> {
                 LazyColumn(
-                    modifier = Modifier
-                        .padding(paddingValues)
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(start = AppPaddings.l, end = AppPaddings.l, top = AppPaddings.l, bottom = 160.dp), // Mărit spațiul de jos
+                    modifier = Modifier.padding(paddingValues).fillMaxSize(),
+                    contentPadding = PaddingValues(start = AppPaddings.l, end = AppPaddings.l, top = AppPaddings.l, bottom = 180.dp),
                     verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
                 ) {
                     items(book.chapters, key = { it.id }) { chapter ->
@@ -124,7 +119,6 @@ fun AudiobookChaptersScreen(
         }
     }
 }
-
 @Composable
 private fun ChapterItem(
     chapter: AudiobookEntity,

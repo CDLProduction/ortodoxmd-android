@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
         askPermissions()
-        startService(Intent(this, PlaybackService::class.java))
+//        startService(Intent(this, PlaybackService::class.java))
 
         setContent {
             OrtodoxmdandroidTheme {
@@ -201,8 +201,6 @@ fun AppScaffold(navController: NavHostController) {
                 )
             },
             bottomBar = {
-                // --- AICI ESTE CORECTAREA 1 ---
-                // Adăugăm o condiție pentru a ascunde mini-player-ul pe ecranul player-ului principal
                 val isPlayerScreenVisible = currentRoute?.startsWith("audiobook_player") ?: false
                 AnimatedVisibility(
                     visible = miniPlayerState.isVisible && !isPlayerScreenVisible,
@@ -221,123 +219,127 @@ fun AppScaffold(navController: NavHostController) {
                 }
             }
         ) { innerPadding ->
-            AppNavHost(
+            NavHost(
                 navController = navController,
+                startDestination = "home",
                 modifier = Modifier.padding(innerPadding)
-            )
-        }
-    }
-}
+            ) {
+                composable("home") { HomeScreen(navController = navController) }
+                composable("calendar") { CalendarScreen() }
+                composable("anuar") { AnuarScreen() }
+                composable("sacraments") { SacramentScreen() }
+                composable("apologetics") { ApologeticScreen() }
+                composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
+                composable("prayer/{category}") { backStackEntry ->
+                    val category = backStackEntry.arguments?.getString("category") ?: "general"
+                    PrayerScreen(category = category)
+                }
+                composable("bible_home") { BibleHomeScreen(mainNavController = navController) }
+                composable("radio") { RadioScreen() }
+                composable("saint_lives") { SaintLivesScreen(navController = navController) }
+                composable(
+                    route = "saint_life_detail/{saintLifeId}",
+                    arguments = listOf(navArgument("saintLifeId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    SaintLifeDetailScreen(
+                        navController = navController,
+                        saintLifeId = backStackEntry.arguments?.getLong("saintLifeId") ?: 0L
+                    )
+                }
+                composable("icons") { IconsScreen(navController = navController) }
+                composable(
+                    route = "icon_detail/{iconId}",
+                    arguments = listOf(navArgument("iconId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    IconDetailScreen(
+                        navController = navController,
+                        iconId = backStackEntry.arguments?.getLong("iconId") ?: 0L
+                    )
+                }
+                composable("monastery_list") { MonasteryListScreen(navController = navController) }
+                composable(
+                    route = "monastery_detail/{monasteryId}",
+                    arguments = listOf(navArgument("monasteryId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    MonasteryDetailScreen(
+                        navController = navController,
+                        monasteryId = backStackEntry.arguments?.getLong("monasteryId") ?: 0L
+                    )
+                }
+                composable("language_selection") { LanguageScreen() }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
-    NavHost(navController = navController, startDestination = "home", modifier = modifier) {
-        composable("home") { HomeScreen(navController = navController) }
-        composable("calendar") { CalendarScreen() }
-        composable("anuar") { AnuarScreen() }
-        composable("sacraments") { SacramentScreen() }
-        composable("apologetics") { ApologeticScreen() }
-        composable("prayer_categories") { PrayerCategoriesScreen(navController = navController) }
-        composable("prayer/{category}") { backStackEntry ->
-            val category = backStackEntry.arguments?.getString("category") ?: "general"
-            PrayerScreen(category = category)
-        }
-        composable("bible_home") { BibleHomeScreen(mainNavController = navController) }
-        composable("radio") { RadioScreen() }
-        composable("saint_lives") { SaintLivesScreen(navController = navController) }
-        composable(
-            route = "saint_life_detail/{saintLifeId}",
-            arguments = listOf(navArgument("saintLifeId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            SaintLifeDetailScreen(
-                navController = navController,
-                saintLifeId = backStackEntry.arguments?.getLong("saintLifeId") ?: 0L
-            )
-        }
-        composable("icons") { IconsScreen(navController = navController) }
-        composable(
-            route = "icon_detail/{iconId}",
-            arguments = listOf(navArgument("iconId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            IconDetailScreen(
-                navController = navController,
-                iconId = backStackEntry.arguments?.getLong("iconId") ?: 0L
-            )
-        }
-        composable("monastery_list") { MonasteryListScreen(navController = navController) }
-        composable(
-            route = "monastery_detail/{monasteryId}",
-            arguments = listOf(navArgument("monasteryId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            MonasteryDetailScreen(
-                navController = navController,
-                monasteryId = backStackEntry.arguments?.getLong("monasteryId") ?: 0L
-            )
-        }
-        composable("language_selection") { LanguageScreen() }
-        navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
-            composable("audiobook_categories") { navBackStackEntry ->
-                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
-                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
-                val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
-                AudiobookCategoriesScreen(
-                    navController = navController,
-                    categories = uiState.categories,
-                    categoryName = stringResource(R.string.menu_audiobooks)
-                )
-            }
-            composable(
-                "audiobook_testaments/{categoryName}",
-                arguments = listOf(navArgument("categoryName") { defaultValue = "Cărți Audio" })
-            ) { navBackStackEntry ->
-                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
-                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
-                val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
-                val categoryName = navBackStackEntry.arguments?.getString("categoryName") ?: stringResource(R.string.menu_audiobooks)
-                val category = uiState.categories.find { it.name == categoryName }
-                val testaments = category?.books?.map { it.testament }?.distinct() ?: emptyList()
-                AudiobookTestamentsScreen(navController, testaments, categoryName)
-            }
-            composable(
-                "audiobook_books/{testamentName}",
-                arguments = listOf(navArgument("testamentName") { type = NavType.StringType })
-            ) { navBackStackEntry ->
-                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
-                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
-                val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
-                val testamentName = navBackStackEntry.arguments?.getString("testamentName")
-                    ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
-                AudiobookBooksScreen(navController, testamentName, uiState.categories.flatMap { it.books })
-            }
-            composable(
-                route = "audiobook_chapters/{bookName}",
-                arguments = listOf(navArgument("bookName") { type = NavType.StringType })
-            ) { navBackStackEntry ->
-                val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
-                val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
-                val bookName = navBackStackEntry.arguments?.getString("bookName")?.let {
-                    URLDecoder.decode(it, StandardCharsets.UTF_8.toString())
-                }
-                LaunchedEffect(bookName) {
-                    if (bookName != null) {
-                        audiobookViewModel.selectBook(bookName)
+                navigation(startDestination = "audiobook_categories", route = "audiobook_flow") {
+                    composable("audiobook_categories") { navBackStackEntry ->
+                        val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                        val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                        AudiobookCategoriesScreen(
+                            navController = navController,
+                            viewModel = audiobookViewModel
+                        )
+                    }
+                    composable(
+                        "audiobook_testaments/{categoryName}",
+                        arguments = listOf(navArgument("categoryName") { defaultValue = "Cărți Audio" })
+                    ) { navBackStackEntry ->
+                        val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                        val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                        val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
+                        val categoryName = navBackStackEntry.arguments?.getString("categoryName") ?: stringResource(R.string.menu_audiobooks)
+                        val category = uiState.categories.find { it.name == categoryName }
+                        val testaments = category?.books?.map { it.testament }?.distinct() ?: emptyList()
+                        AudiobookTestamentsScreen(navController, testaments, categoryName)
+                    }
+                    composable(
+                        "audiobook_books/{testamentName}",
+                        arguments = listOf(navArgument("testamentName") { type = NavType.StringType })
+                    ) { navBackStackEntry ->
+                        val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                        val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                        val uiState by audiobookViewModel.uiState.collectAsStateWithLifecycle()
+                        val testamentName = navBackStackEntry.arguments?.getString("testamentName")
+                            ?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: ""
+                        AudiobookBooksScreen(navController, testamentName, uiState.categories.flatMap { it.books })
+                    }
+                    composable(
+                        route = "audiobook_chapters/{bookName}",
+                        arguments = listOf(navArgument("bookName") { type = NavType.StringType })
+                    ) { navBackStackEntry ->
+                        val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                        val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                        val mainViewModel: MainViewModel = hiltViewModel()
+                        val bookName = navBackStackEntry.arguments?.getString("bookName")?.let {
+                            URLDecoder.decode(it, StandardCharsets.UTF_8.toString())
+                        }
+                        LaunchedEffect(bookName) {
+                            if (bookName != null) {
+                                audiobookViewModel.selectBook(bookName)
+                            }
+                        }
+                        AudiobookChaptersScreen(
+                            navController = navController,
+                            viewModel = audiobookViewModel,
+                            mainViewModel = mainViewModel,
+                            onNavigateToPlayer = { chapterId ->
+                                navController.navigate("audiobook_player/$chapterId")
+                            }
+                        )
+                    }
+                    composable("downloaded_audiobooks") { navBackStackEntry ->
+                        val parentEntry = remember(navBackStackEntry) { navController.getBackStackEntry("audiobook_flow") }
+                        val audiobookViewModel: AudiobookViewModel = hiltViewModel(parentEntry)
+                        DownloadedAudiobooksScreen(
+                            navController = navController,
+                            viewModel = audiobookViewModel
+                        )
                     }
                 }
-                AudiobookChaptersScreen(
-                    viewModel = audiobookViewModel,
-                    onNavigateBack = { navController.popBackStack() },
-                    onNavigateToPlayer = { chapterId ->
-                        navController.navigate("audiobook_player/$chapterId")
-                    }
-                )
+                composable(
+                    route = "audiobook_player/{chapterId}",
+                    arguments = listOf(navArgument("chapterId") { type = NavType.LongType })
+                ) {
+                    AudiobookPlayerScreen(navController = navController)
+                }
             }
-        }
-        composable(
-            route = "audiobook_player/{chapterId}",
-            arguments = listOf(navArgument("chapterId") { type = NavType.LongType })
-        ) {
-            AudiobookPlayerScreen(navController = navController)
         }
     }
 }
@@ -424,7 +426,8 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                 if (item.subItems == null) {
                                     coroutineScope.launch { drawerState.close() }
                                     navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        // --- AICI ESTE PRIMA CORECTARE ---
+                                        popUpTo("home") { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -453,7 +456,8 @@ fun NavigationDrawerContent(navController: NavHostController, drawerState: Drawe
                                         onClick = {
                                             coroutineScope.launch { drawerState.close() }
                                             navController.navigate(subItem.route) {
-                                                popUpTo(navController.graph.findStartDestination().id)
+                                                // --- AICI ESTE A DOUA CORECTARE ---
+                                                popUpTo("home")
                                                 launchSingleTop = true
                                             }
                                         },

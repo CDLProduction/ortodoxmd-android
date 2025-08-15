@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import androidx.lifecycle.asFlow
 import androidx.work.OneTimeWorkRequest
+import androidx.work.await
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -93,23 +94,26 @@ class AudiobookRepository @Inject constructor(
     }
 
     // Funcția startDownload devine mai simplă
-    fun startDownload(audiobook: AudiobookEntity) {
+    suspend fun startDownload(audiobook: AudiobookEntity) {
         if (audiobook.isDownloaded) {
             Log.d("AudiobookRepository", "Audiobook ${audiobook.id} is already downloaded.")
             return
         }
 
+        // Curățăm toate sarcinile finalizate (FAILED, CANCELLED, SUCCEEDED)
+        // Acest pas este esențial pentru ca reîncercarea să funcționeze corect.
+        workManager.pruneWork().await()
+
+        val uniqueWorkName = "download_${audiobook.id}"
         val downloadWorkRequest = createDownloadWorkRequest(audiobook)
 
         Log.d("AudiobookRepository", "Beginning unique work for audiobook ID: ${audiobook.id}")
 
-        // Folosim beginUniqueWork în loc de enqueueUniqueWork pentru a asigura
-        // înlocuirea corectă a sarcinilor finalizate (ex: CANCELLED, FAILED).
-        workManager.beginUniqueWork(
-            "download_${audiobook.id}",
-            ExistingWorkPolicy.REPLACE,
+        workManager.enqueueUniqueWork(
+            uniqueWorkName,
+            ExistingWorkPolicy.REPLACE, // REPLACE acum va funcționa cum trebuie
             downloadWorkRequest
-        ).enqueue()
+        )
     }
 
     suspend fun savePlaybackPosition(id: Long, position: Long) {
@@ -154,4 +158,8 @@ class AudiobookRepository @Inject constructor(
             audiobookDao.markAsNotDownloaded(chapterIdsToDelete)
         }
     }
+
+
+
+    fun getDownloadedAudiobooks(): Flow<List<AudiobookEntity>> = audiobookDao.getDownloaded()
 }

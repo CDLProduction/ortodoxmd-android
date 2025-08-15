@@ -184,6 +184,9 @@
     <string name="onboarding_title_4">A Personalized Experience</string>
     <string name="onboarding_desc_4">Change the application\'s display language whenever you want from the settings section of the menu.</string>
 
+    <string name="audiobook_downloaded_title">Descărcări</string>
+    <string name="audiobook_no_downloads">Nu aveți cărți audio descărcate.</string>
+    <string name="audiobook_downloads_fab">Vezi descărcările</string>
 
 
 </resources>

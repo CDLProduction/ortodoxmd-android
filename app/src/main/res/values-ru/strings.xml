@@ -184,4 +184,9 @@
     <string name="onboarding_title_4">Персонализированный опыт</string>
     <string name="onboarding_desc_4">Изменяйте язык отображения приложения в любое время в разделе настроек меню.</string>
 
+
+
+    <string name="audiobook_downloaded_title">Descărcări</string>
+    <string name="audiobook_no_downloads">Nu aveți cărți audio descărcate.</string>
+    <string name="audiobook_downloads_fab">Vezi descărcările</string>
 </resources>

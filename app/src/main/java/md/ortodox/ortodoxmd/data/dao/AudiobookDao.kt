@@ -41,4 +41,7 @@ interface AudiobookDao {
 
     @Query("UPDATE audiobooks SET isDownloaded = 0, localFilePath = NULL WHERE id IN (:chapterIds)")
     suspend fun markAsNotDownloaded(chapterIds: List<Long>)
+
+    @Query("SELECT * FROM audiobooks WHERE isDownloaded = 1")
+    fun getDownloaded(): Flow<List<AudiobookEntity>>
 }

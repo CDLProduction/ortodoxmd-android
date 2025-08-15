@@ -6,6 +6,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import md.ortodox.ortodoxmd.data.di.DefaultOkHttpClient
+import md.ortodox.ortodoxmd.data.di.DownloadOkHttpClient
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -37,6 +39,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @DefaultOkHttpClient // Adnotarea pentru clientul standard
     fun provideOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
         return OkHttpClient.Builder().addInterceptor(logging).build()
@@ -44,7 +47,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    @DownloadOkHttpClient // Adnotarea pentru clientul de descărcări
+    fun provideDownloadOkHttpClient(): OkHttpClient {
+        // Acest client NU are HttpLoggingInterceptor.
+        // Poți adăuga alte setări, cum ar fi timeout-uri mai mari, dacă dorești.
+        return OkHttpClient.Builder().build()
+    }
+
+    // Modificăm provider-ele Retrofit să folosească clientul standard (@DefaultOkHttpClient)
+    @Provides
+    @Singleton
+    fun provideRetrofit(@DefaultOkHttpClient okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL_MAIN)
             .client(okHttpClient)
@@ -55,7 +68,7 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("AudiobookRetrofit")
-    fun provideAudiobookRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideAudiobookRetrofit(@DefaultOkHttpClient okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL_AUDIOBOOKS)
             .client(okHttpClient)
