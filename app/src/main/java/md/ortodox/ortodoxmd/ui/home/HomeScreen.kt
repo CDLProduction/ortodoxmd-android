@@ -1,6 +1,5 @@
 package md.ortodox.ortodoxmd.ui.home
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,9 +24,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppCard
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -37,9 +41,6 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // **ADAUGAT: Conectăm ViewModel-ul la ciclul de viață al ecranului**
-    // Acest bloc va face ca funcția onStart() din ViewModel să fie apelată de fiecare dată
-    // când utilizatorul revine la acest ecran.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.addObserver(viewModel)
@@ -49,15 +50,14 @@ fun HomeScreen(
     }
 
     if (uiState.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        // REFACTORIZAT: Folosim AppLoading.
+        AppLoading()
     } else {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(AppPaddings.l),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             TodayCard(
@@ -79,43 +79,45 @@ fun HomeScreen(
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TodayCard(calendarData: md.ortodox.ortodoxmd.data.model.CalendarData?, onClick: () -> Unit) {
     val dateDisplayFormat = SimpleDateFormat("EEEE, d MMMM yyyy", Locale("ro")).format(Date())
     val title = dateDisplayFormat.replaceFirstChar { it.uppercase() }
 
-    Card(
+    // REFACTORIZAT: Folosim AppCard.
+    AppCard(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(AppPaddings.l),
+            verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
         ) {
             Text(text = title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
             Divider()
             if (calendarData != null) {
                 val fastingInfo = when (calendarData.fastingDescriptionRo.lowercase(Locale.ROOT)) {
-                    "harti" -> "Zi fără post"
+                    "harti" -> stringResource(R.string.home_no_fasting_day)
+                    "post" -> stringResource(R.string.home_fasting_day)
                     else -> calendarData.fastingDescriptionRo
                 }
                 InfoRow(icon = Icons.Default.Restaurant, text = fastingInfo)
-                InfoRow(icon = Icons.Default.Person, text = calendarData.saints.firstOrNull()?.nameAndDescriptionRo ?: calendarData.summaryTitleRo)
+                InfoRow(
+                    icon = Icons.Default.Person,
+                    text = calendarData.saints.firstOrNull()?.nameAndDescriptionRo ?: calendarData.summaryTitleRo
+                )
             } else {
-                InfoRow(icon = Icons.Default.CloudOff, text = "Datele nu au putut fi încărcate.")
+                InfoRow(icon = Icons.Default.CloudOff, text = stringResource(R.string.home_data_load_error))
             }
         }
     }
 }
+
 @Composable
 private fun InfoRow(icon: ImageVector, text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(AppPaddings.m)
     ) {
         Icon(
             imageVector = icon,
@@ -129,19 +131,18 @@ private fun InfoRow(icon: ImageVector, text: String) {
 
 @Composable
 private fun VerseOfTheDayCard(verse: String, reference: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    // REFACTORIZAT: Folosim AppCard.
+    AppCard(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(AppPaddings.l)) {
             Text(
                 text = "\"$verse\"",
                 style = MaterialTheme.typography.bodyLarge,
                 fontStyle = FontStyle.Italic,
                 lineHeight = 24.sp
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(AppPaddings.s))
             Text(
                 text = reference,
                 style = MaterialTheme.typography.labelMedium,
@@ -153,39 +154,34 @@ private fun VerseOfTheDayCard(verse: String, reference: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ResumeListeningCard(info: ResumePlaybackInfo, onClick: () -> Unit) {
-    // ... conținutul acestei funcții rămâne neschimbat ...
-    Card(
+    // REFACTORIZAT: Folosim AppCard.
+    AppCard(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(AppPaddings.l),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.PlayCircleFilled,
-                contentDescription = "Reluați Ascultarea",
+                contentDescription = stringResource(R.string.home_resume_listening),
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onTertiaryContainer
+                tint = MaterialTheme.colorScheme.tertiary // Culoarea se potrivește bine cu designul original
             )
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(AppPaddings.l))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Reluați Ascultarea",
+                    text = stringResource(R.string.home_resume_listening),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    color = MaterialTheme.colorScheme.onSurface // Culoare standard pentru text
                 )
                 Text(
                     text = info.audiobook.title,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -195,9 +191,9 @@ private fun ResumeListeningCard(info: ResumePlaybackInfo, onClick: () -> Unit) {
                     String.format("%02d:%02d", minutes, seconds)
                 }
                 Text(
-                    text = "Rămas la: $formattedDuration",
+                    text = stringResource(R.string.home_resume_at, formattedDuration),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
             }
         }
@@ -206,36 +202,34 @@ private fun ResumeListeningCard(info: ResumePlaybackInfo, onClick: () -> Unit) {
 
 @Composable
 private fun QuickNavGrid(navController: NavHostController) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AppPaddings.m)) {
         Text(
-            text = "Explorați Aplicația",
+            text = stringResource(R.string.home_explore_app),
             style = MaterialTheme.typography.titleLarge
         )
-        // Primul rând de butoane
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(AppPaddings.l)) {
             NavButton(
-                title = "Biblia",
+                title = stringResource(R.string.home_bible),
                 icon = Icons.Default.Book,
                 onClick = { navController.navigate("bible_home") },
                 modifier = Modifier.weight(1f)
             )
             NavButton(
-                title = "Rugăciuni",
+                title = stringResource(R.string.home_prayers),
                 icon = Icons.AutoMirrored.Filled.MenuBook,
                 onClick = { navController.navigate("prayer_categories") },
                 modifier = Modifier.weight(1f)
             )
         }
-        // Al doilea rând de butoane
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(AppPaddings.l)) {
             NavButton(
-                title = "Vieți Sfinți",
+                title = stringResource(R.string.home_saints_lives),
                 icon = Icons.Default.Person,
                 onClick = { navController.navigate("saint_lives") },
                 modifier = Modifier.weight(1f)
             )
             NavButton(
-                title = "Anuar",
+                title = stringResource(R.string.home_anuar),
                 icon = Icons.Default.Today,
                 onClick = { navController.navigate("anuar") },
                 modifier = Modifier.weight(1f)
@@ -244,7 +238,6 @@ private fun QuickNavGrid(navController: NavHostController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NavButton(
     title: String,
@@ -252,16 +245,15 @@ private fun NavButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    // REFACTORIZAT: Folosim AppCard pentru butoanele de navigare.
+    AppCard(
         onClick = onClick,
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        modifier = modifier
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp),
+            modifier = Modifier.padding(vertical = AppPaddings.l, horizontal = AppPaddings.s),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(AppPaddings.s)
         ) {
             Icon(imageVector = icon, contentDescription = title, modifier = Modifier.size(28.dp))
             Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)

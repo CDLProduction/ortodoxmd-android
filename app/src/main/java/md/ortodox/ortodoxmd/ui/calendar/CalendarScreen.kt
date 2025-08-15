@@ -1,6 +1,8 @@
 package md.ortodox.ortodoxmd.ui.calendar
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -23,20 +26,23 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.CalendarData
 import md.ortodox.ortodoxmd.domain.model.HolidayRank
 import md.ortodox.ortodoxmd.domain.model.RedLetterDays
+import md.ortodox.ortodoxmd.ui.design.AppCard
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
     val monthFormatter = remember { SimpleDateFormat("LLLL yyyy", Locale("ro")) }
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = modifier.fillMaxSize().padding(AppPaddings.l)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -44,9 +50,9 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
             val monthYearTitle = monthFormatter.format(uiState.selectedDate.time).replaceFirstChar { it.uppercase() }
             Text(monthYearTitle, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = viewModel::goToToday) { Text("Azi") }
-            Spacer(Modifier.width(8.dp))
-            Button(onClick = { showDatePicker = true }) { Text("Selectează") }
+            OutlinedButton(onClick = viewModel::goToToday) { Text(stringResource(R.string.calendar_today)) }
+            Spacer(Modifier.width(AppPaddings.s))
+            Button(onClick = { showDatePicker = true }) { Text(stringResource(R.string.calendar_select)) }
         }
 
         if (showDatePicker) {
@@ -57,52 +63,79 @@ fun CalendarScreen(modifier: Modifier = Modifier, viewModel: CalendarViewModel =
                     Button(onClick = {
                         datePickerState.selectedDateMillis?.let { viewModel.updateFromPicker(it) }
                         showDatePicker = false
-                    }) { Text("OK") }
+                    }) { Text(stringResource(R.string.calendar_ok_button)) }
                 },
-                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Anulează") } }
+                dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.calendar_cancel_button)) } }
             ) { DatePicker(state = datePickerState) }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-            listOf("L", "Ma", "Mi", "J", "V", "S", "D").forEach { day ->
-                Text(day, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(AppPaddings.l))
 
-        Box(
-            modifier = Modifier.pointerInput(uiState.selectedDate.get(Calendar.MONTH)) {
-                detectHorizontalDragGestures { _, dragAmount ->
-                    if (dragAmount < -50) viewModel.goToNextMonth()
-                    if (dragAmount > 50) viewModel.goToPreviousMonth()
+        AppCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(uiState.selectedDate.get(Calendar.MONTH)) {
+                    detectHorizontalDragGestures { _, dragAmount ->
+                        if (dragAmount < -50) viewModel.goToNextMonth()
+                        if (dragAmount > 50) viewModel.goToPreviousMonth()
+                    }
+                }
+        ) {
+            Column(modifier = Modifier.padding(AppPaddings.m)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                    listOf(
+                        stringResource(R.string.day_monday_short), stringResource(R.string.day_tuesday_short),
+                        stringResource(R.string.day_wednesday_short), stringResource(R.string.day_thursday_short),
+                        stringResource(R.string.day_friday_short), stringResource(R.string.day_saturday_short),
+                        stringResource(R.string.day_sunday_short)
+                    ).forEach { day ->
+                        Text(day, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                    }
+                }
+                Spacer(modifier = Modifier.height(AppPaddings.s))
+
+                // ACTUALIZAT: Animație de swipe mai lină
+                AnimatedContent(
+                    targetState = "${uiState.selectedDate.get(Calendar.YEAR)}-${uiState.selectedDate.get(Calendar.MONTH)}",
+                    transitionSpec = {
+                        val direction = if (targetState > initialState) AnimatedContentTransitionScope.SlideDirection.Left else AnimatedContentTransitionScope.SlideDirection.Right
+                        slideIntoContainer(
+                            towards = direction,
+                            animationSpec = tween(durationMillis = 400, easing = EaseInOut)
+                        ) togetherWith slideOutOfContainer(
+                            towards = direction,
+                            animationSpec = tween(durationMillis = 400, easing = EaseInOut)
+                        )
+                    }, label = "month_swipe"
+                ) {
+                    CalendarGrid(
+                        calendar = uiState.selectedDate,
+                        dataForMonth = uiState.dataForVisibleMonth,
+                        onDateSelected = { day ->
+                            val newDate = (uiState.selectedDate.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
+                            viewModel.selectDate(newDate)
+                        }
+                    )
                 }
             }
-        ) {
-            AnimatedContent(
-                targetState = "${uiState.selectedDate.get(Calendar.YEAR)}-${uiState.selectedDate.get(Calendar.MONTH)}",
-                transitionSpec = {
-                    if (targetState > initialState) {
-                        slideInHorizontally { width -> -width } togetherWith slideOutHorizontally { width -> width }
-                    } else {
-                        slideInHorizontally { width -> width } togetherWith slideOutHorizontally { width -> -width }
-                    }
-                }, label = "month_swipe"
-            ) {
-                CalendarGrid(
-                    calendar = uiState.selectedDate,
-                    dataForMonth = uiState.dataForVisibleMonth,
-                    onDateSelected = { day ->
-                        val newDate = (uiState.selectedDate.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
-                        viewModel.selectDate(newDate)
-                    }
+        }
+        Spacer(modifier = Modifier.height(AppPaddings.l))
+
+        // ACTUALIZAT: Animație pentru afișarea detaliilor zilei
+        AnimatedContent(
+            targetState = uiState.dataForSelectedDay,
+            label = "day_details_animation",
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(200, delayMillis = 150)) +
+                 slideInVertically(animationSpec = tween(350), initialOffsetY = { it / 2 }))
+                .togetherWith(
+                    fadeOut(animationSpec = tween(150))
                 )
             }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-
-        AnimatedVisibility(visible = !uiState.isLoading, enter = fadeIn(), exit = fadeOut()) {
-            DayDetails(data = uiState.dataForSelectedDay)
+        ) { targetData ->
+            if (targetData != null) {
+                DayDetails(data = targetData)
+            }
         }
     }
 }
@@ -123,7 +156,7 @@ private fun CalendarGrid(
     val today = Calendar.getInstance()
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
-    LazyVerticalGrid(columns = GridCells.Fixed(7), userScrollEnabled = false) {
+    LazyVerticalGrid(columns = GridCells.Fixed(7), userScrollEnabled = false, modifier = Modifier.height(300.dp)) {
         items(firstDayOfWeek) { Box(Modifier.aspectRatio(1f)) }
         items(daysInMonth) { dayIndex ->
             val day = dayIndex + 1
@@ -179,10 +212,8 @@ private fun DayDetails(data: CalendarData?) {
         else -> data.fastingDescriptionRo
     }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // **AICI ESTE MODIFICAREA**
-            // Folosim un AnnotatedString pentru a combina crucea (cu roșu) și titlul (cu culoarea primară).
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(AppPaddings.l), verticalArrangement = Arrangement.spacedBy(AppPaddings.s)) {
             val annotatedTitle = buildAnnotatedString {
                 if (holidayRank != null) {
                     withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.error)) {
@@ -195,12 +226,12 @@ private fun DayDetails(data: CalendarData?) {
             }
             Text(text = annotatedTitle, style = MaterialTheme.typography.titleMedium)
 
-            Divider()
+            HorizontalDivider()
 
-            Text("Post: $correctedFastingDescription", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.calendar_day_details_fasting, correctedFastingDescription), style = MaterialTheme.typography.bodyLarge)
 
             if (data.saints.isNotEmpty()) {
-                Text("Sfinții zilei:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.calendar_day_details_saints), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Column {
                     data.saints.forEach { saint ->
                         Text("• ${saint.nameAndDescriptionRo}", style = MaterialTheme.typography.bodyMedium)

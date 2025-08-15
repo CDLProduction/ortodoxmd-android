@@ -28,6 +28,7 @@ import md.ortodox.ortodoxmd.data.repository.AudiobookRepository
 import md.ortodox.ortodoxmd.ui.playback.PlaybackService
 import java.io.File
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 data class PlayerUiState(
     val audiobook: AudiobookEntity? = null,
@@ -84,20 +85,19 @@ class AudiobookPlayerViewModel @Inject constructor(
     }
 
     private fun initializeController() {
-        // **CORECTAT: Citim argumentul direct ca Long**
         val chapterId: Long? = savedStateHandle["chapterId"]
         if (chapterId == null) return
 
         viewModelScope.launch {
             val audiobook = repository.getById(chapterId) ?: return@launch
-            // Găsește toate capitolele din aceeași carte
-            val bookPathPrefix = audiobook.remoteUrlPath.split("/").take(4).joinToString("/")
-
-            // **CORECTAT: Folosim funcția de sortare corectă**
-            val allChapters = repository.getAudiobooks().first()
-                .filter { it.remoteUrlPath.startsWith(bookPathPrefix) }
-                .sortedByChapterNumber()
-
+            val bookDirectoryPath = File(audiobook.remoteUrlPath).parent
+            val allChapters = if (bookDirectoryPath != null) {
+                repository.getAudiobooks().first()
+                    .filter { File(it.remoteUrlPath).parent == bookDirectoryPath }
+                    .sortedByChapterNumber()
+            } else {
+                listOf(audiobook)
+            }
             val currentIndex = allChapters.indexOfFirst { it.id == chapterId }
 
             _uiState.update { it.copy(audiobook = audiobook, chapters = allChapters, currentChapterIndex = currentIndex) }
@@ -109,17 +109,35 @@ class AudiobookPlayerViewModel @Inject constructor(
         return if (audiobook.isDownloaded && audiobook.localFilePath != null && File(audiobook.localFilePath!!).exists()) {
             Uri.fromFile(File(audiobook.localFilePath!!))
         } else {
-            Uri.parse("${NetworkModule.BASE_URL_AUDIOBOOKS}api/audiobooks/${audiobook.id}/stream")
+            "${NetworkModule.BASE_URL_AUDIOBOOKS}api/audiobooks/${audiobook.id}/stream".toUri()
         }
     }
 
+    // --- AICI ESTE CORECTAREA 2 (Partea 1) ---
     private fun setupMediaController(audiobook: AudiobookEntity) {
         val sessionToken = SessionToken(application, ComponentName(application, PlaybackService::class.java))
         controllerFuture = MediaController.Builder(application, sessionToken).buildAsync()
         controllerFuture.addListener({
             mediaController = controllerFuture.get()
             mediaController?.addListener(playerListener)
-            getMediaUri(audiobook)?.let { prepareAndPlay(it, audiobook, audiobook.lastPositionMillis) }
+
+            // Verificăm dacă piesa pe care vrem să o redăm este deja cea curentă
+            val isAlreadyPlayingThisTrack = mediaController?.currentMediaItem?.mediaId == audiobook.id.toString()
+
+            if (isAlreadyPlayingThisTrack) {
+                // Dacă da, doar actualizăm UI-ul și lăsăm player-ul în pace
+                _uiState.update {
+                    it.copy(
+                        isPlaying = mediaController?.isPlaying ?: false,
+                        isReady = true,
+                        totalDurationMillis = mediaController?.duration?.coerceAtLeast(0) ?: 0
+                    )
+                }
+                startPlaybackPositionUpdates()
+            } else {
+                // Dacă nu, pregătim piesa de la poziția salvată
+                getMediaUri(audiobook)?.let { prepareAndPlay(it, audiobook, audiobook.lastPositionMillis) }
+            }
         }, MoreExecutors.directExecutor())
     }
 
@@ -168,30 +186,38 @@ class AudiobookPlayerViewModel @Inject constructor(
 
     fun onNext() {
         val currentState = _uiState.value
-        val nextIndex = currentState.currentChapterIndex + 1
-        if (nextIndex < currentState.chapters.size) {
-            val nextChapter = currentState.chapters[nextIndex]
-            _uiState.update { it.copy(audiobook = nextChapter, currentChapterIndex = nextIndex) }
-            getMediaUri(nextChapter)?.let { prepareAndPlay(it, nextChapter) }
-        } else {
-            mediaController?.pause() // Oprește la finalul listei
-        }
+        if (currentState.chapters.isEmpty()) return
+        mediaController?.stop()
+        val nextIndex = (currentState.currentChapterIndex + 1) % currentState.chapters.size
+        val nextChapter = currentState.chapters[nextIndex]
+        _uiState.update { it.copy(audiobook = nextChapter, currentChapterIndex = nextIndex, isReady = false) }
+        getMediaUri(nextChapter)?.let { prepareAndPlay(it, nextChapter) }
     }
 
     fun onPrevious() {
         val currentState = _uiState.value
-        val prevIndex = currentState.currentChapterIndex - 1
-        if (prevIndex >= 0) {
-            val prevChapter = currentState.chapters[prevIndex]
-            _uiState.update { it.copy(audiobook = prevChapter, currentChapterIndex = prevIndex) }
-            getMediaUri(prevChapter)?.let { prepareAndPlay(it, prevChapter) }
-        }
+        if (currentState.chapters.isEmpty()) return
+        mediaController?.stop()
+        val prevIndex = (currentState.currentChapterIndex - 1 + currentState.chapters.size) % currentState.chapters.size
+        val prevChapter = currentState.chapters[prevIndex]
+        _uiState.update { it.copy(audiobook = prevChapter, currentChapterIndex = prevIndex, isReady = false) }
+        getMediaUri(prevChapter)?.let { prepareAndPlay(it, prevChapter) }
     }
 
+    // --- AICI ESTE CORECTAREA 2 (Partea 2) ---
     override fun onCleared() {
-        progressUpdateJob?.cancel()
-        mediaController?.removeListener(playerListener)
-        MediaController.releaseFuture(controllerFuture)
+        // La închiderea acestui ViewModel (ieșirea din ecranul player), salvăm poziția curentă.
+        viewModelScope.launch {
+            _uiState.value.audiobook?.let { book ->
+                val lastPosition = mediaController?.currentPosition ?: 0
+                if (lastPosition > 0) {
+                    repository.savePlaybackPosition(book.id, lastPosition)
+                }
+            }
+            progressUpdateJob?.cancel()
+            mediaController?.removeListener(playerListener)
+            MediaController.releaseFuture(controllerFuture)
+        }
         super.onCleared()
     }
 }

@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import androidx.lifecycle.asFlow
 import androidx.work.OneTimeWorkRequest
+import androidx.work.await
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,6 +20,7 @@ import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
 import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback
 import md.ortodox.ortodoxmd.data.network.AudiobookApiService
 import md.ortodox.ortodoxmd.data.network.NetworkModule
+import md.ortodox.ortodoxmd.ui.audiobook.toDisplayableName
 import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -52,7 +54,9 @@ class AudiobookRepository @Inject constructor(
                 val existingEntity = localMap[dto.id]
                 AudiobookEntity(
                     id = dto.id,
-                    title = dto.titleRo,
+                    // --- AICI ESTE CORECTAREA ---
+                    // Aplicăm formatarea direct pe titlu înainte de a-l salva
+                    title = dto.titleRo.toDisplayableName(),
                     author = dto.authorRo,
                     remoteUrlPath = dto.filePath,
                     localFilePath = existingEntity?.localFilePath,
@@ -90,18 +94,24 @@ class AudiobookRepository @Inject constructor(
     }
 
     // Funcția startDownload devine mai simplă
-    fun startDownload(audiobook: AudiobookEntity) {
+    suspend fun startDownload(audiobook: AudiobookEntity) {
         if (audiobook.isDownloaded) {
             Log.d("AudiobookRepository", "Audiobook ${audiobook.id} is already downloaded.")
             return
         }
 
+        // Curățăm toate sarcinile finalizate (FAILED, CANCELLED, SUCCEEDED)
+        // Acest pas este esențial pentru ca reîncercarea să funcționeze corect.
+        workManager.pruneWork().await()
+
+        val uniqueWorkName = "download_${audiobook.id}"
         val downloadWorkRequest = createDownloadWorkRequest(audiobook)
 
-        Log.d("AudiobookRepository", "Enqueuing unique download work for audiobook ID: ${audiobook.id}")
+        Log.d("AudiobookRepository", "Beginning unique work for audiobook ID: ${audiobook.id}")
+
         workManager.enqueueUniqueWork(
-            "download_${audiobook.id}", // Nume unic pentru a nu dubla descărcarea individuală
-            ExistingWorkPolicy.REPLACE,
+            uniqueWorkName,
+            ExistingWorkPolicy.REPLACE, // REPLACE acum va funcționa cum trebuie
             downloadWorkRequest
         )
     }
@@ -148,4 +158,8 @@ class AudiobookRepository @Inject constructor(
             audiobookDao.markAsNotDownloaded(chapterIdsToDelete)
         }
     }
+
+
+
+    fun getDownloadedAudiobooks(): Flow<List<AudiobookEntity>> = audiobookDao.getDownloaded()
 }

@@ -13,13 +13,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import md.ortodox.ortodoxmd.R
 
-// --- Refactorizat pentru a folosi SaintLife ---
 sealed class ContentBlock {
     data class H1(val text: String) : ContentBlock()
     data class H2(val text: String) : ContentBlock()
@@ -87,7 +88,7 @@ fun SaintLifeDetailScreen(
                     },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi", tint = readerTheme.onBackground)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.common_back), tint = readerTheme.onBackground)
                         }
                     },
                     actions = {
@@ -98,13 +99,13 @@ fun SaintLifeDetailScreen(
                                 ReaderTheme.DARK -> ReaderTheme.LIGHT
                             }
                         }) {
-                            Icon(Icons.Default.Tonality, "Schimbă Tema", tint = readerTheme.onBackground)
+                            Icon(Icons.Default.Tonality, stringResource(R.string.saints_reader_change_theme), tint = readerTheme.onBackground)
                         }
                         IconButton(onClick = { if (fontScale > 0.8f) fontScale -= 0.1f }) {
-                            Icon(Icons.Default.Remove, "Micșorează Text", tint = readerTheme.onBackground)
+                            Icon(Icons.Default.Remove, stringResource(R.string.saints_reader_decrease_font), tint = readerTheme.onBackground)
                         }
                         IconButton(onClick = { if (fontScale < 1.5f) fontScale += 0.1f }) {
-                            Icon(Icons.Default.Add, "Mărește Text", tint = readerTheme.onBackground)
+                            Icon(Icons.Default.Add, stringResource(R.string.saints_reader_increase_font), tint = readerTheme.onBackground)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

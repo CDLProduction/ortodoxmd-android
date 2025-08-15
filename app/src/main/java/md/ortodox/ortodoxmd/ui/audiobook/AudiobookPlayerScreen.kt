@@ -3,81 +3,38 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Forward30
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Replay10
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
+import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
 import java.util.concurrent.TimeUnit
-import android.util.Log
 
 @androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
 @Composable
 fun AudiobookPlayerScreen(
     navController: NavController,
     viewModel: AudiobookPlayerViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(uiState.audiobook?.title ?: "Se încarcă...") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        Log.d("AudiobookPlayerScreen", "Back button clicked")
-                        navController.popBackStack()
-                    }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Înapoi",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        }
+    AppScaffold(
+        title = uiState.audiobook?.title ?: stringResource(R.string.common_loading),
+        onBack = { navController.popBackStack() }
     ) { paddingValues ->
         Crossfade(targetState = uiState.isReady, label = "PlayerContentFade") { isReady ->
             if (isReady && uiState.audiobook != null) {
@@ -95,9 +52,7 @@ fun AudiobookPlayerScreen(
                     onPrevious = viewModel::onPrevious
                 )
             } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                AppLoading(modifier = Modifier.padding(paddingValues))
             }
         }
     }
@@ -143,7 +98,7 @@ private fun PlayerHeader(title: String, author: String) {
         Spacer(Modifier.height(32.dp))
         Icon(
             imageVector = Icons.AutoMirrored.Filled.MenuBook,
-            contentDescription = "Coperta Cărții",
+            contentDescription = stringResource(R.string.audiobook_player_cover_desc),
             modifier = Modifier
                 .fillMaxWidth(0.6f)
                 .aspectRatio(1f),
@@ -204,10 +159,10 @@ private fun PlayerControls(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onPrevious, enabled = controlsEnabled) {
-                Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.SkipPrevious, stringResource(R.string.audiobook_player_previous), modifier = Modifier.size(32.dp))
             }
             IconButton(onClick = onRewind, enabled = controlsEnabled) {
-                Icon(Icons.Default.Replay10, "Înapoi 10s", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Replay10, stringResource(R.string.audiobook_player_rewind), modifier = Modifier.size(32.dp))
             }
             FilledIconButton(
                 onClick = onPlayPauseToggle,
@@ -219,16 +174,16 @@ private fun PlayerControls(
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = "Play/Pauză",
+                    contentDescription = stringResource(R.string.audiobook_player_play_pause),
                     modifier = Modifier.size(40.dp),
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
             IconButton(onClick = onForward, enabled = controlsEnabled) {
-                Icon(Icons.Default.Forward30, "Înainte 30s", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Forward30, stringResource(R.string.audiobook_player_forward), modifier = Modifier.size(32.dp))
             }
             IconButton(onClick = onNext, enabled = controlsEnabled) {
-                Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.SkipNext, stringResource(R.string.audiobook_player_next), modifier = Modifier.size(32.dp))
             }
         }
         Spacer(Modifier.height(32.dp))

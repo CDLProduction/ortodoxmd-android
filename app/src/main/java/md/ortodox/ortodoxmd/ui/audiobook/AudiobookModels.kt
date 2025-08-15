@@ -1,16 +1,17 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
 import androidx.work.WorkInfo
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
-import java.util.Locale
-
-// --- Structuri de date pentru UI ---
 
 data class AudiobooksUiState(
-    val categories: List<AudiobookCategory> = emptyList(),
+    val categories: ImmutableList<AudiobookCategory> = persistentListOf(),
     val isLoading: Boolean = true,
-    val downloadStates: Map<Long, WorkInfo.State> = emptyMap(),
-    val downloadProgress: Map<Long, Int> = emptyMap()
+    val downloadStates: ImmutableMap<Long, WorkInfo.State> = persistentMapOf(),
+    val downloadProgress: ImmutableMap<Long, Int> = persistentMapOf()
 )
 
 data class ChapterScreenState(
@@ -18,25 +19,19 @@ data class ChapterScreenState(
     val isLoading: Boolean = true
 )
 
+data class DownloadedAudiobooksUiState(
+    val categories: ImmutableList<AudiobookCategory> = persistentListOf(),
+    val isLoading: Boolean = true
+)
+
 data class AudiobookCategory(
     val name: String,
-    val books: List<AudiobookBook>
+    val books: ImmutableList<AudiobookBook>,
+    val isSimpleCategory: Boolean = false
 )
 
 data class AudiobookBook(
     val name: String,
     val testament: String,
-    val chapters: List<AudiobookEntity>
+    val chapters: ImmutableList<AudiobookEntity>
 )
-
-// --- Funcții ajutătoare (Extensii) ---
-
-fun String.toDisplayableName(): String {
-    return this.replace('_', ' ').replace('-', ' ').replaceFirstChar {
-        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-    }
-}
-
-fun String.fromDisplayableName(): String {
-    return this.replace(' ', '_')
-}

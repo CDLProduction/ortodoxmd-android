@@ -1,16 +1,18 @@
 [versions]
 agp = "8.11.1"
 hiltNavigationCompose = "1.2.0"
-navigationCompose = "2.8.0"
+kotlinxCollectionsImmutable = "0.4.0"
+material = "1.12.0"
+navigationCompose = "2.9.3"
 kotlin = "2.0.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.0"
-lifecycleRuntimeKtx = "2.8.4"
-lifecycleLivedataKtx = "2.8.5"
-lifecycleViewmodelCompose = "2.8.5" # Adăugat pentru suport Compose
-activityCompose = "1.9.1"
+lifecycleRuntimeKtx = "2.9.2"
+lifecycleLivedataKtx = "2.9.2"
+lifecycleViewmodelCompose = "2.9.2" # Adăugat pentru suport Compose
+activityCompose = "1.10.1"
 composeBom = "2025.07.00"
 room = "2.6.1"
 retrofit = "2.11.0"
@@ -25,7 +27,7 @@ work = "2.10.2"
 androidx-media = "1.7.0"
 hiltWork = "1.1.0"
 coil = "2.7.0"
-
+#datastore = "1.1.7"
 
 [libraries]
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
@@ -48,6 +50,8 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
+material = { module = "com.google.android.material:material", version.ref = "material" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
@@ -69,7 +73,7 @@ androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", vers
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
-
+#androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

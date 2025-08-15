@@ -1,44 +1,43 @@
 package md.ortodox.ortodoxmd.ui.bible
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
+import md.ortodox.ortodoxmd.R
+import md.ortodox.ortodoxmd.ui.design.AppCard
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
 
-// NOU: Ecran pentru a alege între Vechiul și Noul Testament
 @Composable
 fun TestamentsScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     val testaments = listOf(
-        "Vechiul Testament" to "1",
-        "Noul Testament" to "2"
+        stringResource(R.string.bible_old_testament) to "1",
+        stringResource(R.string.bible_new_testament) to "2"
     )
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = AppPaddings.content,
+        verticalArrangement = Arrangement.spacedBy(AppPaddings.s)
     ) {
         items(testaments.size) { index ->
             val (name, id) = testaments[index]
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        navController.navigate("bible/books/$id")
-                    },
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            // REFACTORIZAT: Folosim AppCard.
+            AppCard(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { navController.navigate("bible/books/$id") }
             ) {
                 Text(
                     text = name,
                     style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(AppPaddings.l)
                 )
             }
         }

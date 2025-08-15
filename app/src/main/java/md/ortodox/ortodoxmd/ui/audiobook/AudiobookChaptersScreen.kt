@@ -1,104 +1,108 @@
 package md.ortodox.ortodoxmd.ui.audiobook
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.work.WorkInfo
+import md.ortodox.ortodoxmd.R
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
+import md.ortodox.ortodoxmd.ui.MainViewModel
+import md.ortodox.ortodoxmd.ui.design.AppEmpty
+import md.ortodox.ortodoxmd.ui.design.AppLoading
+import md.ortodox.ortodoxmd.ui.design.AppPaddings
+import md.ortodox.ortodoxmd.ui.design.AppScaffold
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudiobookChaptersScreen(
+    navController: NavController,
     viewModel: AudiobookViewModel,
-    onNavigateToPlayer: (Long) -> Unit,
-    onNavigateBack: () -> Unit
+    mainViewModel: MainViewModel,
+    onNavigateToPlayer: (Long) -> Unit
 ) {
-    val chapterUiState by viewModel.selectedBookState.collectAsState()
-    val mainUiState by viewModel.uiState.collectAsState()
-    val isDownloading by viewModel.isDownloading.collectAsState()
+    val miniPlayerState by mainViewModel.miniPlayerState.collectAsStateWithLifecycle()
+    val currentPlayingId = miniPlayerState.currentTrackId
+
+    val chapterUiState by viewModel.selectedBookState.collectAsStateWithLifecycle()
+    val mainUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isDownloading by viewModel.isDownloading.collectAsStateWithLifecycle()
 
     DisposableEffect(Unit) {
         onDispose { viewModel.clearBookSelection() }
     }
 
     val book = chapterUiState.book
-    val hasDownloadableChapters = remember(book, mainUiState) {
-        book?.chapters?.any {
-            !it.isDownloaded
-        } ?: false
+
+    val hasDownloadableChapters by remember(book) {
+        derivedStateOf { book?.chapters?.any { !it.isDownloaded } ?: false }
     }
-    val hasDeletableChapters = remember(book, mainUiState) {
-        book?.chapters?.any { it.isDownloaded } ?: false
+    val hasDeletableChapters by remember(book, mainUiState.downloadStates) {
+        derivedStateOf { book?.chapters?.any { it.isDownloaded } ?: false }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(book?.name ?: "Încărcare...", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Înapoi") }
-                }
-            )
-        },
+    AppScaffold(
+        title = book?.name ?: stringResource(R.string.common_loading),
+        onBack = { navController.popBackStack() },
         floatingActionButton = {
-            AnimatedVisibility(
-                visible = isDownloading || hasDeletableChapters || hasDownloadableChapters,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut()
+            // --- BUTONUL PENTRU "DESCĂRCĂRI" A FOST ELIMINAT DE AICI ---
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                when {
-                    isDownloading -> ExtendedFloatingActionButton(
+                AnimatedVisibility(visible = isDownloading) {
+                    ExtendedFloatingActionButton(
                         onClick = { viewModel.cancelAllDownloads() },
-                        icon = { Icon(Icons.Default.Cancel, "Anulează") },
-                        text = { Text("Anulează") },
+                        icon = { Icon(Icons.Default.Cancel, stringResource(R.string.common_cancel)) },
+                        text = { Text(stringResource(R.string.common_cancel)) },
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
-                    hasDeletableChapters -> ExtendedFloatingActionButton(
-                        onClick = { book?.chapters?.let { viewModel.deleteAllDownloadedChapters(it) } },
-                        icon = { Icon(Icons.Default.Delete, "Șterge") },
-                        text = { Text("Șterge Descărcările") },
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    )
-                    hasDownloadableChapters -> ExtendedFloatingActionButton(
-                        onClick = { book?.chapters?.let { viewModel.downloadAllChapters(it) } },
-                        icon = { Icon(Icons.Default.Download, "Descarcă") },
-                        text = { Text("Descarcă") }
-                    )
+                }
+
+                if (!isDownloading) {
+                    AnimatedVisibility(visible = hasDownloadableChapters) {
+                        ExtendedFloatingActionButton(
+                            onClick = { book?.chapters?.let { viewModel.downloadAllChapters(it.toList()) } },
+                            icon = { Icon(Icons.Default.Download, stringResource(R.string.common_download)) },
+                            text = { Text(stringResource(R.string.audiobook_download_all)) }
+                        )
+                    }
+                    AnimatedVisibility(visible = hasDeletableChapters) {
+                        ExtendedFloatingActionButton(
+                            onClick = { book?.chapters?.let { viewModel.deleteAllDownloadedChapters(it.toList()) } },
+                            icon = { Icon(Icons.Default.Delete, stringResource(R.string.common_delete)) },
+                            text = { Text(stringResource(R.string.audiobook_delete_all_downloads)) },
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                        )
+                    }
                 }
             }
         }
     ) { paddingValues ->
         when {
-            chapterUiState.isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            }
+            chapterUiState.isLoading -> AppLoading(Modifier.padding(paddingValues))
             book != null -> {
                 LazyColumn(
                     modifier = Modifier.padding(paddingValues).fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(start = AppPaddings.l, end = AppPaddings.l, top = AppPaddings.l, bottom = 180.dp),
+                    verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
                 ) {
                     items(book.chapters, key = { it.id }) { chapter ->
                         ChapterItem(
                             chapter = chapter,
+                            isCurrentlyPlaying = chapter.id == currentPlayingId,
                             downloadState = mainUiState.downloadStates[chapter.id],
                             progress = mainUiState.downloadProgress[chapter.id] ?: 0,
                             onClick = { onNavigateToPlayer(chapter.id) },
@@ -108,38 +112,42 @@ fun AudiobookChaptersScreen(
                     }
                 }
             }
-            else -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Cartea nu a fost găsită.") }
-            }
+            else -> AppEmpty(
+                message = stringResource(R.string.audiobook_book_not_found),
+                modifier = Modifier.padding(paddingValues)
+            )
         }
     }
 }
-
-
 @Composable
 private fun ChapterItem(
     chapter: AudiobookEntity,
+    isCurrentlyPlaying: Boolean,
     downloadState: WorkInfo.State?,
     progress: Int,
     onClick: () -> Unit,
     onDownload: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val isDownloaded = chapter.isDownloaded
+    val cardColors = if (isCurrentlyPlaying) {
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    } else {
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    }
 
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = cardColors
     ) {
         Row(
             modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.Headset,
-                contentDescription = "Icoană Capitol",
+                imageVector = if (isCurrentlyPlaying) Icons.Default.GraphicEq else Icons.Default.Headset,
+                contentDescription = stringResource(R.string.audiobook_chapter_icon_desc),
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -158,43 +166,26 @@ private fun ChapterItem(
                 contentAlignment = Alignment.Center
             ) {
                 when {
-                    isDownloaded -> Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Descărcat",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    chapter.isDownloaded -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.audiobook_downloaded), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
                         IconButton(onClick = onDelete) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Șterge",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_delete), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                         }
                     }
                     downloadState == WorkInfo.State.RUNNING -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         val animatedProgress by animateFloatAsState(targetValue = progress / 100f, label = "progressAnimation")
-                        CircularProgressIndicator(
-                            progress = { animatedProgress },
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
+                        CircularProgressIndicator(progress = { animatedProgress }, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         Text(text = "$progress%", fontSize = 10.sp)
                     }
-                    // --> AICI ESTE LOGICA PENTRU STAREA "ÎN AȘTEPTARE" <--
-                    downloadState == WorkInfo.State.ENQUEUED -> Icon(
-                        imageVector = Icons.Default.HourglassTop,
-                        contentDescription = "În așteptare",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    downloadState == WorkInfo.State.ENQUEUED -> Icon(Icons.Default.HourglassTop, contentDescription = stringResource(R.string.audiobook_download_waiting), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     downloadState == WorkInfo.State.FAILED || downloadState == WorkInfo.State.CANCELLED ->
                         IconButton(onClick = onDownload) {
-                            Icon(Icons.Default.Refresh, "Reîncearcă", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Refresh, stringResource(R.string.common_retry), tint = MaterialTheme.colorScheme.error)
                         }
                     else ->
                         IconButton(onClick = onDownload) {
-                            Icon(Icons.Default.Download, "Descarcă", tint = MaterialTheme.colorScheme.secondary)
+                            Icon(Icons.Default.Download, stringResource(R.string.common_download), tint = MaterialTheme.colorScheme.secondary)
                         }
                 }
             }

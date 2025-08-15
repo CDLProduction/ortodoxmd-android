@@ -1,34 +1,48 @@
 package md.ortodox.ortodoxmd
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
+import md.ortodox.ortodoxmd.data.language.LanguageManager
 import md.ortodox.ortodoxmd.data.worker.DailyNotificationWorker
 import md.ortodox.ortodoxmd.notifications.NotificationHelper
-import java.util.*
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
 class OrtodoxMDApplication : Application() {
-
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+    @Inject
+    lateinit var languageManager: LanguageManager
+
+    override fun attachBaseContext(base: Context) {
+        // Create a temporary LanguageManager to read the saved language
+        val tempLanguageManager = LanguageManager(base)
+        val lang = tempLanguageManager.getCurrentLanguageSync()
+        val localeList = LocaleListCompat.forLanguageTags(lang)
+        AppCompatDelegate.setApplicationLocales(localeList)
+        super.attachBaseContext(base)
+    }
 
     override fun onCreate() {
         super.onCreate()
-
-        val config = Configuration.Builder()
+        val workManagerConfig = androidx.work.Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .setMinimumLoggingLevel(Log.DEBUG)
             .build()
-        WorkManager.initialize(this, config)
-
+        WorkManager.initialize(this, workManagerConfig)
         Log.d("OrtodoxMDApplication", "Hilt & WorkManager initialized.")
-
-        // **ADAUGAT: Creăm canalul și programăm notificarea la pornirea aplicației**
         NotificationHelper.createNotificationChannel(this)
         scheduleDailyNotification()
     }
@@ -42,7 +56,6 @@ class OrtodoxMDApplication : Application() {
             )
             .setInitialDelay(calculateInitialDelayTo7AM(), TimeUnit.MILLISECONDS)
             .build()
-
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "DailyCalendarNotification",
             ExistingPeriodicWorkPolicy.KEEP,
