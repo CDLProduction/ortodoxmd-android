@@ -21,7 +21,7 @@ import md.ortodox.ortodoxmd.data.model.bible.*
     Monastery::class,
     Sacrament::class,
     Apologetic::class
-], version = 6, exportSchema = false)
+], version = 7, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun calendarDao(): CalendarDao

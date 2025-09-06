@@ -90,12 +90,27 @@ class AudioDownloadWorker @AssistedInject constructor(
 
                             // --- AICI ESTE OPTIMIZAREA ---
                             val currentTime = System.currentTimeMillis()
-                            // Actualizăm starea doar dacă progresul s-a schimbat ȘI au trecut cel puțin 500ms
-                            if (progress != -1 && progress > lastReportedProgress && (currentTime - lastUpdateTime > 500)) {
+                            // Optimized progress updates: only update on significant progress changes or time intervals
+                            val shouldUpdate = progress != -1 && (
+                                progress >= 100 || // Always update at completion
+                                progress - lastReportedProgress >= 5 || // Update every 5% progress
+                                (currentTime - lastUpdateTime > 1000) // Or every 1 second minimum
+                            )
+                            
+                            if (shouldUpdate) {
                                 lastUpdateTime = currentTime
                                 lastReportedProgress = progress
-                                setProgress(workDataOf(KEY_PROGRESS to progress))
-                                val foregroundInfo = createForegroundInfo(audiobookId.toInt(), progress, fileName, "Descărcare... $progress%")
+                                
+                                // Batch progress and foreground updates together
+                                val progressData = workDataOf(KEY_PROGRESS to progress)
+                                setProgress(progressData)
+                                
+                                val foregroundInfo = createForegroundInfo(
+                                    audiobookId.toInt(), 
+                                    progress, 
+                                    fileName, 
+                                    "Descărcare... $progress%"
+                                )
                                 setForeground(foregroundInfo)
                             }
                         }

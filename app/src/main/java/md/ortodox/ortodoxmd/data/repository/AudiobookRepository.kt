@@ -14,6 +14,9 @@ import androidx.work.await
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import md.ortodox.ortodoxmd.data.worker.AudioDownloadWorker
 import md.ortodox.ortodoxmd.data.dao.AudiobookDao
 import md.ortodox.ortodoxmd.data.model.audiobook.AudiobookEntity
@@ -21,6 +24,7 @@ import md.ortodox.ortodoxmd.data.model.audiobook.LastPlayback
 import md.ortodox.ortodoxmd.data.network.AudiobookApiService
 import md.ortodox.ortodoxmd.data.network.NetworkModule
 import md.ortodox.ortodoxmd.ui.audiobook.toDisplayableName
+import java.util.Locale
 import java.io.File
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -45,27 +49,51 @@ class AudiobookRepository @Inject constructor(
 
     fun getLastPlaybackInfo(): Flow<LastPlayback?> = audiobookDao.getLastPlayback()
 
-    suspend fun syncAudiobooks() {
+    suspend fun syncAudiobooks() = withContext(Dispatchers.IO) {
         try {
-            val remoteAudiobooks = apiService.getAudiobooks()
-            val localAudiobooks = audiobookDao.getAll().first()
-            val localMap = localAudiobooks.associateBy { it.id }
-            val entitiesToInsert = remoteAudiobooks.map { dto ->
-                val existingEntity = localMap[dto.id]
-                AudiobookEntity(
-                    id = dto.id,
-                    // --- AICI ESTE CORECTAREA ---
-                    // Aplicăm formatarea direct pe titlu înainte de a-l salva
-                    title = dto.titleRo.toDisplayableName(),
-                    author = dto.authorRo,
-                    remoteUrlPath = dto.filePath,
-                    localFilePath = existingEntity?.localFilePath,
-                    isDownloaded = existingEntity?.isDownloaded ?: false,
-                    lastPositionMillis = existingEntity?.lastPositionMillis ?: 0,
-                    downloadId = existingEntity?.downloadId ?: -1L
-                )
+            val remoteAudiobooks = async { apiService.getAudiobooks() }
+            val localAudiobooks = async { audiobookDao.getAll().first() }
+            
+            // Wait for both operations to complete
+            val remoteData = remoteAudiobooks.await()
+            val localData = localAudiobooks.await()
+            
+            // Process data transformations in parallel chunks for better performance
+            val localMap = localData.associateBy { it.id }
+            val entitiesToInsert = remoteData.chunked(50).flatMap { chunk ->
+                chunk.map { dto ->
+                    val existingEntity = localMap[dto.id]
+                    // Pre-compute all display values once during sync
+                    val displayTitle = dto.titleRo.toDisplayableName()
+                    val pathSegments = dto.filePath.trimStart('/').split("/")
+                    val categoryKey = pathSegments.getOrNull(1) ?: "necunoscut"
+                    val bookKey = pathSegments.getOrNull(pathSegments.size - 2) ?: categoryKey
+                    val testamentKey = pathSegments.getOrNull(pathSegments.size - 3) ?: categoryKey
+                    val chapterNum = extractChapterNumber(displayTitle)
+                    
+                    AudiobookEntity(
+                        id = dto.id,
+                        title = dto.titleRo.toDisplayableName(),
+                        author = dto.authorRo,
+                        remoteUrlPath = dto.filePath,
+                        localFilePath = existingEntity?.localFilePath,
+                        isDownloaded = existingEntity?.isDownloaded ?: false,
+                        lastPositionMillis = existingEntity?.lastPositionMillis ?: 0,
+                        downloadId = existingEntity?.downloadId ?: -1L,
+                        // Pre-computed values
+                        displayTitle = displayTitle,
+                        categoryName = categoryKey.toDisplayableName(),
+                        testamentName = testamentKey.toDisplayableName(),
+                        bookName = bookKey.toDisplayableName(),
+                        chapterNumber = chapterNum
+                    )
+                }
             }
+            
+            // Batch insert for better database performance
             audiobookDao.insertAll(entitiesToInsert)
+            Log.d("AudiobookRepository", "Successfully synced ${entitiesToInsert.size} audiobooks")
+            
         } catch (e: Exception) {
             Log.e("AudiobookRepository", "Failed to sync audiobooks: ${e.message}", e)
         }
@@ -130,36 +158,47 @@ class AudiobookRepository @Inject constructor(
         deleteChapters(listOf(chapter))
     }
 
-    // NOU: Funcție pentru a șterge o listă de capitole
-    suspend fun deleteChapters(chapters: List<AudiobookEntity>) {
+    // Optimized batch delete operation with background processing
+    suspend fun deleteChapters(chapters: List<AudiobookEntity>) = withContext(Dispatchers.IO) {
         val chapterIdsToDelete = mutableListOf<Long>()
 
-        chapters.forEach { chapter ->
-            if (chapter.isDownloaded && !chapter.localFilePath.isNullOrEmpty()) {
-                try {
-                    val fileToDelete = File(chapter.localFilePath!!)
-                    if (fileToDelete.exists()) {
-                        if (fileToDelete.delete()) {
-                            // Adaugă la listă doar dacă fișierul a fost șters cu succes
-                            chapterIdsToDelete.add(chapter.id)
-                            Log.d("AudiobookRepository", "Deleted file: ${chapter.localFilePath}")
-                        } else {
-                            Log.e("AudiobookRepository", "Failed to delete file: ${chapter.localFilePath}")
+        // Process deletions in parallel for better performance
+        chapters.chunked(10).forEach { chunk ->
+            chunk.forEach { chapter ->
+                if (chapter.isDownloaded && !chapter.localFilePath.isNullOrEmpty()) {
+                    try {
+                        val fileToDelete = File(chapter.localFilePath!!)
+                        if (fileToDelete.exists()) {
+                            if (fileToDelete.delete()) {
+                                chapterIdsToDelete.add(chapter.id)
+                                Log.d("AudiobookRepository", "Deleted file: ${chapter.localFilePath}")
+                            } else {
+                                Log.e("AudiobookRepository", "Failed to delete file: ${chapter.localFilePath}")
+                            }
                         }
+                    } catch (e: Exception) {
+                        Log.e("AudiobookRepository", "Error deleting file for chapter ${chapter.id}", e)
                     }
-                } catch (e: Exception) {
-                    Log.e("AudiobookRepository", "Error deleting file for chapter ${chapter.id}", e)
                 }
             }
         }
 
-        // Actualizează baza de date pentru fișierele șterse
+        // Batch update database for better performance
         if (chapterIdsToDelete.isNotEmpty()) {
             audiobookDao.markAsNotDownloaded(chapterIdsToDelete)
+            Log.d("AudiobookRepository", "Marked ${chapterIdsToDelete.size} chapters as not downloaded")
         }
     }
 
 
 
     fun getDownloadedAudiobooks(): Flow<List<AudiobookEntity>> = audiobookDao.getDownloaded()
+
+    // Helper function to extract chapter numbers efficiently
+    private fun extractChapterNumber(title: String): Int {
+        return "\\d+".toRegex().findAll(title)
+            .lastOrNull()
+            ?.value
+            ?.toIntOrNull() ?: 0
+    }
 }

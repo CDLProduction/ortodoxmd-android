@@ -2,6 +2,7 @@ package md.ortodox.ortodoxmd.ui.audiobook
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,14 +57,45 @@ fun AudiobookCategoriesScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(
-            contentPadding = AppPaddings.content,
-            verticalArrangement = Arrangement.spacedBy(AppPaddings.m),
+        Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
-            items(uiState.categories, key = { it.name }) { category ->
+            
+            
+            // Show sync error if any
+            uiState.syncError?.let { error ->
+                androidx.compose.material3.Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(AppPaddings.m),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text(
+                        text = error,
+                        modifier = Modifier.padding(AppPaddings.m),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            
+            LazyColumn(
+            contentPadding = AppPaddings.content,
+            verticalArrangement = Arrangement.spacedBy(AppPaddings.m),
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            items(
+                items = uiState.categories,
+                key = { category -> category.name },
+                contentType = { category -> 
+                    if (category.isSimpleCategory) "simple_category" else "multi_book_category"
+                }
+            ) { category ->
                 AppCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
@@ -110,6 +142,7 @@ fun AudiobookCategoriesScreen(
                     }
                 }
             }
+        }
         }
     }
 }

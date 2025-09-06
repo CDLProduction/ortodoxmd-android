@@ -11,12 +11,15 @@ data class AudiobooksUiState(
     val categories: ImmutableList<AudiobookCategory> = persistentListOf(),
     val isLoading: Boolean = true,
     val downloadStates: ImmutableMap<Long, WorkInfo.State> = persistentMapOf(),
-    val downloadProgress: ImmutableMap<Long, Int> = persistentMapOf()
+    val downloadProgress: ImmutableMap<Long, Int> = persistentMapOf(),
+    val syncError: String? = null
 )
 
 data class ChapterScreenState(
     val book: AudiobookBook? = null,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val paginatedChapters: PaginatedChapters? = null,
+    val lazyLoadingState: LazyLoadingState = LazyLoadingState()
 )
 
 data class DownloadedAudiobooksUiState(
@@ -34,4 +37,26 @@ data class AudiobookBook(
     val name: String,
     val testament: String,
     val chapters: ImmutableList<AudiobookEntity>
+)
+
+data class DownloadStateInfo(
+    val state: WorkInfo.State?,
+    val progress: Int
+)
+
+data class PaginatedChapters(
+    val chapters: ImmutableList<AudiobookEntity>,
+    val hasMorePages: Boolean,
+    val currentPage: Int,
+    val totalChapters: Int
+) {
+    companion object {
+        const val PAGE_SIZE = 20 // Load 20 chapters at a time
+    }
+}
+
+data class LazyLoadingState(
+    val isLoadingMore: Boolean = false,
+    val hasReachedEnd: Boolean = false,
+    val error: String? = null
 )

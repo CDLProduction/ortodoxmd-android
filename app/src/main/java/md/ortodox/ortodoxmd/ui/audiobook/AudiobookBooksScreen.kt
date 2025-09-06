@@ -40,7 +40,11 @@ fun AudiobookBooksScreen(
             verticalArrangement = Arrangement.spacedBy(AppPaddings.m),
             modifier = Modifier.padding(paddingValues).fillMaxSize()
         ) {
-            items(booksInTestament, key = { it.name }) { book ->
+            items(
+                items = booksInTestament,
+                key = { book -> book.name },
+                contentType = { "audiobook_book" }
+            ) { book ->
                 AppCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {

@@ -133,3 +133,5 @@ fabric.properties
 
 !/gradle/wrapper/gradle-wrapper.jar
 /.idea/
+/CLAUDE.md
+/GEMINI.md

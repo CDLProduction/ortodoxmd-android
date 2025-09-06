@@ -12,5 +12,11 @@ data class AudiobookEntity(
     var localFilePath: String? = null,
     var lastPositionMillis: Long = 0,
     var isDownloaded: Boolean = false,
-    var downloadId: Long = -1L
+    var downloadId: Long = -1L,
+    // Pre-computed display values for performance
+    val displayTitle: String = title,
+    val categoryName: String = "",
+    val testamentName: String = "",
+    val bookName: String = "",
+    val chapterNumber: Int = 0
 )

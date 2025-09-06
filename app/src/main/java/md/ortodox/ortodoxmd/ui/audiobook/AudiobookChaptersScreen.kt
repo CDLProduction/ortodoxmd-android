@@ -46,11 +46,31 @@ fun AudiobookChaptersScreen(
 
     val book = chapterUiState.book
 
-    val hasDownloadableChapters by remember(book) {
-        derivedStateOf { book?.chapters?.any { !it.isDownloaded } ?: false }
+    // Cache expensive derivations with proper keys
+    val hasDownloadableChapters by remember(book?.chapters) {
+        derivedStateOf { 
+            book?.chapters?.any { !it.isDownloaded } ?: false 
+        }
     }
-    val hasDeletableChapters by remember(book, mainUiState.downloadStates) {
-        derivedStateOf { book?.chapters?.any { it.isDownloaded } ?: false }
+    
+    val hasDeletableChapters by remember(book?.chapters, mainUiState.downloadStates) {
+        derivedStateOf { 
+            book?.chapters?.any { chapter ->
+                chapter.isDownloaded || mainUiState.downloadStates[chapter.id] == WorkInfo.State.SUCCEEDED
+            } ?: false 
+        }
+    }
+    
+    // Cache download state lookups for better performance
+    val downloadStatesCache by remember(mainUiState.downloadStates, mainUiState.downloadProgress) {
+        derivedStateOf {
+            book?.chapters?.associate { chapter ->
+                chapter.id to DownloadStateInfo(
+                    state = mainUiState.downloadStates[chapter.id],
+                    progress = mainUiState.downloadProgress[chapter.id] ?: 0
+                )
+            } ?: emptyMap()
+        }
     }
 
     AppScaffold(
@@ -91,31 +111,70 @@ fun AudiobookChaptersScreen(
             }
         }
     ) { paddingValues ->
-        when {
-            chapterUiState.isLoading -> AppLoading(Modifier.padding(paddingValues))
-            book != null -> {
-                LazyColumn(
-                    modifier = Modifier.padding(paddingValues).fillMaxSize(),
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+        ) {
+            
+            
+            when {
+                chapterUiState.isLoading -> AppLoading(Modifier.fillMaxSize())
+                book != null -> {
+                    LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = AppPaddings.l, end = AppPaddings.l, top = AppPaddings.l, bottom = 180.dp),
                     verticalArrangement = Arrangement.spacedBy(AppPaddings.m)
                 ) {
-                    items(book.chapters, key = { it.id }) { chapter ->
+                    // Use paginated chapters for better performance
+                    val chaptersToShow = chapterUiState.paginatedChapters?.chapters ?: book.chapters
+                    
+                    items(
+                        items = chaptersToShow,
+                        key = { chapter -> chapter.id },
+                        contentType = { chapter -> 
+                            when {
+                                chapter.isDownloaded -> "downloaded"
+                                downloadStatesCache[chapter.id]?.state == WorkInfo.State.RUNNING -> "downloading"
+                                downloadStatesCache[chapter.id]?.state == WorkInfo.State.ENQUEUED -> "enqueued"
+                                else -> "available"
+                            }
+                        }
+                    ) { chapter ->
+                        val downloadStateInfo = downloadStatesCache[chapter.id] 
                         ChapterItem(
                             chapter = chapter,
                             isCurrentlyPlaying = chapter.id == currentPlayingId,
-                            downloadState = mainUiState.downloadStates[chapter.id],
-                            progress = mainUiState.downloadProgress[chapter.id] ?: 0,
+                            downloadState = downloadStateInfo?.state,
+                            progress = downloadStateInfo?.progress ?: 0,
                             onClick = { onNavigateToPlayer(chapter.id) },
                             onDownload = { viewModel.downloadChapter(chapter) },
                             onDelete = { viewModel.deleteChapter(chapter) }
                         )
                     }
+                    
+                    // Add lazy loading footer if needed
+                    chapterUiState.paginatedChapters?.let { paginatedData ->
+                        if (paginatedData.hasMorePages) {
+                            item(
+                                key = "load_more_footer",
+                                contentType = "load_more"
+                            ) {
+                                LazyLoadingFooter(
+                                    isLoading = chapterUiState.lazyLoadingState.isLoadingMore,
+                                    onLoadMore = { viewModel.loadMoreChapters() },
+                                    error = chapterUiState.lazyLoadingState.error
+                                )
+                            }
+                        }
+                    }
                 }
             }
             else -> AppEmpty(
                 message = stringResource(R.string.audiobook_book_not_found),
-                modifier = Modifier.padding(paddingValues)
+                modifier = Modifier.fillMaxSize()
             )
+        }
         }
     }
 }
@@ -129,11 +188,14 @@ private fun ChapterItem(
     onDownload: () -> Unit,
     onDelete: () -> Unit
 ) {
+    // Cache expensive computations
     val cardColors = if (isCurrentlyPlaying) {
         CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     } else {
         CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     }
+
+    val leadingIcon = if (isCurrentlyPlaying) Icons.Default.GraphicEq else Icons.Default.Headset
 
     Card(
         onClick = onClick,
@@ -141,52 +203,149 @@ private fun ChapterItem(
         elevation = CardDefaults.cardElevation(2.dp),
         colors = cardColors
     ) {
-        Row(
-            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = if (isCurrentlyPlaying) Icons.Default.GraphicEq else Icons.Default.Headset,
-                contentDescription = stringResource(R.string.audiobook_chapter_icon_desc),
-                modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
+        Column {
+            Row(
+                modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = stringResource(R.string.audiobook_chapter_icon_desc),
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.width(16.dp))
+                
+                // Simplified title section
                 Text(
-                    text = chapter.title,
+                    text = chapter.displayTitle.ifEmpty { chapter.title },
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                
+                // Optimized action section - simplified to just icons
+                ChapterActionSection(
+                    isDownloaded = chapter.isDownloaded,
+                    downloadState = downloadState,
+                    progress = progress,
+                    onDownload = onDownload,
+                    onDelete = onDelete
+                )
             }
-            Spacer(Modifier.width(8.dp))
-            Box(
-                modifier = Modifier.size(60.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                when {
-                    chapter.isDownloaded -> Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.audiobook_downloaded), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        IconButton(onClick = onDelete) {
-                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_delete), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
-                        }
+            
+            // Compact download indicator at the bottom
+            CompactDownloadIndicator(
+                isDownloading = downloadState == WorkInfo.State.RUNNING,
+                progress = progress,
+                modifier = Modifier.padding(start = 16.dp, end = 8.dp, bottom = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChapterActionSection(
+    isDownloaded: Boolean,
+    downloadState: WorkInfo.State?,
+    progress: Int,
+    onDownload: () -> Unit,
+    onDelete: () -> Unit
+) {
+    // Simplified to just action buttons - no heavy progress circles
+    when {
+        isDownloaded -> {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.common_delete),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        downloadState == WorkInfo.State.RUNNING -> {
+            Icon(
+                Icons.Default.Download,
+                contentDescription = "Descărcare în curs",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        downloadState == WorkInfo.State.ENQUEUED -> {
+            Icon(
+                Icons.Default.HourglassTop,
+                contentDescription = "În așteptare",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        downloadState == WorkInfo.State.FAILED || downloadState == WorkInfo.State.CANCELLED -> {
+            IconButton(onClick = onDownload) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = stringResource(R.string.common_retry),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        else -> {
+            IconButton(onClick = onDownload) {
+                Icon(
+                    Icons.Default.Download,
+                    contentDescription = stringResource(R.string.common_download),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun LazyLoadingFooter(
+    isLoading: Boolean,
+    onLoadMore: () -> Unit,
+    error: String?
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(AppPaddings.l),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            error != null -> {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onLoadMore) {
+                        Text(stringResource(R.string.common_retry))
                     }
-                    downloadState == WorkInfo.State.RUNNING -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val animatedProgress by animateFloatAsState(targetValue = progress / 100f, label = "progressAnimation")
-                        CircularProgressIndicator(progress = { animatedProgress }, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        Text(text = "$progress%", fontSize = 10.sp)
-                    }
-                    downloadState == WorkInfo.State.ENQUEUED -> Icon(Icons.Default.HourglassTop, contentDescription = stringResource(R.string.audiobook_download_waiting), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    downloadState == WorkInfo.State.FAILED || downloadState == WorkInfo.State.CANCELLED ->
-                        IconButton(onClick = onDownload) {
-                            Icon(Icons.Default.Refresh, stringResource(R.string.common_retry), tint = MaterialTheme.colorScheme.error)
-                        }
-                    else ->
-                        IconButton(onClick = onDownload) {
-                            Icon(Icons.Default.Download, stringResource(R.string.common_download), tint = MaterialTheme.colorScheme.secondary)
-                        }
+                }
+            }
+            isLoading -> {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Text(
+                        text = stringResource(R.string.common_loading),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            else -> {
+                Button(onClick = onLoadMore) {
+                    Text("Load More") // Using hardcoded string as resource doesn't exist
                 }
             }
         }

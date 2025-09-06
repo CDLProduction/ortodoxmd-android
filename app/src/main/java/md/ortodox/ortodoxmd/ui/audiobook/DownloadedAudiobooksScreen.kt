@@ -66,7 +66,10 @@ fun DownloadedAudiobooksScreen(
             uiState.categories.forEach { category ->
                 // Adăugăm un titlu pentru fiecare categorie, dacă există mai multe
                 if (uiState.categories.size > 1) {
-                    item {
+                    item(
+                        key = "header_${category.name}",
+                        contentType = "category_header"
+                    ) {
                         Text(
                             text = category.name,
                             style = MaterialTheme.typography.titleLarge,
@@ -76,7 +79,11 @@ fun DownloadedAudiobooksScreen(
                 }
 
                 // Listăm cărțile din categorie
-                items(category.books, key = { it.name }) { book ->
+                items(
+                    items = category.books,
+                    key = { book -> book.name },
+                    contentType = { "downloaded_book" }
+                ) { book ->
                     AppCard(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
